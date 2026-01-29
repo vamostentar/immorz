@@ -9,6 +9,9 @@ node_modules/
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
+# Yarn lock files should be committed in microservices for deterministic builds
+# Only ignore yarn.lock at root level
+/yarn.lock
 
 # ====================================
 # Environment Variables (PROTECTED)
