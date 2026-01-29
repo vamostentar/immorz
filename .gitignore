@@ -161,7 +161,6 @@ temp/
 # Package Manager
 # ====================================
 package-lock.json
-yarn.lock
 pnpm-lock.yaml
 .pnpm-store/
 
