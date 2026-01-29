@@ -25,7 +25,11 @@ COPY . .
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 
 # Build the application
-RUN yarn build
+RUN set -ex && \
+  echo "===== Starting TypeScript Build =====" && \
+  yarn build && \
+  echo "===== Build Completed Successfully =====" &&\
+  ls -la dist/
 
 # Expose port
 EXPOSE 8081
