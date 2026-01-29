@@ -12,6 +12,9 @@ RUN corepack enable && corepack prepare yarn@4.9.2 --activate
 # Copy package files (include lockfile)
 COPY package.json yarn.lock* ./
 
+# Copy Yarn configuration to ensure node-modules linker is used
+COPY .yarnrc.yml ./
+
 # Avoid traversing to parent for workspaces during install
 ENV YARN_IGNORE_PATH=1
 
