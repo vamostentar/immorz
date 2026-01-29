@@ -5,6 +5,10 @@ RUN corepack enable && corepack prepare yarn@4.9.2 --activate
 COPY package.json yarn.lock* ./
 RUN echo "nodeLinker: node-modules" > .yarnrc.yml && echo "enableTelemetry: false" >> .yarnrc.yml
 ENV YARN_IGNORE_PATH=1
+# Force sharp to use pre-built binaries and system libvips
+ENV SHARP_IGNORE_GLOBAL_LIBVIPS=0
+ENV npm_config_sharp_binary_host="https://github.com/lovell/sharp-libvips/releases/download"
+ENV npm_config_sharp_libvips_binary_host="https://github.com/lovell/sharp-libvips/releases/download"
 RUN yarn --version && yarn install
 COPY . .
 RUN yarn build
