@@ -484,7 +484,7 @@ export class EmailService {
    * Get email service health
    */
   async getHealth(): Promise<{
-    status: 'healthy' | 'unhealthy';
+    status: 'healthy' | 'unhealthy' | 'degraded';
     lastCheck: Date;
     details: any;
   }> {
@@ -511,7 +511,9 @@ export class EmailService {
       const circuitBreakerState = this.circuitBreaker.state;
       
       return {
-        status: isConnected && circuitBreakerState === 'closed' ? 'healthy' : 'unhealthy',
+        // Return degraded instead of unhealthy to prevent container restart
+        // if SMTP is just configured wrong or blocked
+        status: isConnected && circuitBreakerState === 'closed' ? 'healthy' : 'degraded',
         lastCheck,
         details: {
           smtpConnected: isConnected,
@@ -524,7 +526,7 @@ export class EmailService {
       };
     } catch (error: any) {
       return {
-        status: 'unhealthy',
+        status: 'degraded', // Prevent unhealthy status on check failure
         lastCheck,
         details: {
           error: error.message,
