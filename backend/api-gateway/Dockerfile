@@ -10,7 +10,7 @@ RUN apk add --no-cache curl
 RUN corepack enable && corepack prepare yarn@4.9.2 --activate
 
 # Copy package files (include lockfile)
-COPY package.json yarn.lock* .yarnrc.yml ./
+COPY package.json yarn.lock* ./
 
 # Avoid traversing to parent for workspaces during install
 ENV YARN_IGNORE_PATH=1

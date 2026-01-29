@@ -17,7 +17,7 @@ RUN apk add --no-cache \
 RUN corepack enable && corepack prepare yarn@4.9.2 --activate
 
 # Copiar manifestos primeiro para melhor cache
-COPY package.json yarn.lock* .yarnrc.yml ./
+COPY package.json yarn.lock* ./
 
 # Forçar nodeLinker node-modules para compat com Docker
 RUN echo "nodeLinker: node-modules" > .yarnrc.yml && \
@@ -78,7 +78,7 @@ EXPOSE 8090
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8090/health || exit 1
+    CMD curl -f http://localhost:8090/health || exit 1
 
 ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
 CMD ["node", "dist/server.js"]
