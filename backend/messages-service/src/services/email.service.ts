@@ -130,7 +130,9 @@ export class EmailService {
         host: config.SMTP_HOST,
         port: config.SMTP_PORT,
       });
-      throw error;
+      // Não fazer throw do erro para permitir que o serviço inicie
+      // O serviço de email ficará indisponível mas a aplicação (e logs) funcionará
+      // throw error; 
     }
   }
 

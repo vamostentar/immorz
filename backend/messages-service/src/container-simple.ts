@@ -33,10 +33,12 @@ export class SimpleContainer {
         log: configService.isDevelopment ? ['query', 'info', 'warn', 'error'] : ['error'],
       });
 
-      this._prisma.$connect().catch((error) => {
-        logger.error('Failed to connect to database', { error: error.message });
-        process.exit(1);
-      });
+      // Conexão lazy (automática no primeiro pedido) é mais segura para o arranque
+      // Evita crash se a DB demorar a responder
+      // this._prisma.$connect().catch((error) => {
+      //   logger.error('Failed to connect to database', { error: error.message });
+      //   // process.exit(1); 
+      // });
     }
     return this._prisma;
   }
