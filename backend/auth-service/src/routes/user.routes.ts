@@ -2,12 +2,34 @@ import { UserController } from '@/controllers/user.controller';
 import { authenticate, requireRole } from '@/middlewares/auth.middleware';
 import { UserService } from '@/services/user.service';
 import {
-    type CreateUserRequest,
-    type UpdateUserRequest,
-    type UserListQuery,
+  type CreateUserRequest,
+  type UpdateUserRequest,
+  type UserListQuery,
 } from '@/types/auth';
 import { PrismaClient } from '@prisma/client';
 import type { FastifyInstance } from 'fastify';
+
+// Shared user response properties
+const userResponseProperties = {
+  id: { type: 'string', format: 'uuid' },
+  email: { type: 'string', format: 'email' },
+  firstName: { type: 'string' },
+  lastName: { type: 'string' },
+  phone: { type: 'string' },
+  roleId: { type: 'string' },
+  role: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      name: { type: 'string' },
+      displayName: { type: 'string' }
+    }
+  },
+  isActive: { type: 'boolean' },
+  isEmailVerified: { type: 'boolean' },
+  createdAt: { type: 'string', format: 'date-time' },
+  updatedAt: { type: 'string', format: 'date-time' }
+};
 
 export async function userRoutes(fastify: FastifyInstance) {
   const prisma = fastify.prisma as PrismaClient;
@@ -29,7 +51,10 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: 'object',
           properties: {
             success: { type: 'boolean' },
-            data: { type: 'object' },
+            data: {
+              type: 'object',
+              properties: userResponseProperties
+            },
             meta: { type: 'object' },
           },
         },
@@ -52,7 +77,10 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: 'object',
           properties: {
             success: { type: 'boolean' },
-            data: { type: 'object' },
+            data: {
+              type: 'object',
+              properties: userResponseProperties
+            },
             meta: { type: 'object' },
           },
         },
@@ -117,7 +145,10 @@ export async function userRoutes(fastify: FastifyInstance) {
               success: { type: 'boolean' },
               data: {
                 type: 'array',
-                items: { type: 'object' },
+                items: {
+                  type: 'object',
+                  properties: userResponseProperties
+                },
               },
               meta: { type: 'object' },
             },
@@ -152,7 +183,10 @@ export async function userRoutes(fastify: FastifyInstance) {
               success: { type: 'boolean' },
               data: {
                 type: 'array',
-                items: { type: 'object' },
+                items: {
+                  type: 'object',
+                  properties: userResponseProperties
+                },
               },
               meta: {
                 type: 'object',
@@ -186,7 +220,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['userId'],
           properties: {
-            userId: { type: 'string', format: 'uuid' },
+            userId: { type: 'string' },
           },
         },
         response: {
@@ -195,7 +229,10 @@ export async function userRoutes(fastify: FastifyInstance) {
             type: 'object',
             properties: {
               success: { type: 'boolean' },
-              data: { type: 'object' },
+              data: {
+                type: 'object',
+                properties: userResponseProperties
+              },
               meta: { type: 'object' },
             },
           },
@@ -234,7 +271,10 @@ export async function userRoutes(fastify: FastifyInstance) {
             type: 'object',
             properties: {
               success: { type: 'boolean' },
-              data: { type: 'object' },
+              data: {
+                type: 'object',
+                properties: userResponseProperties
+              },
               meta: { type: 'object' },
             },
           },
@@ -256,7 +296,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['userId'],
           properties: {
-            userId: { type: 'string', format: 'uuid' },
+            userId: { type: 'string' },
           },
         },
         body: {
@@ -269,7 +309,10 @@ export async function userRoutes(fastify: FastifyInstance) {
             type: 'object',
             properties: {
               success: { type: 'boolean' },
-              data: { type: 'object' },
+              data: {
+                type: 'object',
+                properties: userResponseProperties
+              },
               meta: { type: 'object' },
             },
           },
@@ -291,7 +334,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['userId'],
           properties: {
-            userId: { type: 'string', format: 'uuid' },
+            userId: { type: 'string' },
           },
         },
         response: {
@@ -327,7 +370,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['userId'],
           properties: {
-            userId: { type: 'string', format: 'uuid' },
+            userId: { type: 'string' },
           },
         },
         response: {
@@ -336,7 +379,10 @@ export async function userRoutes(fastify: FastifyInstance) {
             type: 'object',
             properties: {
               success: { type: 'boolean' },
-              data: { type: 'object' },
+              data: {
+                type: 'object',
+                properties: userResponseProperties
+              },
               meta: { type: 'object' },
             },
           },
@@ -354,7 +400,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['userId'],
           properties: {
-            userId: { type: 'string', format: 'uuid' },
+            userId: { type: 'string' },
           },
         },
         response: {
@@ -363,7 +409,10 @@ export async function userRoutes(fastify: FastifyInstance) {
             type: 'object',
             properties: {
               success: { type: 'boolean' },
-              data: { type: 'object' },
+              data: {
+                type: 'object',
+                properties: userResponseProperties
+              },
               meta: { type: 'object' },
             },
           },
@@ -381,7 +430,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['userId'],
           properties: {
-            userId: { type: 'string', format: 'uuid' },
+            userId: { type: 'string' },
           },
         },
         body: {
@@ -420,7 +469,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['userId'],
           properties: {
-            userId: { type: 'string', format: 'uuid' },
+            userId: { type: 'string' },
           },
         },
         response: {
@@ -538,7 +587,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['userId'],
           properties: {
-            userId: { type: 'string', format: 'uuid' },
+            userId: { type: 'string' },
           },
         },
         querystring: {
@@ -586,7 +635,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['userId'],
           properties: {
-            userId: { type: 'string', format: 'uuid' },
+            userId: { type: 'string' },
           },
         },
         response: {
@@ -619,7 +668,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['userId'],
           properties: {
-            userId: { type: 'string', format: 'uuid' },
+            userId: { type: 'string' },
           },
         },
         body: {

@@ -15,9 +15,17 @@ model Message {
   body          String
   context       Json?
   status        MessageStatus @default(RECEIVED)
+  type          MessageType   @default(INBOUND)  // INBOUND = received from client, OUTBOUND = sent reply
   conversationId String? @unique
   retries       Int      @default(0)
   error         String?
+  
+  // New fields for Lead Management
+  propertyId    String?
+  agentId       String?
+  read          Boolean  @default(false)
+  deleted       Boolean  @default(false)  // Soft delete for Lixo/Trash
+  
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   events        MessageEvent[]
@@ -25,7 +33,7 @@ model Message {
 
 model MessageEvent {
   id        String   @id @default(cuid())
-  message   Message  @relation(fields: [messageId], references: [id])
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
   messageId String
   type      EventType
   details   Json?
@@ -37,6 +45,12 @@ enum MessageStatus {
   QUEUED
   SENT
   FAILED
+  DELETED
+}
+
+enum MessageType {
+  INBOUND   // Messages received from clients/leads
+  OUTBOUND  // Replies sent by admin/agent
 }
 
 enum EventType {
@@ -45,5 +59,3 @@ enum EventType {
   OUTBOUND_FAILED
   INBOUND_RECEIVED
 }
-
-

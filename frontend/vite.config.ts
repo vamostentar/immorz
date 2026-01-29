@@ -1,14 +1,14 @@
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
-import { defineConfig, loadEnv } from 'vite';
 import { visualizer } from 'rollup-plugin-visualizer';
+import { defineConfig, loadEnv } from 'vite';
 import compression from 'vite-plugin-compression';
 
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
   const isProduction = mode === 'production';
-  
+
   return {
     plugins: [
       react(),
@@ -32,13 +32,13 @@ export default defineConfig(({ mode }) => {
         brotliSize: true,
       }),
     ].filter(Boolean),
-    
+
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
       },
     },
-    
+
     server: {
       port: 3001,
       host: true,
@@ -50,7 +50,7 @@ export default defineConfig(({ mode }) => {
         clientPort: 3001,
       },
     },
-    
+
     // Build optimizations
     build: {
       target: 'es2020',
@@ -58,14 +58,14 @@ export default defineConfig(({ mode }) => {
       sourcemap: false,
       cssCodeSplit: true,
       chunkSizeWarningLimit: 1000,
-      
+
       terserOptions: {
         compress: {
           drop_console: isProduction,
           drop_debugger: isProduction,
         },
       },
-      
+
       rollupOptions: {
         output: {
           // Manual chunks for better caching
@@ -90,7 +90,7 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    
+
     // Optimize dependencies
     optimizeDeps: {
       include: [
@@ -102,10 +102,10 @@ export default defineConfig(({ mode }) => {
         'lucide-react',
       ],
     },
-    
+
     // Define global constants for build time
     define: {
-      __VITE_API_URL__: JSON.stringify(env.VITE_API_URL || 'http://localhost:8081'),
+      __VITE_API_URL__: JSON.stringify(env.VITE_API_URL || 'http://localhost:3000'),
       'process.env.NODE_ENV': JSON.stringify(mode),
     },
   };

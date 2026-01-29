@@ -68,7 +68,7 @@ export class AuthService {
    * User login with email/password
    */
   async login(
-    credentials: LoginRequest, 
+    credentials: LoginRequest,
     context: RequestContext
   ): Promise<LoginResponse> {
     const { email, password, rememberMe, twoFactorCode } = credentials;
@@ -124,7 +124,7 @@ export class AuthService {
       // Create session
       const sessionToken = generateSessionToken();
       const expiresAt = new Date(Date.now() + config.securityConfig.sessionTimeout * 1000);
-      
+
       const session = await this.sessionRepository.create({
         userId: user.id,
         sessionToken,
@@ -160,7 +160,7 @@ export class AuthService {
    * User registration
    */
   async register(
-    userData: RegisterRequest, 
+    userData: RegisterRequest,
     context: RequestContext
   ): Promise<{ user: any; message: string }> {
     const { email, password, firstName, lastName, username, phone } = userData;
@@ -183,26 +183,70 @@ export class AuthService {
       // Hash password
       const hashedPassword = await hashPassword(password);
 
-      // Get default role (assuming there's a default role)
-      let defaultRole = await this.prisma.role.findFirst({
-        where: { name: 'user' } // or whatever the default role name is
-      });
+      // Verificar se é o primeiro utilizador (primeiro registo = Admin)
+      const userCount = await this.prisma.user.count();
+      const isFirstUser = userCount === 0;
 
-      if (!defaultRole) {
-        // Create default role if it doesn't exist
-        const newRole = await this.prisma.role.create({
-          data: {
-            name: 'user',
-            displayName: 'User',
-            description: 'Default user role',
-            permissions: ['users.read', 'properties.read'],
-            isActive: true,
-          }
+      let roleToAssign: { id: string; name: string };
+
+      if (isFirstUser) {
+        // Primeiro utilizador - criar/obter role Admin
+        logger.info({
+          requestId: context.requestId,
+          email,
+        }, '🎯 Primeiro utilizador detectado - será criado como Admin');
+
+        let adminRole = await this.prisma.role.findFirst({
+          where: { name: 'admin' }
         });
-        defaultRole = newRole;
+
+        if (!adminRole) {
+          // Criar role Admin se não existir
+          adminRole = await this.prisma.role.create({
+            data: {
+              name: 'admin',
+              displayName: 'Administrador',
+              description: 'Administrador do sistema com acesso total',
+              permissions: [
+                'admin.access',
+                'users.read', 'users.create', 'users.update', 'users.delete',
+                'properties.read', 'properties.create', 'properties.update', 'properties.delete',
+                'settings.read', 'settings.update',
+                'roles.read', 'roles.create', 'roles.update', 'roles.delete',
+                'reports.read', 'reports.create',
+                'audit.read'
+              ],
+              isActive: true,
+            }
+          });
+          logger.info({ requestId: context.requestId }, 'Role Admin criada automaticamente');
+        }
+
+        roleToAssign = { id: adminRole.id, name: adminRole.name };
+      } else {
+        // Utilizador normal - role padrão 'user'
+        let defaultRole = await this.prisma.role.findFirst({
+          where: { name: 'user' }
+        });
+
+        if (!defaultRole) {
+          // Criar role User se não existir
+          defaultRole = await this.prisma.role.create({
+            data: {
+              name: 'user',
+              displayName: 'Utilizador',
+              description: 'Utilizador padrão com permissões básicas',
+              permissions: ['users.read', 'properties.read'],
+              isActive: true,
+            }
+          });
+        }
+
+        roleToAssign = { id: defaultRole.id, name: defaultRole.name };
       }
 
-      // Create user
+      // Criar utilizador
+      // Nota: Primeiro Admin é activado automaticamente; outros necessitam ativação pelo admin
       const user = await this.userRepository.create({
         email,
         password: hashedPassword,
@@ -210,17 +254,60 @@ export class AuthService {
         lastName,
         username: username || undefined,
         phone,
-        roleId: defaultRole.id,
-        isActive: false, // New users start inactive until email verification
-        sendWelcomeEmail: false, // Don't send welcome email for now
+        roleId: roleToAssign.id,
+        isActive: isFirstUser, // Primeiro Admin activo imediatamente
+        sendWelcomeEmail: false,
       });
 
       // Log user registration
       logHelpers.userCreated(user.id, 'system', context);
 
+      // Enviar notificações por email (apenas para utilizadores não-admin)
+      if (!isFirstUser) {
+        // Importar EmailService dinamicamente para evitar problemas de circular dependency
+        const { getEmailService } = await import('@/services/email.service');
+        const emailService = getEmailService();
+
+        // Criar token de verificação de email
+        const activationToken = generateSecureToken(32);
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+
+        await this.prisma.emailVerification.create({
+          data: {
+            email: user.email,
+            token: activationToken,
+            expiresAt,
+          }
+        });
+
+        // Enviar email de ativação ao utilizador
+        await emailService.sendActivationEmail({
+          email: user.email,
+          firstName: firstName || email.split('@')[0],
+          userId: user.id,
+          activationToken,
+        });
+
+        // Enviar notificação ao administrador
+        await emailService.sendAdminNotification({
+          newUserEmail: user.email,
+          newUserName: `${firstName || ''} ${lastName || ''}`.trim() || email.split('@')[0],
+          userId: user.id,
+          role: roleToAssign.name,
+        });
+
+        logger.info({
+          requestId: context.requestId,
+          userId: user.id,
+          email: user.email,
+        }, '📧 Emails de ativação e notificação enviados');
+      }
+
       return {
         user: this.sanitizeUser(user),
-        message: 'User registered successfully. Please check your email for verification.'
+        message: isFirstUser
+          ? 'Administrador criado com sucesso. A sua conta está ativa.'
+          : 'Registo efetuado com sucesso. A sua conta aguarda ativação pelo administrador.'
       };
 
     } catch (error) {
@@ -240,8 +327,8 @@ export class AuthService {
    * Complete two-factor authentication
    */
   async complete2FA(
-    tempToken: string, 
-    twoFactorCode: string, 
+    tempToken: string,
+    twoFactorCode: string,
     context: RequestContext
   ): Promise<LoginResponse> {
     try {
@@ -266,7 +353,7 @@ export class AuthService {
       // Create session
       const sessionToken = generateSessionToken();
       const expiresAt = new Date(Date.now() + config.securityConfig.sessionTimeout * 1000);
-      
+
       const session = await this.sessionRepository.create({
         userId: user.id,
         sessionToken,
@@ -298,7 +385,7 @@ export class AuthService {
    * Refresh JWT tokens
    */
   async refreshTokens(
-    request: RefreshTokenRequest, 
+    request: RefreshTokenRequest,
     context: RequestContext
   ): Promise<RefreshResponse> {
     const { refreshToken } = request;
@@ -342,7 +429,7 @@ export class AuthService {
         requestId: context.requestId,
         error: error instanceof Error ? error.message : 'Unknown error',
       }, 'Token refresh failed');
-      
+
       throw error;
     }
   }
@@ -367,7 +454,7 @@ export class AuthService {
         requestId: context.requestId,
         error: error instanceof Error ? error.message : 'Unknown error',
       }, 'Logout failed');
-      
+
       throw error;
     }
   }
@@ -376,8 +463,8 @@ export class AuthService {
    * Change password
    */
   async changePassword(
-    userId: string, 
-    request: ChangePasswordRequest, 
+    userId: string,
+    request: ChangePasswordRequest,
     context: RequestContext
   ): Promise<void> {
     const { currentPassword, newPassword } = request;
@@ -415,7 +502,7 @@ export class AuthService {
         userId,
         error: error instanceof Error ? error.message : 'Unknown error',
       }, 'Password change failed');
-      
+
       throw error;
     }
   }
@@ -454,7 +541,7 @@ export class AuthService {
         userId,
         error: error instanceof Error ? error.message : 'Unknown error',
       }, 'Enable 2FA failed');
-      
+
       throw error;
     }
   }
@@ -463,9 +550,9 @@ export class AuthService {
    * Verify and confirm 2FA setup
    */
   async confirm2FA(
-    userId: string, 
-    secret: string, 
-    token: string, 
+    userId: string,
+    secret: string,
+    token: string,
     context: RequestContext
   ): Promise<void> {
     try {
@@ -495,7 +582,7 @@ export class AuthService {
         userId,
         error: error instanceof Error ? error.message : 'Unknown error',
       }, 'Confirm 2FA failed');
-      
+
       throw error;
     }
   }
@@ -504,9 +591,9 @@ export class AuthService {
    * Disable two-factor authentication
    */
   async disable2FA(
-    userId: string, 
-    password: string, 
-    token: string, 
+    userId: string,
+    password: string,
+    token: string,
     context: RequestContext
   ): Promise<void> {
     try {
@@ -545,7 +632,7 @@ export class AuthService {
         userId,
         error: error instanceof Error ? error.message : 'Unknown error',
       }, 'Disable 2FA failed');
-      
+
       throw error;
     }
   }
@@ -554,20 +641,20 @@ export class AuthService {
    * Generate JWT token pair
    */
   private async generateTokenPair(
-    user: any, 
-    sessionId: string, 
+    user: any,
+    sessionId: string,
     rememberMe: boolean = false,
     context?: RequestContext
   ): Promise<TokenPair> {
     const jti = generateJTI();
     const now = Math.floor(Date.now() / 1000);
-    
-    const accessTokenExpiry = rememberMe 
-      ? config.jwtConfig.accessExpiry 
+
+    const accessTokenExpiry = rememberMe
+      ? config.jwtConfig.accessExpiry
       : '1h';
-    
-    const refreshTokenExpiry = rememberMe 
-      ? '30d' 
+
+    const refreshTokenExpiry = rememberMe
+      ? '30d'
       : config.jwtConfig.refreshExpiry;
 
     // Access token payload
@@ -650,9 +737,9 @@ export class AuthService {
    * Record login attempt
    */
   private async recordLoginAttempt(
-    email: string, 
-    context: RequestContext, 
-    success: boolean, 
+    email: string,
+    context: RequestContext,
+    success: boolean,
     failureReason?: string
   ): Promise<void> {
     try {

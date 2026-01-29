@@ -12,10 +12,10 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
   try {
     // Verify JWT token (this uses @fastify/jwt plugin)
     await request.jwtVerify();
-    
+
     // Extract user information from JWT payload
     const payload = request.user as any;
-    
+
     if (!payload || !payload.sub) {
       throw new UnauthorizedError('Invalid token payload');
     }
@@ -65,10 +65,10 @@ export function authorize(requiredPermissions: Permission[]) {
     }
 
     const userPermissions = request.user.permissions || [];
-    
+
     // Check if user has all permissions or wildcard permission
     const hasWildcard = userPermissions.includes('*');
-    const hasAllPermissions = requiredPermissions.every(permission => 
+    const hasAllPermissions = requiredPermissions.every(permission =>
       userPermissions.includes(permission)
     );
 
@@ -100,12 +100,21 @@ export function authorize(requiredPermissions: Permission[]) {
  */
 export function requireRole(allowedRoles: string[]) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
+    // Allow internal requests to bypass role check
+    if (request.headers['x-internal-request'] === 'true') {
+      logger.debug({
+        requestId: request.requestContext?.requestId,
+        url: request.url,
+      }, 'Role check bypassed for internal request');
+      return;
+    }
+
     if (!request.user) {
       throw new UnauthorizedError('Authentication required');
     }
 
     const userRole = request.user.role;
-    
+
     if (!allowedRoles.includes(userRole)) {
       logger.warn({
         requestId: request.requestContext?.requestId,
@@ -141,7 +150,7 @@ export function requireSelfOrAdmin(userIdParam: string = 'userId') {
     const targetUserId = params[userIdParam];
     const currentUserId = request.user.id;
     const userRole = request.user.role;
-    
+
     // Allow if user is accessing their own resource
     if (targetUserId === currentUserId) {
       return;
@@ -173,10 +182,10 @@ export function requireSelfOrAdmin(userIdParam: string = 'userId') {
 export async function optionalAuthenticate(request: FastifyRequest, reply: FastifyReply) {
   try {
     const authHeader = request.headers.authorization;
-    
+
     if (authHeader && authHeader.startsWith('Bearer ')) {
       await request.jwtVerify();
-      
+
       const payload = request.user as any;
       if (payload && payload.sub) {
         request.user = {
@@ -185,7 +194,7 @@ export async function optionalAuthenticate(request: FastifyRequest, reply: Fasti
           role: payload.role,
           permissions: payload.permissions || [],
         };
-        
+
         updateRequestContextWithUser(request, payload.sub, payload.role);
       }
     }
@@ -204,7 +213,7 @@ export async function optionalAuthenticate(request: FastifyRequest, reply: Fasti
  */
 export async function authenticateApiKey(request: FastifyRequest, reply: FastifyReply) {
   const apiKey = request.headers['x-api-key'] as string;
-  
+
   if (!apiKey) {
     throw new UnauthorizedError('API key required');
   }
@@ -212,11 +221,11 @@ export async function authenticateApiKey(request: FastifyRequest, reply: Fastify
   try {
     // Get Prisma instance from Fastify
     const prisma = (request.server as any).prisma;
-    
+
     // Hash the provided API key
     const crypto = await import('crypto');
     const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
-    
+
     // Look up the key in the database
     const apiKeyRecord = await prisma.apiKey.findUnique({
       where: { keyHash },
@@ -333,7 +342,7 @@ export async function validateSession(request: FastifyRequest, reply: FastifyRep
 
   const payload = request.user as any;
   const sessionId = payload.sessionId;
-  
+
   if (!sessionId) {
     throw new UnauthorizedError('Invalid token: missing session ID');
   }
@@ -341,12 +350,12 @@ export async function validateSession(request: FastifyRequest, reply: FastifyRep
   try {
     // Get Prisma instance from Fastify
     const prisma = (request.server as any).prisma;
-    
+
     // Look up the session in the database
     const session = await prisma.session.findUnique({
-      where: { 
+      where: {
         id: sessionId,
-        isActive: true 
+        isActive: true
       },
       include: {
         user: {
@@ -442,7 +451,7 @@ export async function requireTwoFactor(request: FastifyRequest, reply: FastifyRe
   }
 
   const payload = request.user as any;
-  
+
   // Check if 2FA is required and completed
   if (payload.requiresTwoFactor && !payload.twoFactorVerified) {
     logger.warn({

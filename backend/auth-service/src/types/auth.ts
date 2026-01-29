@@ -245,6 +245,17 @@ export const UpdateUserSchema = z.object({
   avatar: z.string().url().optional(),
   roleId: UUIDSchema.optional(),
   isActive: z.boolean().optional(),
+  // Agent profile fields
+  bio: z.string().max(1000).optional(),
+  specialties: z.array(z.string()).optional(),
+  experience: z.number().int().min(0).max(100).optional(),
+  rating: z.number().min(0).max(5).optional(),
+  reviewCount: z.number().int().min(0).optional(),
+  linkedin: z.string().url().optional(),
+  facebook: z.string().url().optional(),
+  instagram: z.string().url().optional(),
+  isProfilePublic: z.boolean().optional(),
+  isProfileApproved: z.boolean().optional(),
 });
 
 export type UpdateUserRequest = z.infer<typeof UpdateUserSchema>;

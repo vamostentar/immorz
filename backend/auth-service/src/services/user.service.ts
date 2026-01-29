@@ -34,11 +34,11 @@ export class UserService {
    */
   async findById(id: string) {
     const user = await this.userRepository.findById(id);
-    
+
     if (!user) {
       throw new NotFoundError('User not found');
     }
-    
+
     return this.sanitizeUser(user);
   }
 
@@ -54,7 +54,7 @@ export class UserService {
     }
   ): Promise<PaginatedResponse<any>> {
     const result = await this.userRepository.findMany(pagination, filters);
-    
+
     return {
       data: result.data.map(user => this.sanitizeUser(user)),
       pagination: result.pagination,
@@ -62,45 +62,60 @@ export class UserService {
   }
 
   /**
-   * Create new user
+   * Criar novo utilizador
    */
   async create(
-    data: CreateUserRequest, 
-    createdBy: string, 
+    data: CreateUserRequest,
+    createdBy: string,
     context: RequestContext
   ) {
-    // Validate role exists
-    if (data.roleId) {
-      const role = await this.roleRepository.findById(data.roleId);
-      if (!role) {
-        throw new ValidationError('Invalid role ID');
+    // Se roleId não for fornecido, atribuir role padrão 'client'
+    let roleId = data.roleId;
+    if (!roleId) {
+      const defaultRole = await this.roleRepository.findByName('client');
+      if (!defaultRole) {
+        // Se role 'client' não existir, tentar 'user'
+        const userRole = await this.roleRepository.findByName('user');
+        if (!userRole) {
+          throw new ValidationError('Role padrão não encontrada. Especifique um roleId válido.');
+        }
+        roleId = userRole.id;
+      } else {
+        roleId = defaultRole.id;
       }
     }
 
-    // Check if email already exists
-    const emailExists = await this.userRepository.emailExists(data.email);
-    if (emailExists) {
-      throw new ConflictError('Email already exists');
+    // Validar que a role existe
+    const role = await this.roleRepository.findById(roleId);
+    if (!role) {
+      throw new ValidationError('Role ID inválido');
     }
 
-    // Check if username already exists
+    // Verificar se email já existe
+    const emailExists = await this.userRepository.emailExists(data.email);
+    if (emailExists) {
+      throw new ConflictError('Email já existe');
+    }
+
+    // Verificar se username já existe
     if (data.username) {
       const usernameExists = await this.userRepository.usernameExists(data.username);
       if (usernameExists) {
-        throw new ConflictError('Username already exists');
+        throw new ConflictError('Username já existe');
       }
     }
 
     // Hash password
     const hashedPassword = await hashPassword(data.password);
 
-    // Create user
+    // Criar utilizador com roleId garantido
     const user = await this.userRepository.create({
       ...data,
+      roleId, // Usar roleId que foi validado/atribuído
       password: hashedPassword,
     });
 
-    // Log user creation
+    // Log criação de utilizador
     logHelpers.userCreated(user.id, createdBy, context);
 
     return this.sanitizeUser(user);
@@ -110,8 +125,8 @@ export class UserService {
    * Update user
    */
   async update(
-    id: string, 
-    data: Partial<UpdateUserRequest>, 
+    id: string,
+    data: Partial<UpdateUserRequest>,
     context: RequestContext,
     updatedBy?: string
   ) {
@@ -120,11 +135,40 @@ export class UserService {
       throw new NotFoundError('User not found');
     }
 
+    // Normalize roleId from role or roleId
+    const targetRoleId = data.roleId || (typeof (data as any).role === 'string' ? (data as any).role : (data as any).role?.id);
+
     // Validate role if updating
-    if (data.roleId) {
-      const role = await this.roleRepository.findById(data.roleId);
+    if (targetRoleId) {
+      const role = await this.roleRepository.findById(targetRoleId);
       if (!role) {
         throw new ValidationError('Invalid role ID');
+      }
+
+      // SECURITY: Prevent last super_admin from demoting themselves
+      const currentUserRole = existingUser.role;
+      console.log('🛡️ Security Check:', {
+        currentUserRoleName: currentUserRole?.name,
+        newRoleName: role.name,
+        isSuperAdmin: currentUserRole?.name === 'super_admin',
+        isDemotion: role.name !== 'super_admin'
+      });
+
+      if (currentUserRole?.name === 'super_admin' && role.name !== 'super_admin') {
+        // Count how many super_admins exist
+        const superAdminRole = await this.roleRepository.findByName('super_admin');
+        if (superAdminRole) {
+          const superAdminCount = await this.roleRepository.getUserCount(superAdminRole.id);
+          console.log('🛡️ Super Admin Count:', superAdminCount);
+
+          if (superAdminCount <= 1) {
+            console.warn('⚠️ Blocked demotion of last Super Admin');
+            throw new ValidationError(
+              'Não é possível alterar o role do único Super Administrador do sistema. ' +
+              'Crie outro Super Administrador antes de alterar este utilizador.'
+            );
+          }
+        }
       }
     }
 
@@ -159,7 +203,7 @@ export class UserService {
   }
 
   /**
-   * Delete user (soft delete)
+   * Delete user (hard delete - permanent removal)
    */
   async delete(id: string, deletedBy: string, context: RequestContext) {
     const user = await this.userRepository.findById(id);
@@ -167,7 +211,21 @@ export class UserService {
       throw new NotFoundError('User not found');
     }
 
-    await this.userRepository.delete(id);
+    // SECURITY: Prevent deletion of last super_admin
+    if (user.role?.name === 'super_admin') {
+      const superAdminRole = await this.roleRepository.findByName('super_admin');
+      if (superAdminRole) {
+        const superAdminCount = await this.roleRepository.getUserCount(superAdminRole.id);
+        if (superAdminCount <= 1) {
+          throw new ValidationError(
+            'Não é possível eliminar o único Super Administrador do sistema.'
+          );
+        }
+      }
+    }
+
+    // Perform hard delete (permanent removal)
+    await this.userRepository.hardDelete(id);
 
     // Log deletion
     logHelpers.userDeleted(id, deletedBy, context);
@@ -219,9 +277,9 @@ export class UserService {
    * Reset user password
    */
   async resetPassword(
-    id: string, 
-    newPassword: string, 
-    resetBy: string, 
+    id: string,
+    newPassword: string,
+    resetBy: string,
     context: RequestContext
   ) {
     const user = await this.userRepository.findById(id);
@@ -285,10 +343,10 @@ export class UserService {
     context: RequestContext
   ) {
     const { type, subject, message, userIds, template, sentBy } = data;
-    
+
     // Get users to send communication to
     const users = await this.userRepository.findByIds(userIds);
-    
+
     if (users.length === 0) {
       throw new NotFoundError('No users found');
     }
@@ -300,9 +358,9 @@ export class UserService {
       try {
         // Personalize message with user data
         const personalizedMessage = message.replace(
-          '{name}', 
-          user.firstName && user.lastName 
-            ? `${user.firstName} ${user.lastName}` 
+          '{name}',
+          user.firstName && user.lastName
+            ? `${user.firstName} ${user.lastName}`
             : user.email.split('@')[0]
         );
 
@@ -318,7 +376,7 @@ export class UserService {
         // TODO: Implement actual email/notification sending
         // For now, we'll just log the communication
         console.log(`📧 Sending ${type} to ${user.email}: ${subject}`);
-        
+
         sentCount++;
       } catch (error) {
         errors.push(`Failed to send to ${user.email}: ${error}`);
@@ -372,7 +430,7 @@ export class UserService {
 
         // Create user
         const hashedPassword = await hashPassword('TempPassword123!'); // Default password for imported users
-        
+
         await this.userRepository.create({
           email: userData.email,
           password: hashedPassword,
@@ -467,9 +525,9 @@ export class UserService {
    * Update user permissions
    */
   async updateUserPermissions(
-    userId: string, 
-    permissions: string[], 
-    updatedBy: string, 
+    userId: string,
+    permissions: string[],
+    updatedBy: string,
     context: RequestContext
   ) {
     const user = await this.userRepository.findById(userId);
@@ -479,9 +537,9 @@ export class UserService {
 
     // TODO: Implement actual permissions update
     // For now, just log the action
-    logHelpers.userUpdated(userId, updatedBy, { 
+    logHelpers.userUpdated(userId, updatedBy, {
       permissionsUpdated: true,
-      newPermissions: permissions 
+      newPermissions: permissions
     }, context);
 
     return {
@@ -494,13 +552,13 @@ export class UserService {
    * Sanitize user data for public consumption
    */
   private sanitizeUser(user: any) {
-    const { 
-      password, 
-      twoFactorSecret, 
-      twoFactorBackupCodes, 
-      ...safeUser 
+    const {
+      password,
+      twoFactorSecret,
+      twoFactorBackupCodes,
+      ...safeUser
     } = user;
-    
+
     return safeUser;
   }
 }

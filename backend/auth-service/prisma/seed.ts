@@ -1,6 +1,6 @@
-import { config } from '@/config';
-import { hashPassword } from '@/utils/crypto';
 import { PrismaClient } from '@prisma/client';
+import { config } from '../src/config';
+import { hashPassword } from '../src/utils/crypto';
 
 const prisma = new PrismaClient();
 
@@ -11,7 +11,7 @@ async function main() {
     let adminUser: any | null = null;
     // Create default roles
     console.log('📝 Creating default roles...');
-    
+
     const superAdminRole = await prisma.role.upsert({
       where: { name: 'super_admin' },
       update: {},
@@ -53,36 +53,36 @@ async function main() {
       },
     });
 
-    const managerRole = await prisma.role.upsert({
-      where: { name: 'manager' },
+    const agentRole = await prisma.role.upsert({
+      where: { name: 'agent' },
       update: {},
       create: {
-        name: 'manager',
-        displayName: 'Manager',
-        description: 'Management access to users and basic system functions',
+        name: 'agent',
+        displayName: 'Agente',
+        description: 'Imobiliário Agent access',
         permissions: [
           'users.read',
           'users.create',
           'users.update',
+          'properties.read',
+          'properties.create',
+          'properties.update',
           'roles.read',
-          'sessions.read',
-          'audit_logs.read',
-          'analytics.read',
         ],
         isActive: true,
       },
     });
 
-    const operatorRole = await prisma.role.upsert({
-      where: { name: 'operator' },
+    const clientRole = await prisma.role.upsert({
+      where: { name: 'client' },
       update: {},
       create: {
-        name: 'operator',
-        displayName: 'Operator',
-        description: 'Basic operational access',
+        name: 'client',
+        displayName: 'Cliente',
+        description: 'Client access',
         permissions: [
-          'users.read',
-          'sessions.read',
+          'properties.read',
+          'users.read_self',
         ],
         isActive: true,
       },
@@ -92,10 +92,13 @@ async function main() {
 
     // Create default admin user if enabled
     if (config.SEED_DEFAULT_ADMIN) {
+      if (!config.DEFAULT_ADMIN_EMAIL || !config.DEFAULT_ADMIN_PASSWORD) {
+        throw new Error('❌ Set DEFAULT_ADMIN_EMAIL and DEFAULT_ADMIN_PASSWORD in .env');
+      }
       console.log('👤 Creating default admin user...');
-      
+
       const hashedPassword = await hashPassword(config.DEFAULT_ADMIN_PASSWORD);
-      
+
       adminUser = await prisma.user.upsert({
         where: { email: config.DEFAULT_ADMIN_EMAIL },
         update: {},
@@ -118,7 +121,7 @@ async function main() {
 
     // Create default auth settings
     console.log('⚙️ Creating default auth settings...');
-    
+
     await prisma.authSettings.upsert({
       where: { id: 'singleton' },
       update: {},
@@ -150,10 +153,10 @@ async function main() {
     // Create sample API key for testing (development only)
     if (config.isDevelopment) {
       console.log('🔑 Creating sample API key for development...');
-      
+
       const apiKeyValue = 'rz_dev_sample_key_12345678901234567890123456789012';
       const keyHash = require('crypto').createHash('sha256').update(apiKeyValue).digest('hex');
-      
+
       await prisma.apiKey.upsert({
         where: { keyHash },
         update: {},
@@ -174,7 +177,7 @@ async function main() {
     }
 
     console.log('🎉 Database seeding completed successfully!');
-    
+
   } catch (error) {
     console.error('❌ Error during database seeding:', error);
     throw error;

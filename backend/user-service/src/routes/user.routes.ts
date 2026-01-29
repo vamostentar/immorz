@@ -1,82 +1,128 @@
+/**
+ * Rotas do User Service (Refatorado)
+ * 
+ * ARQUITECTURA CONSOLIDADA:
+ * - Dados de identidade (email, nome, role) → auth-service
+ * - Dados de perfil (bio, avatar, preferências) → este serviço
+ * 
+ * As rotas /api/v1/users/* que precisam de dados de identidade
+ * devem ser servidas pelo API Gateway que agrega de ambos os serviços.
+ */
+
 import { FastifyInstance } from 'fastify';
 import {
-    NotificationController,
-    PropertyInterestController,
-    SavedPropertyController,
-    SearchHistoryController,
-    UserPreferencesController,
-    UserProfileController
-} from '../controllers/user.controller.js';
+  notificationController,
+  savedPropertyController,
+  searchHistoryController,
+  userPreferencesController,
+  userProfileController
+} from '../controllers/profile.controller.js';
 
 export async function userRoutes(fastify: FastifyInstance) {
   if (process.env.ENABLE_DETAILED_LOGGING === 'true' || process.env.NODE_ENV !== 'production') {
-    console.log('🔧 Registrando rotas do User Service...');
+    console.log('🔧 A registar rotas do User Service (refatorado)...');
   }
 
-  const userProfileController = new UserProfileController();
-  const userPreferencesController = new UserPreferencesController();
-  const propertyInterestController = new PropertyInterestController();
-  const savedPropertyController = new SavedPropertyController();
-  const searchHistoryController = new SearchHistoryController();
-  const notificationController = new NotificationController();
+  // ============================================================
+  // Rotas de Perfil
+  // ============================================================
 
-  // User Profile Routes
-  fastify.post('/api/v1/user-profiles', userProfileController.createUserProfile.bind(userProfileController));
-  fastify.get('/api/v1/user-profiles/me', userProfileController.getUserProfile.bind(userProfileController));
-  fastify.put('/api/v1/user-profiles/me', userProfileController.updateUserProfile.bind(userProfileController));
-  fastify.get('/api/v1/user-profiles/:userId', userProfileController.getUserProfile.bind(userProfileController));
-  fastify.put('/api/v1/user-profiles/:userId', userProfileController.updateUserProfile.bind(userProfileController));
+  // Obter/criar perfil do utilizador actual
+  fastify.get('/api/v1/user-profiles/me', async (req, rep) => {
+    return userProfileController.getMyProfile(req, rep);
+  });
 
-  // User Preferences Routes
-  fastify.get('/api/v1/user-preferences/me', userPreferencesController.getUserPreferences.bind(userPreferencesController));
-  fastify.put('/api/v1/user-preferences/me', userPreferencesController.updateUserPreferences.bind(userPreferencesController));
-  fastify.get('/api/v1/user-preferences/:userId', userPreferencesController.getUserPreferences.bind(userPreferencesController));
-  fastify.put('/api/v1/user-preferences/:userId', userPreferencesController.updateUserPreferences.bind(userPreferencesController));
+  // Actualizar perfil do utilizador actual
+  fastify.put('/api/v1/user-profiles/me', async (req, rep) => {
+    return userProfileController.updateMyProfile(req, rep);
+  });
 
-  // Property Interest Routes
-  fastify.get('/api/v1/property-interests/me', propertyInterestController.getUserPropertyInterests.bind(propertyInterestController));
-  fastify.post('/api/v1/property-interests', propertyInterestController.addPropertyInterest.bind(propertyInterestController));
-  fastify.get('/api/v1/property-interests/:userId', propertyInterestController.getUserPropertyInterests.bind(propertyInterestController));
+  // Criar perfil (chamado automaticamente ao primeiro acesso)
+  fastify.post('/api/v1/user-profiles', async (req, rep) => {
+    return userProfileController.createProfile(req, rep);
+  });
 
-  // Saved Properties Routes
-  fastify.get('/api/v1/saved-properties/me', savedPropertyController.getUserSavedProperties.bind(savedPropertyController));
-  fastify.post('/api/v1/saved-properties', savedPropertyController.saveProperty.bind(savedPropertyController));
-  fastify.delete('/api/v1/saved-properties/:propertyId', savedPropertyController.removeSavedProperty.bind(savedPropertyController));
-  fastify.get('/api/v1/saved-properties/:userId', savedPropertyController.getUserSavedProperties.bind(savedPropertyController));
+  // Obter perfil por ID (admin)
+  fastify.get('/api/v1/user-profiles/:userId', async (req, rep) => {
+    return userProfileController.getProfileById(req, rep);
+  });
 
-  // Search History Routes
-  fastify.get('/api/v1/search-history/me', searchHistoryController.getUserSearchHistory.bind(searchHistoryController));
-  fastify.post('/api/v1/search-history', searchHistoryController.addSearchHistory.bind(searchHistoryController));
-  fastify.get('/api/v1/search-history/:userId', searchHistoryController.getUserSearchHistory.bind(searchHistoryController));
+  // Actualizar perfil por ID (admin)
+  fastify.put('/api/v1/user-profiles/:userId', async (req, rep) => {
+    return userProfileController.updateMyProfile(req, rep);
+  });
 
-  // Notifications Routes
-  fastify.get('/api/v1/notifications/me', notificationController.getUserNotifications.bind(notificationController));
-  fastify.put('/api/v1/notifications/:notificationId/read', notificationController.markNotificationAsRead.bind(notificationController));
-  fastify.get('/api/v1/notifications/:userId', notificationController.getUserNotifications.bind(notificationController));
+  // Eliminar perfil (admin)
+  fastify.delete('/api/v1/user-profiles/:userId', async (req, rep) => {
+    return userProfileController.deleteProfile(req, rep);
+  });
 
-  // Admin routes
-  fastify.get('/api/v1/admin/pending-approvals', userProfileController.getPendingApprovals.bind(userProfileController));
-  
-  // Users CRUD - for admin management
-  fastify.get('/api/v1/users', userProfileController.listUsers.bind(userProfileController));
-  fastify.get('/api/v1/users/me', userProfileController.getCurrentUser.bind(userProfileController));
-  fastify.post('/api/v1/users', userProfileController.createUserProfile.bind(userProfileController));
-  fastify.get('/api/v1/users/:userId', userProfileController.getUserProfile.bind(userProfileController));
-  fastify.put('/api/v1/users/:userId', userProfileController.updateUserProfile.bind(userProfileController));
-  fastify.put('/api/v1/users/:userId/permissions', userProfileController.updateUserPermissions.bind(userProfileController));
-  fastify.delete('/api/v1/users/:userId', userProfileController.deleteUserProfile.bind(userProfileController));
-  
-  // Users statistics
-  fastify.get('/api/v1/users/statistics', userProfileController.getUserStatistics.bind(userProfileController));
-  
-  // Roles - for admin interface
-  fastify.get('/api/v1/roles', userProfileController.getRoles.bind(userProfileController));
+  // Listar perfis (admin) - apenas dados de perfil
+  fastify.get('/api/v1/user-profiles', async (req, rep) => {
+    return userProfileController.listProfiles(req, rep);
+  });
+
+  // ============================================================
+  // Rotas de Preferências
+  // ============================================================
+
+  fastify.get('/api/v1/user-preferences/me', async (req, rep) => {
+    return userPreferencesController.getMyPreferences(req, rep);
+  });
+
+  fastify.put('/api/v1/user-preferences/me', async (req, rep) => {
+    return userPreferencesController.updateMyPreferences(req, rep);
+  });
+
+  // ============================================================
+  // Rotas de Propriedades Guardadas (Favoritos)
+  // ============================================================
+
+  fastify.get('/api/v1/saved-properties/me', async (req, rep) => {
+    return savedPropertyController.getMySavedProperties(req, rep);
+  });
+
+  fastify.post('/api/v1/saved-properties', async (req, rep) => {
+    return savedPropertyController.saveProperty(req, rep);
+  });
+
+  fastify.delete('/api/v1/saved-properties/:propertyId', async (req, rep) => {
+    return savedPropertyController.removeSavedProperty(req, rep);
+  });
+
+  // ============================================================
+  // Rotas de Histórico de Pesquisa
+  // ============================================================
+
+  fastify.get('/api/v1/search-history/me', async (req, rep) => {
+    return searchHistoryController.getMySearchHistory(req, rep);
+  });
+
+  fastify.post('/api/v1/search-history', async (req, rep) => {
+    return searchHistoryController.addSearchToHistory(req, rep);
+  });
+
+  fastify.delete('/api/v1/search-history/me', async (req, rep) => {
+    return searchHistoryController.clearMySearchHistory(req, rep);
+  });
+
+  // ============================================================
+  // Rotas de Notificações
+  // ============================================================
+
+  fastify.get('/api/v1/notifications/me', async (req, rep) => {
+    return notificationController.getMyNotifications(req, rep);
+  });
+
+  fastify.put('/api/v1/notifications/:notificationId/read', async (req, rep) => {
+    return notificationController.markAsRead(req, rep);
+  });
+
+  fastify.put('/api/v1/notifications/read-all', async (req, rep) => {
+    return notificationController.markAllAsRead(req, rep);
+  });
 
   if (process.env.ENABLE_DETAILED_LOGGING === 'true' || process.env.NODE_ENV !== 'production') {
-    console.log('✅ Rotas do User Service registradas com sucesso');
+    console.log('✅ Rotas do User Service registadas com sucesso');
   }
 }
-
-
-
-

@@ -2,9 +2,9 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { ServiceFactory } from '../factories/service.factory';
 import { AppError } from '../types/common';
 import {
-    propertyCreateSchema,
-    propertyFiltersSchema,
-    propertyUpdateSchema
+  propertyCreateSchema,
+  propertyFiltersSchema,
+  propertyUpdateSchema
 } from '../types/property';
 import { httpLogger } from '../utils/logger';
 import { validateInput, validateUUID } from '../utils/validation';
@@ -18,27 +18,38 @@ export class PropertyController {
 
   async createProperty(request: FastifyRequest, reply: FastifyReply) {
     const startTime = Date.now();
-    
+
     try {
       httpLogger.info({ operation: 'createProperty' }, 'Creating new property');
-      
+
       const validatedData = validateInput(propertyCreateSchema, request.body);
+
+      // Auto-assign agentId if user is an agent
+      const userRole = request.headers['x-user-role'] as string;
+      const userId = request.headers['x-user-id'] as string;
+
+      let agentId = validatedData.agentId;
+      if (userRole === 'agent' && userId) {
+        agentId = userId;
+      }
+
       const dataWithDefaults = {
         ...validatedData,
+        agentId,
         status: validatedData.status || 'for_sale' as const,
         adminStatus: validatedData.adminStatus ?? 'ACTIVE' as const,
       };
 
       const propertyService = this.serviceFactory.createCompletePropertyService();
       const property = await propertyService.createProperty(dataWithDefaults);
-      
+
       const responseTime = Date.now() - startTime;
-      httpLogger.info({ 
-        operation: 'createProperty', 
+      httpLogger.info({
+        operation: 'createProperty',
         propertyId: property.id,
-        responseTime 
+        responseTime
       }, 'Property created successfully');
-      
+
       return reply.code(201).send({
         data: property,
         message: 'Property created successfully',
@@ -46,10 +57,10 @@ export class PropertyController {
       });
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      httpLogger.error({ 
-        error, 
-        operation: 'createProperty', 
-        responseTime 
+      httpLogger.error({
+        error,
+        operation: 'createProperty',
+        responseTime
       }, 'Failed to create property');
       throw error;
     }
@@ -57,33 +68,33 @@ export class PropertyController {
 
   async getPropertyById(request: FastifyRequest, reply: FastifyReply) {
     const startTime = Date.now();
-    
+
     try {
       const { id } = request.params as { id: string };
       validateUUID(id);
-      
+
       httpLogger.debug({ operation: 'getPropertyById', id }, 'Fetching property by ID');
-      
+
       const propertyService = this.serviceFactory.createCompletePropertyService();
       const property = await propertyService.getPropertyById(id);
-      
+
       const responseTime = Date.now() - startTime;
-      httpLogger.debug({ 
-        operation: 'getPropertyById', 
+      httpLogger.debug({
+        operation: 'getPropertyById',
         propertyId: property.id,
-        responseTime 
+        responseTime
       }, 'Property fetched successfully');
-      
+
       return reply.send({
         data: property,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      httpLogger.error({ 
-        error, 
-        operation: 'getPropertyById', 
-        responseTime 
+      httpLogger.error({
+        error,
+        operation: 'getPropertyById',
+        responseTime
       }, 'Failed to fetch property');
       throw error;
     }
@@ -91,7 +102,7 @@ export class PropertyController {
 
   async getProperties(request: FastifyRequest, reply: FastifyReply) {
     const startTime = Date.now();
-    
+
     try {
       httpLogger.info({ operation: 'getProperties' }, 'Fetching properties with filters');
 
@@ -108,7 +119,7 @@ export class PropertyController {
       }
 
       const validatedFilters = validateInput(propertyFiltersSchema, enrichedQuery);
-      
+
       // Ensure required properties are set
       const filtersWithDefaults = {
         ...validatedFilters,
@@ -120,18 +131,18 @@ export class PropertyController {
           radiusKm: validatedFilters.nearbySearch.radiusKm || 5,
         } : undefined,
       };
-      
+
       const propertyService = this.serviceFactory.createCompletePropertyService();
       const result = await propertyService.getProperties(filtersWithDefaults);
-      
+
       const responseTime = Date.now() - startTime;
-      httpLogger.info({ 
-        operation: 'getProperties', 
+      httpLogger.info({
+        operation: 'getProperties',
         count: result.data.length,
         hasMore: result.pagination.hasMore,
-        responseTime 
+        responseTime
       }, 'Properties fetched successfully');
-      
+
       return reply.send({
         data: result.data,
         pagination: result.pagination,
@@ -139,10 +150,10 @@ export class PropertyController {
       });
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      httpLogger.error({ 
-        error, 
-        operation: 'getProperties', 
-        responseTime 
+      httpLogger.error({
+        error,
+        operation: 'getProperties',
+        responseTime
       }, 'Failed to fetch properties');
       throw error;
     }
@@ -150,12 +161,12 @@ export class PropertyController {
 
   async getPropertiesPaginated(request: FastifyRequest, reply: FastifyReply) {
     const startTime = Date.now();
-    
+
     try {
       httpLogger.info({ operation: 'getPropertiesPaginated' }, 'Fetching paginated properties');
 
       const validatedFilters = validateInput(propertyFiltersSchema, request.query);
-      
+
       // Ensure required properties are set
       const filtersWithDefaults = {
         ...validatedFilters,
@@ -167,18 +178,18 @@ export class PropertyController {
           radiusKm: validatedFilters.nearbySearch.radiusKm || 5,
         } : undefined,
       };
-      
+
       const propertyService = this.serviceFactory.createCompletePropertyService();
       const result = await propertyService.getProperties(filtersWithDefaults);
-      
+
       const responseTime = Date.now() - startTime;
-      httpLogger.info({ 
-        operation: 'getPropertiesPaginated', 
+      httpLogger.info({
+        operation: 'getPropertiesPaginated',
         count: result.data.length,
         hasMore: result.pagination.hasMore,
-        responseTime 
+        responseTime
       }, 'Paginated properties fetched successfully');
-      
+
       return reply.send({
         data: result.data,
         pagination: result.pagination,
@@ -186,10 +197,10 @@ export class PropertyController {
       });
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      httpLogger.error({ 
-        error, 
-        operation: 'getPropertiesPaginated', 
-        responseTime 
+      httpLogger.error({
+        error,
+        operation: 'getPropertiesPaginated',
+        responseTime
       }, 'Failed to fetch paginated properties');
       throw error;
     }
@@ -197,25 +208,25 @@ export class PropertyController {
 
   async updateProperty(request: FastifyRequest, reply: FastifyReply) {
     const startTime = Date.now();
-    
+
     try {
       const { id } = request.params as { id: string };
       validateUUID(id);
-      
+
       httpLogger.info({ operation: 'updateProperty', id }, 'Updating property');
-      
+
       const validatedData = validateInput(propertyUpdateSchema, request.body);
-      
+
       const propertyService = this.serviceFactory.createCompletePropertyService();
       const property = await propertyService.updateProperty(id, validatedData);
-      
+
       const responseTime = Date.now() - startTime;
-      httpLogger.info({ 
-        operation: 'updateProperty', 
+      httpLogger.info({
+        operation: 'updateProperty',
         propertyId: id,
-        responseTime 
+        responseTime
       }, 'Property updated successfully');
-      
+
       return reply.send({
         data: property,
         message: 'Property updated successfully',
@@ -223,10 +234,10 @@ export class PropertyController {
       });
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      httpLogger.error({ 
-        error, 
-        operation: 'updateProperty', 
-        responseTime 
+      httpLogger.error({
+        error,
+        operation: 'updateProperty',
+        responseTime
       }, 'Failed to update property');
       throw error;
     }
@@ -234,30 +245,30 @@ export class PropertyController {
 
   async deleteProperty(request: FastifyRequest, reply: FastifyReply) {
     const startTime = Date.now();
-    
+
     try {
       const { id } = request.params as { id: string };
       validateUUID(id);
-      
+
       httpLogger.info({ operation: 'deleteProperty', id }, 'Deleting property');
-      
+
       const propertyService = this.serviceFactory.createCompletePropertyService();
       await propertyService.deleteProperty(id);
-      
+
       const responseTime = Date.now() - startTime;
-      httpLogger.info({ 
-        operation: 'deleteProperty', 
+      httpLogger.info({
+        operation: 'deleteProperty',
         propertyId: id,
-        responseTime 
+        responseTime
       }, 'Property deleted successfully');
-      
+
       return reply.code(204).send();
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      httpLogger.error({ 
-        error, 
-        operation: 'deleteProperty', 
-        responseTime 
+      httpLogger.error({
+        error,
+        operation: 'deleteProperty',
+        responseTime
       }, 'Failed to delete property');
       throw error;
     }
@@ -265,29 +276,29 @@ export class PropertyController {
 
   async getPropertiesStats(request: FastifyRequest, reply: FastifyReply) {
     const startTime = Date.now();
-    
+
     try {
       httpLogger.info({ operation: 'getPropertiesStats' }, 'Fetching properties statistics');
-      
+
       const propertyService = this.serviceFactory.createCompletePropertyService();
       const stats = await propertyService.getPropertiesStats();
-      
+
       const responseTime = Date.now() - startTime;
-      httpLogger.info({ 
-        operation: 'getPropertiesStats', 
-        responseTime 
+      httpLogger.info({
+        operation: 'getPropertiesStats',
+        responseTime
       }, 'Properties statistics fetched successfully');
-      
+
       return reply.send({
         data: stats,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      httpLogger.error({ 
-        error, 
-        operation: 'getPropertiesStats', 
-        responseTime 
+      httpLogger.error({
+        error,
+        operation: 'getPropertiesStats',
+        responseTime
       }, 'Failed to fetch properties statistics');
       throw error;
     }
@@ -295,34 +306,34 @@ export class PropertyController {
 
   async searchProperties(request: FastifyRequest, reply: FastifyReply) {
     const startTime = Date.now();
-    
+
     try {
       const { q, limit = 20 } = request.query as { q: string; limit?: number };
-      
+
       if (!q || q.length < 3) {
         throw new AppError('Search query must be at least 3 characters long', 400);
       }
-      
+
       httpLogger.info({ operation: 'searchProperties', query: q, limit }, 'Searching properties');
-      
+
       const propertyService = this.serviceFactory.createCompletePropertyService();
       const result = await propertyService.searchProperties(q, limit);
-      
+
       const responseTime = Date.now() - startTime;
-      httpLogger.info({ 
-        operation: 'searchProperties', 
+      httpLogger.info({
+        operation: 'searchProperties',
         query: q,
         count: result.count,
-        responseTime 
+        responseTime
       }, 'Properties search completed successfully');
-      
+
       return reply.send(result);
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      httpLogger.error({ 
-        error, 
-        operation: 'searchProperties', 
-        responseTime 
+      httpLogger.error({
+        error,
+        operation: 'searchProperties',
+        responseTime
       }, 'Failed to search properties');
       throw error;
     }
@@ -330,49 +341,49 @@ export class PropertyController {
 
   async getNearbyProperties(request: FastifyRequest, reply: FastifyReply) {
     const startTime = Date.now();
-    
+
     try {
-      const { lat, lng, radius = '5', limit = '20' } = request.query as { 
-        lat: string; 
-        lng: string; 
-        radius?: string; 
-        limit?: string; 
+      const { lat, lng, radius = '5', limit = '20' } = request.query as {
+        lat: string;
+        lng: string;
+        radius?: string;
+        limit?: string;
       };
-      
+
       const latitude = parseFloat(lat);
       const longitude = parseFloat(lng);
       const radiusKm = parseFloat(radius);
       const limitNum = parseInt(limit);
-      
+
       if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
         throw new AppError('Invalid coordinates provided', 400);
       }
-      
-      httpLogger.info({ 
-        operation: 'getNearbyProperties', 
-        coordinates: { lat: latitude, lng: longitude }, 
-        radius: radiusKm, 
-        limit: limitNum 
+
+      httpLogger.info({
+        operation: 'getNearbyProperties',
+        coordinates: { lat: latitude, lng: longitude },
+        radius: radiusKm,
+        limit: limitNum
       }, 'Finding nearby properties');
-      
+
       const propertyService = this.serviceFactory.createCompletePropertyService();
       const result = await propertyService.getNearbyProperties(latitude, longitude, radiusKm, limitNum);
-      
+
       const responseTime = Date.now() - startTime;
-      httpLogger.info({ 
-        operation: 'getNearbyProperties', 
+      httpLogger.info({
+        operation: 'getNearbyProperties',
         coordinates: { lat: latitude, lng: longitude },
         count: result.count,
-        responseTime 
+        responseTime
       }, 'Nearby properties search completed successfully');
-      
+
       return reply.send(result);
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      httpLogger.error({ 
-        error, 
-        operation: 'getNearbyProperties', 
-        responseTime 
+      httpLogger.error({
+        error,
+        operation: 'getNearbyProperties',
+        responseTime
       }, 'Failed to find nearby properties');
       throw error;
     }
@@ -380,27 +391,27 @@ export class PropertyController {
 
   async updateAdminStatus(request: FastifyRequest, reply: FastifyReply) {
     const startTime = Date.now();
-    
+
     try {
       const { id } = request.params as { id: string };
       validateUUID(id);
-      
+
       const { adminStatus } = request.body as { adminStatus: 'ACTIVE' | 'PENDING' | 'INACTIVE' };
 
       httpLogger.info({ operation: 'updateAdminStatus', id, adminStatus }, 'Updating property admin status');
       console.log('📝 AdminStatus recebido:', adminStatus);
-      
+
       const propertyService = this.serviceFactory.createCompletePropertyService();
       const property = await propertyService.updateProperty(id, { adminStatus });
-      
+
       const responseTime = Date.now() - startTime;
-      httpLogger.info({ 
-        operation: 'updateAdminStatus', 
+      httpLogger.info({
+        operation: 'updateAdminStatus',
         propertyId: id,
         adminStatus,
-        responseTime 
+        responseTime
       }, 'Property admin status updated successfully');
-      
+
       console.log('📤 Propriedade retornada:', { id: property.id, adminStatus: property.adminStatus });
 
       return reply.send({
@@ -414,10 +425,10 @@ export class PropertyController {
       });
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      httpLogger.error({ 
-        error, 
-        operation: 'updateAdminStatus', 
-        responseTime 
+      httpLogger.error({
+        error,
+        operation: 'updateAdminStatus',
+        responseTime
       }, 'Failed to update property admin status');
       throw error;
     }

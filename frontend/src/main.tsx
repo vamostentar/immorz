@@ -1,5 +1,6 @@
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { AuthProvider } from '@/context/AuthContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 import { lazy, Suspense } from 'react';
 
 // Eager load critical pages
@@ -23,7 +24,16 @@ const PropertiesList = lazy(() => import('@/pages/admin/PropertiesList'));
 const PropertiesManagement = lazy(() => import('@/pages/admin/PropertiesManagement'));
 const PropertyImages = lazy(() => import('@/pages/admin/PropertyImages'));
 const Settings = lazy(() => import('@/pages/admin/Settings'));
-const UsersManagement = lazy(() => import('@/pages/admin/UsersManagement'));
+const UsersManagement = lazy(() => import('@/pages/admin/users'));
+const AgentDashboard = lazy(() => import('@/pages/agent/Dashboard'));
+const AgentProperties = lazy(() => import('@/pages/agent/Properties'));
+const AgentInbox = lazy(() => import('@/pages/agent/Inbox'));
+const AdminInbox = lazy(() => import('@/pages/admin/Inbox'));
+const ClientDashboard = lazy(() => import('@/pages/client/Dashboard'));
+
+// Lazy load public agent profile
+const AgentProfile = lazy(() => import('@/pages/agent/AgentProfile'));
+const EditProfile = lazy(() => import('@/pages/agent/EditProfile'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,56 +53,127 @@ const queryClient = new QueryClient({
 // Loading component for Suspense
 import Loading from '@/components/Loading';
 
-// Wrapper component to provide Auth context with Suspense
+// Wrapper component to provide Auth and Theme context with Suspense
 function AppWrapper({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
-      <Suspense fallback={<Loading fullScreen />}>
-        {children}
-      </Suspense>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Suspense fallback={<Loading fullScreen />}>
+          {children}
+        </Suspense>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
 const router = createBrowserRouter([
-  { 
-    path: '/', 
+  {
+    path: '/',
     element: (
       <AppWrapper>
         <Home />
       </AppWrapper>
-    ) 
+    )
   },
-  { 
-    path: '/login', 
+  {
+    path: '/login',
     element: (
       <AppWrapper>
         <Login />
       </AppWrapper>
-    ) 
+    )
   },
-  { 
-    path: '/property/:id', 
+  {
+    path: '/property/:id',
     element: (
       <AppWrapper>
         <PropertyDetails />
       </AppWrapper>
-    ) 
+    )
   },
+  // Public agent profile route
+  {
+    path: '/agent/:id',
+    element: (
+      <AppWrapper>
+        <AgentProfile />
+      </AppWrapper>
+    )
+  },
+  // Agent routes
+  {
+    path: '/agent',
+    element: (
+      <AppWrapper>
+        <Navigate to="/agent/dashboard" replace />
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/agent/dashboard',
+    element: (
+      <AppWrapper>
+        <ProtectedRoute allowedRoles={['agent']}>
+          <AgentDashboard />
+        </ProtectedRoute>
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/agent/properties',
+    element: (
+      <AppWrapper>
+        <ProtectedRoute allowedRoles={['agent']}>
+          <AgentProperties />
+        </ProtectedRoute>
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/agent/profile',
+    element: (
+      <AppWrapper>
+        <ProtectedRoute allowedRoles={['agent']}>
+          <EditProfile />
+        </ProtectedRoute>
+      </AppWrapper>
+    )
+  },
+
+  // Client routes
+  {
+    path: '/client',
+    element: (
+      <AppWrapper>
+        <Navigate to="/client/dashboard" replace />
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/client/dashboard',
+    element: (
+      <AppWrapper>
+        <ProtectedRoute allowedRoles={['client']}>
+          <ClientDashboard />
+        </ProtectedRoute>
+      </AppWrapper>
+    )
+  },
+
   // Admin routes
-  { 
-    path: '/admin', 
+  {
+    path: '/admin',
     element: (
       <AppWrapper>
         <Navigate to="/admin/dashboard" replace />
       </AppWrapper>
-    ) 
+    )
   },
   {
     path: '/admin/dashboard',
     element: (
       <AppWrapper>
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
           <Dashboard />
         </ProtectedRoute>
       </AppWrapper>
@@ -102,7 +183,7 @@ const router = createBrowserRouter([
     path: '/admin/properties',
     element: (
       <AppWrapper>
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
           <PropertiesManagement />
         </ProtectedRoute>
       </AppWrapper>
@@ -112,7 +193,7 @@ const router = createBrowserRouter([
     path: '/admin/properties/:id/images',
     element: (
       <AppWrapper>
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
           <PropertyImages />
         </ProtectedRoute>
       </AppWrapper>
@@ -122,7 +203,7 @@ const router = createBrowserRouter([
     path: '/admin/users',
     element: (
       <AppWrapper>
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
           <UsersManagement />
         </ProtectedRoute>
       </AppWrapper>
@@ -132,7 +213,7 @@ const router = createBrowserRouter([
     path: '/admin/analytics',
     element: (
       <AppWrapper>
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
           <Analytics />
         </ProtectedRoute>
       </AppWrapper>
@@ -142,17 +223,41 @@ const router = createBrowserRouter([
     path: '/admin/settings',
     element: (
       <AppWrapper>
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
           <Settings />
         </ProtectedRoute>
       </AppWrapper>
     )
   },
+  // Agent Inbox
+  {
+    path: '/agent/messages',
+    element: (
+      <AppWrapper>
+        <ProtectedRoute allowedRoles={['agent']}>
+          <AgentInbox />
+        </ProtectedRoute>
+      </AppWrapper>
+    )
+  },
+
+  // Admin Inbox
+  {
+    path: '/admin/messages',
+    element: (
+      <AppWrapper>
+        <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+          <AdminInbox />
+        </ProtectedRoute>
+      </AppWrapper>
+    )
+  },
+
   {
     path: '/admin/approvals',
     element: (
       <AppWrapper>
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
           <Approvals />
         </ProtectedRoute>
       </AppWrapper>
@@ -163,19 +268,19 @@ const router = createBrowserRouter([
     path: '/admin/properties-old',
     element: (
       <AppWrapper>
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
           <PropertiesList />
         </ProtectedRoute>
       </AppWrapper>
     )
   },
-  { 
-    path: '*', 
+  {
+    path: '*',
     element: (
       <AppWrapper>
         <NotFound />
       </AppWrapper>
-    ) 
+    )
   },
 ]);
 

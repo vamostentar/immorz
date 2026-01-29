@@ -12,7 +12,7 @@ const schema = z.object({
   price: z.number().min(0),
   status: z.enum(['for_sale', 'for_rent', 'sold']),
   adminStatus: z.enum(['ACTIVE', 'PENDING', 'INACTIVE']).optional(),
-  type: z.enum(['apartamento','moradia','loft','penthouse','estudio','escritorio','terreno']).optional().nullable(),
+  type: z.enum(['apartamento', 'moradia', 'loft', 'penthouse', 'estudio', 'escritorio', 'terreno']).optional().nullable(),
   imageUrl: z.string().optional().nullable(),
   description: z.string().max(2000).optional().nullable(),
   bedrooms: z.number().min(0).optional().nullable(),
@@ -24,7 +24,7 @@ interface UploadedImage {
   id: string;
   file: File;
   preview: string;
-  status: 'uploading' | 'success' | 'error';
+  status: 'pending' | 'uploading' | 'success' | 'error';
   progress: number;
   url?: string;
   error?: string;
@@ -33,9 +33,10 @@ interface UploadedImage {
 export type PropertyFormValues = z.infer<typeof schema>;
 
 export interface PropertyFormRef {
-  updateImageProgress: (imageIndex: number, progress: number, status?: 'uploading' | 'success' | 'error', url?: string) => void;
-  updateAllImagesStatus: (status: 'uploading' | 'success' | 'error') => void;
+  updateImageProgress: (imageIndex: number, progress: number, status?: 'pending' | 'uploading' | 'success' | 'error', url?: string) => void;
+  updateAllImagesStatus: (status: 'pending' | 'uploading' | 'success' | 'error') => void;
   clearImages: () => void;
+  startUpload: () => void;
 }
 
 const PropertyForm = forwardRef<PropertyFormRef, {
@@ -66,7 +67,7 @@ const PropertyForm = forwardRef<PropertyFormRef, {
 
   // Expor funções para o componente pai
   useImperativeHandle(ref, () => ({
-    updateImageProgress: (imageIndex: number, progress: number, status?: 'uploading' | 'success' | 'error', url?: string) => {
+    updateImageProgress: (imageIndex: number, progress: number, status?: 'pending' | 'uploading' | 'success' | 'error', url?: string) => {
       console.log(`🔄 PropertyForm: updateImageProgress chamado para imagem ${imageIndex}: ${progress}%`);
       if (multiImageUploadRef.current?.updateImageProgress) {
         multiImageUploadRef.current.updateImageProgress(imageIndex, progress, status, url);
@@ -74,7 +75,7 @@ const PropertyForm = forwardRef<PropertyFormRef, {
         console.warn(`⚠️ PropertyForm: multiImageUploadRef.current não está disponível`);
       }
     },
-    updateAllImagesStatus: (status: 'uploading' | 'success' | 'error') => {
+    updateAllImagesStatus: (status: 'pending' | 'uploading' | 'success' | 'error') => {
       console.log(`🔄 PropertyForm: updateAllImagesStatus chamado com status: ${status}`);
       if (multiImageUploadRef.current?.updateAllImagesStatus) {
         multiImageUploadRef.current.updateAllImagesStatus(status);
@@ -88,6 +89,15 @@ const PropertyForm = forwardRef<PropertyFormRef, {
       setImages([]);
       if (onImagesUpdate) {
         onImagesUpdate([]);
+      }
+    },
+    // Nova função para iniciar o upload (mudar status de 'pending' para 'uploading')
+    startUpload: () => {
+      console.log(`🚀 PropertyForm: startUpload chamado`);
+      if (multiImageUploadRef.current?.startUpload) {
+        multiImageUploadRef.current.startUpload();
+      } else {
+        console.warn(`⚠️ PropertyForm: multiImageUploadRef.current.startUpload não está disponível`);
       }
     },
   }));
@@ -144,33 +154,33 @@ const PropertyForm = forwardRef<PropertyFormRef, {
       {/* Características da propriedade */}
       <div className="grid md:grid-cols-3 gap-3">
         <div>
-          <input 
-            className="input" 
-            placeholder="Nº de quartos" 
-            type="number" 
-            min="0" 
-            {...register('bedrooms', { valueAsNumber: true })} 
+          <input
+            className="input"
+            placeholder="Nº de quartos"
+            type="number"
+            min="0"
+            {...register('bedrooms', { valueAsNumber: true })}
           />
           {errors.bedrooms && <span className="text-red-600 text-sm">{errors.bedrooms.message}</span>}
         </div>
         <div>
-          <input 
-            className="input" 
-            placeholder="Nº de casas de banho" 
-            type="number" 
-            min="0" 
-            step="0.5" 
-            {...register('bathrooms', { valueAsNumber: true })} 
+          <input
+            className="input"
+            placeholder="Nº de casas de banho"
+            type="number"
+            min="0"
+            step="0.5"
+            {...register('bathrooms', { valueAsNumber: true })}
           />
           {errors.bathrooms && <span className="text-red-600 text-sm">{errors.bathrooms.message}</span>}
         </div>
         <div>
-          <input 
-            className="input" 
-            placeholder="Área (m²)" 
-            type="number" 
-            min="0" 
-            {...register('area', { valueAsNumber: true })} 
+          <input
+            className="input"
+            placeholder="Área (m²)"
+            type="number"
+            min="0"
+            {...register('area', { valueAsNumber: true })}
           />
           {errors.area && <span className="text-red-600 text-sm">{errors.area.message}</span>}
         </div>

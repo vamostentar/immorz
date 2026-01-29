@@ -5,7 +5,7 @@ import { NotFoundError } from '@/types/common';
 import { PrismaClient } from '@prisma/client';
 
 export class UserRepository {
-  constructor(private prisma: PrismaClient) {}
+  constructor(private prisma: PrismaClient) { }
 
   /**
    * Find user by ID
@@ -60,12 +60,47 @@ export class UserRepository {
    * Update user
    */
   async update(id: string, data: Partial<UpdateUserRequest>): Promise<User & { role: Role }> {
+    const input = data as any;
+
+    // Whitelist de campos válidos do Prisma User model
+    const updateData: any = {};
+
+    // Campos de perfil
+    if (input.firstName !== undefined) updateData.firstName = input.firstName;
+    if (input.lastName !== undefined) updateData.lastName = input.lastName;
+    if (input.phone !== undefined) updateData.phone = input.phone;
+    if (input.username !== undefined) updateData.username = input.username;
+    if (input.avatar !== undefined) updateData.avatar = input.avatar;
+
+    // Campos de estado
+    if (input.isActive !== undefined) updateData.isActive = input.isActive;
+
+    // isEmailVerified - aceitar vários nomes
+    if (input.isEmailVerified !== undefined) {
+      updateData.isEmailVerified = input.isEmailVerified;
+    } else if (input.isVerified !== undefined) {
+      updateData.isEmailVerified = input.isVerified;
+    }
+
+    // Role - pode vir como string (roleId) ou objecto
+    if (input.role !== undefined) {
+      if (typeof input.role === 'string') {
+        updateData.roleId = input.role;
+      } else if (typeof input.role === 'object' && input.role?.id) {
+        updateData.roleId = input.role.id;
+      }
+    } else if (input.roleId !== undefined) {
+      updateData.roleId = input.roleId;
+    }
+
+    // Timestamps
+    updateData.updatedAt = new Date();
+
+    console.log('📝 User update data:', { id, updateData });
+
     const user = await this.prisma.user.update({
       where: { id },
-      data: {
-        ...data,
-        updatedAt: new Date(),
-      },
+      data: updateData,
       include: { role: true },
     });
 
@@ -111,7 +146,7 @@ export class UserRepository {
 
     // Build where clause
     const where: any = {};
-    
+
     if (filters?.search) {
       where.OR = [
         { firstName: { contains: filters.search, mode: 'insensitive' } },
@@ -239,7 +274,7 @@ export class UserRepository {
 
     // Remove used backup code
     const updatedCodes = user.twoFactorBackupCodes.filter((c: string) => c !== code);
-    
+
     await this.prisma.user.update({
       where: { id },
       data: {
@@ -299,7 +334,7 @@ export class UserRepository {
    */
   async emailExists(email: string, excludeUserId?: string): Promise<boolean> {
     const where: any = { email: email.toLowerCase() };
-    
+
     if (excludeUserId) {
       where.id = { not: excludeUserId };
     }
@@ -313,7 +348,7 @@ export class UserRepository {
    */
   async usernameExists(username: string, excludeUserId?: string): Promise<boolean> {
     const where: any = { username };
-    
+
     if (excludeUserId) {
       where.id = { not: excludeUserId };
     }

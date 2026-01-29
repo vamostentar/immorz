@@ -18,10 +18,12 @@ export function useProperties(params?: Partial<{
   q: string;
   status: string;
   type: string;
+  adminStatus: 'ACTIVE' | 'PENDING' | 'INACTIVE';
+  agentId: string;
   cursor: string;
   limit: number;
   sortBy: string;
-  sortOrder: 'asc'|'desc';
+  sortOrder: 'asc' | 'desc';
 }>) {
   return useQuery<PropertiesListResponse>({
     queryKey: ['properties', params],
@@ -74,7 +76,7 @@ export function useDeleteProperty() {
 
 export async function uploadMediaImage(
   file: File,
-  opts?: { transform?: 'original'|'resize'|'cover'; width?: number; height?: number; quality?: number; onProgress?: (p: number) => void }
+  opts?: { transform?: 'original' | 'resize' | 'cover'; width?: number; height?: number; quality?: number; onProgress?: (p: number) => void }
 ) {
   const form = new FormData();
   form.append('file', file);
@@ -98,15 +100,15 @@ export async function uploadMediaImage(
 // Upload múltiplas imagens para o media service
 export async function uploadMultipleMediaImages(
   files: File[],
-  opts?: { transform?: 'original'|'resize'|'cover'; width?: number; height?: number; quality?: number; onProgress?: (p: number) => void }
+  opts?: { transform?: 'original' | 'resize' | 'cover'; width?: number; height?: number; quality?: number; onProgress?: (p: number) => void }
 ): Promise<string[]> {
   const uploadPromises = files.map(async (file, index) => {
     const progressCallback = opts?.onProgress
       ? (progress: number) => {
-          // Calcular progresso total baseado no índice do arquivo
-          const totalProgress = Math.round(((index * 100) + progress) / files.length);
-          opts.onProgress!(totalProgress);
-        }
+        // Calcular progresso total baseado no índice do arquivo
+        const totalProgress = Math.round(((index * 100) + progress) / files.length);
+        opts.onProgress!(totalProgress);
+      }
       : undefined;
 
     return await uploadMediaImage(file, { ...opts, onProgress: progressCallback });
@@ -160,7 +162,7 @@ export async function uploadPropertyImages(
   propertyId: string,
   files: File[],
   opts?: {
-    transform?: 'original'|'resize'|'cover';
+    transform?: 'original' | 'resize' | 'cover';
     width?: number;
     height?: number;
     quality?: number;
@@ -331,7 +333,7 @@ export async function uploadPropertyImages(
             alt: data.data.alt,
             order: data.data.order
           });
-          results.push(data.data.url || data.data.filename || `uploaded-${i+1}`);
+          results.push(data.data.url || data.data.filename || `uploaded-${i + 1}`);
 
           // Marcar imagem como 100% concluída
           imageProgresses[i] = 100;
@@ -458,7 +460,7 @@ export function useProperty(propertyId: string) {
 
 export function useUpdatePropertyAdminStatus() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ propertyId, adminStatus }: { propertyId: string; adminStatus: 'ACTIVE' | 'PENDING' | 'INACTIVE' }) => {
       const { data } = await api.patch(`/api/v1/properties/${propertyId}/admin-status`, { adminStatus });
@@ -468,14 +470,113 @@ export function useUpdatePropertyAdminStatus() {
       // Invalidar todas as queries relacionadas com propriedades
       queryClient.invalidateQueries({ queryKey: ['properties'] });
       queryClient.invalidateQueries({ queryKey: ['property', variables.propertyId] });
-      
+
       // Forçar refetch imediato
       queryClient.refetchQueries({ queryKey: ['properties'] });
-      
+
       console.log('✅ Estado administrativo atualizado:', variables.adminStatus);
     },
     onError: (error) => {
       console.error('❌ Erro ao atualizar estado administrativo:', error);
+    },
+  });
+}
+
+// Messages Hooks
+
+export function useMessages(params?: Partial<{
+  page: number;
+  limit: number;
+  status: string;
+  type: 'INBOUND' | 'OUTBOUND';  // INBOUND = received from clients, OUTBOUND = sent replies
+  fromEmail: string;
+  dateFrom: string;
+  dateTo: string;
+  agentId: string;
+  propertyId: string;
+  read: boolean;
+  deleted: boolean;  // true = show trash, false/undefined = show active
+  search: string;
+}>) {
+  return useQuery<{ data: import('@/types').Message[]; pagination: any }>({
+    queryKey: ['messages', params],
+    queryFn: async () => {
+      const { data } = await api.get('/api/v1/messages', { params });
+      return data;
+    },
+    staleTime: 1000 * 30, // 30 seconds
+  });
+}
+
+
+export function useMessageStats(agentId?: string) {
+  return useQuery<{
+    total: number;
+    byStatus: Record<string, number>;
+    last24Hours: number;
+    last7Days: number;
+    unread?: number;
+  }>({
+    queryKey: ['messages-stats', agentId],
+    queryFn: async () => {
+      const params = agentId ? `?agentId=${agentId}` : '';
+      const { data } = await api.get(`/api/v1/messages/stats${params}`);
+      return data.data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+export function useReplyToMessage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ messageId, body, subject }: { messageId: string; body: string; subject?: string }) => {
+      const { data } = await api.post(`/api/v1/messages/${messageId}/reply`, { body, subject });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+    },
+  });
+}
+
+export function useMarkMessageAsRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (messageId: string) => {
+      const { data } = await api.patch(`/api/v1/messages/${messageId}/read`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+    },
+  });
+}
+
+export function useMarkMessageAsUnread() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (messageId: string) => {
+      const { data } = await api.patch(`/api/v1/messages/${messageId}/unread`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      queryClient.invalidateQueries({ queryKey: ['messages-stats'] });
+    },
+  });
+}
+
+export function useDeleteMessage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (messageId: string) => {
+      const { data } = await api.delete(`/api/v1/messages/${messageId}`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      queryClient.invalidateQueries({ queryKey: ['messages-stats'] });
     },
   });
 }

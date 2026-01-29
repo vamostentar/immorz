@@ -1,53 +1,58 @@
+/**
+ * Tipos do User-Service
+ * 
+ * ARQUITECTURA CONSOLIDADA:
+ * - Dados de identidade (email, nome, role) → auth-service
+ * - Dados de perfil (bio, avatar, preferências) → user-service (este serviço)
+ * 
+ * UserRole foi removido deste serviço - roles são geridos pelo auth-service.
+ */
+
 import {
-    ContactMethod,
-    DeliveryMethod,
-    Gender,
-    InterestType,
-    NotificationType,
-    Priority,
-    ProfileVisibility,
-    PropertyType,
-    SortBy,
-    UserRole,
-    ViewMode
+  ContactMethod,
+  DeliveryMethod,
+  Gender,
+  InterestType,
+  NotificationType,
+  Priority,
+  ProfileVisibility,
+  PropertyType,
+  SortBy,
+  ViewMode
 } from '@prisma/client';
 
-// Re-export enums for easier access
+// Re-exportar enums do Prisma (excepto UserRole que agora está no auth)
 export {
-    ContactMethod, DeliveryMethod, Gender, InterestType, NotificationType, Priority, ProfileVisibility,
-    PropertyType, SortBy, UserRole,
-    ViewMode
+  ContactMethod,
+  DeliveryMethod,
+  Gender,
+  InterestType,
+  NotificationType,
+  Priority,
+  ProfileVisibility,
+  PropertyType,
+  SortBy,
+  ViewMode
 };
 
 /**
- * Tipos principais do sistema de gestão de utilizadores
+ * Perfil do utilizador - Dados estendidos
+ * NÃO inclui email, firstName, lastName, role (estão no auth-service)
  */
-
-// User Profile
 export interface UserProfile {
   id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  avatar?: string;
   bio?: string;
-  dateOfBirth?: Date;
-  gender?: Gender;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  postalCode?: string;
+  avatar?: string;
+  dateOfBirth?: Date | null;
+  gender?: Gender | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  postalCode?: string | null;
   preferredContactMethod: ContactMethod;
   language: string;
   timezone: string;
-  role: UserRole;
-  isActive: boolean;
-  isEmailVerified: boolean;
-  emailVerifiedAt?: Date;
-  isPhoneVerified: boolean;
-  phoneVerifiedAt?: Date;
   profileVisibility: ProfileVisibility;
   allowMarketing: boolean;
   allowNotifications: boolean;
@@ -55,7 +60,9 @@ export interface UserProfile {
   updatedAt: Date;
 }
 
-// User Preferences
+/**
+ * Preferências do utilizador
+ */
 export interface UserPreferences {
   id: string;
   userId: string;
@@ -83,7 +90,9 @@ export interface UserPreferences {
   updatedAt: Date;
 }
 
-// Property Interest
+/**
+ * Interesse em propriedade
+ */
 export interface PropertyInterest {
   id: string;
   userId: string;
@@ -99,7 +108,9 @@ export interface PropertyInterest {
   updatedAt: Date;
 }
 
-// Saved Property
+/**
+ * Propriedade guardada (favorito)
+ */
 export interface SavedProperty {
   id: string;
   userId: string;
@@ -112,7 +123,9 @@ export interface SavedProperty {
   updatedAt: Date;
 }
 
-// Search History
+/**
+ * Histórico de pesquisa
+ */
 export interface SearchHistory {
   id: string;
   userId: string;
@@ -133,7 +146,9 @@ export interface SearchHistory {
   createdAt: Date;
 }
 
-// Notification
+/**
+ * Notificação
+ */
 export interface Notification {
   id: string;
   userId: string;
@@ -153,14 +168,13 @@ export interface Notification {
   updatedAt: Date;
 }
 
+// ============================================================
 // Request/Response DTOs
-export interface CreateUserProfileRequest {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  avatar?: string;
+// ============================================================
+
+export interface CreateProfileRequest {
   bio?: string;
+  avatar?: string;
   dateOfBirth?: string;
   gender?: Gender;
   address?: string;
@@ -176,20 +190,16 @@ export interface CreateUserProfileRequest {
   allowNotifications?: boolean;
 }
 
-export interface UpdateUserProfileRequest {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  avatar?: string;
+export interface UpdateProfileRequest {
   bio?: string;
-  dateOfBirth?: string;
-  gender?: Gender;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  postalCode?: string;
+  avatar?: string;
+  dateOfBirth?: string | null;
+  gender?: Gender | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  postalCode?: string | null;
   preferredContactMethod?: ContactMethod;
   language?: string;
   timezone?: string;
@@ -198,14 +208,10 @@ export interface UpdateUserProfileRequest {
   allowNotifications?: boolean;
 }
 
-export interface UserProfileResponse {
+export interface ProfileResponse {
   id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  avatar?: string;
   bio?: string;
+  avatar?: string;
   dateOfBirth?: string;
   gender?: Gender;
   address?: string;
@@ -216,12 +222,6 @@ export interface UserProfileResponse {
   preferredContactMethod: ContactMethod;
   language: string;
   timezone: string;
-  role: UserRole;
-  isActive: boolean;
-  isEmailVerified: boolean;
-  emailVerifiedAt?: string;
-  isPhoneVerified: boolean;
-  phoneVerifiedAt?: string;
   profileVisibility: ProfileVisibility;
   allowMarketing: boolean;
   allowNotifications: boolean;
@@ -342,17 +342,14 @@ export interface NotificationResponse {
   updatedAt: string;
 }
 
-// Query parameters
-export interface UserProfileQueryParams {
+// ============================================================
+// Query Parameters
+// ============================================================
+
+export interface ProfileQueryParams {
   page?: number;
   limit?: number;
-  search?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  isActive?: boolean;
-  isEmailVerified?: boolean;
-  sortBy?: 'createdAt' | 'updatedAt' | 'firstName' | 'lastName' | 'email';
+  sortBy?: 'createdAt' | 'updatedAt';
   sortOrder?: 'asc' | 'desc';
 }
 
@@ -366,7 +363,10 @@ export interface NotificationQueryParams {
   sortOrder?: 'asc' | 'desc';
 }
 
-// API Response wrappers
+// ============================================================
+// API Response Wrappers
+// ============================================================
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;

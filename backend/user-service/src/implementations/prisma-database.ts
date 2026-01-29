@@ -1,26 +1,27 @@
-import { PrismaClient } from '@prisma/client';
 import {
+  CreateNotificationData,
+  CreatePropertyInterestData,
+  CreateSavedPropertyData,
+  CreateSearchHistoryData,
+  CreateUserPreferencesData,
+  CreateUserProfileData,
   DatabaseConnection,
   DatabaseTransaction,
-  UserProfileRepositoryInterface,
-  UserPreferencesRepositoryInterface,
+  FindManyOptions,
+  NotificationFindOptions,
+  NotificationRepositoryInterface,
   PropertyInterestRepositoryInterface,
   SavedPropertyRepositoryInterface,
   SearchHistoryRepositoryInterface,
-  NotificationRepositoryInterface,
-  CreateUserProfileData,
-  UpdateUserProfileData,
-  CreateUserPreferencesData,
-  UpdateUserPreferencesData,
-  CreatePropertyInterestData,
-  UpdatePropertyInterestData,
-  CreateSavedPropertyData,
-  UpdateSavedPropertyData,
-  CreateSearchHistoryData,
-  CreateNotificationData,
   UpdateNotificationData,
-  FindManyOptions,
+  UpdatePropertyInterestData,
+  UpdateSavedPropertyData,
+  UpdateUserPreferencesData,
+  UpdateUserProfileData,
+  UserPreferencesRepositoryInterface,
+  UserProfileRepositoryInterface,
 } from '@/interfaces/database.interface';
+import { PrismaClient } from '@prisma/client';
 
 /**
  * Implementação do banco de dados usando Prisma
@@ -89,7 +90,7 @@ export class PrismaDatabase implements DatabaseConnection {
  * Implementação de transação usando Prisma
  */
 class PrismaDatabaseTransaction implements DatabaseTransaction {
-  constructor(private tx: any) {}
+  constructor(private tx: any) { }
 
   get userProfiles(): UserProfileRepositoryInterface {
     return new PrismaUserProfileRepository(this.tx);
@@ -120,7 +121,7 @@ class PrismaDatabaseTransaction implements DatabaseTransaction {
  * Implementação do repositório de perfis de utilizadores
  */
 class PrismaUserProfileRepository implements UserProfileRepositoryInterface {
-  constructor(private prisma: PrismaClient | any) {}
+  constructor(private prisma: PrismaClient | any) { }
 
   async findById(id: string) {
     return this.prisma.userProfile.findUnique({
@@ -174,7 +175,7 @@ class PrismaUserProfileRepository implements UserProfileRepositoryInterface {
     if (excludeUserId) {
       where.id = { not: excludeUserId };
     }
-    
+
     const count = await this.prisma.userProfile.count({ where });
     return count > 0;
   }
@@ -219,7 +220,7 @@ class PrismaUserProfileRepository implements UserProfileRepositoryInterface {
  * Implementação do repositório de preferências de utilizadores
  */
 class PrismaUserPreferencesRepository implements UserPreferencesRepositoryInterface {
-  constructor(private prisma: PrismaClient | any) {}
+  constructor(private prisma: PrismaClient | any) { }
 
   async findByUserId(userId: string) {
     return this.prisma.userPreferences.findUnique({
@@ -252,7 +253,7 @@ class PrismaUserPreferencesRepository implements UserPreferencesRepositoryInterf
  * Implementação do repositório de interesses em propriedades
  */
 class PrismaPropertyInterestRepository implements PropertyInterestRepositoryInterface {
-  constructor(private prisma: PrismaClient | any) {}
+  constructor(private prisma: PrismaClient | any) { }
 
   async findById(id: string) {
     return this.prisma.propertyInterest.findUnique({
@@ -328,7 +329,7 @@ class PrismaPropertyInterestRepository implements PropertyInterestRepositoryInte
  * Implementação do repositório de propriedades guardadas
  */
 class PrismaSavedPropertyRepository implements SavedPropertyRepositoryInterface {
-  constructor(private prisma: PrismaClient | any) {}
+  constructor(private prisma: PrismaClient | any) { }
 
   async findById(id: string) {
     return this.prisma.savedProperty.findUnique({
@@ -392,13 +393,19 @@ class PrismaSavedPropertyRepository implements SavedPropertyRepositoryInterface 
       },
     });
   }
+
+  async deleteByUserAndProperty(userId: string, propertyId: string) {
+    await this.prisma.savedProperty.deleteMany({
+      where: { userId, propertyId },
+    });
+  }
 }
 
 /**
  * Implementação do repositório de histórico de pesquisas
  */
 class PrismaSearchHistoryRepository implements SearchHistoryRepositoryInterface {
-  constructor(private prisma: PrismaClient | any) {}
+  constructor(private prisma: PrismaClient | any) { }
 
   async findById(id: string) {
     return this.prisma.searchHistory.findUnique({
@@ -407,13 +414,11 @@ class PrismaSearchHistoryRepository implements SearchHistoryRepositoryInterface 
     });
   }
 
-  async findByUserId(userId: string, options?: FindManyOptions) {
+  async findByUserId(userId: string, limit?: number) {
     return this.prisma.searchHistory.findMany({
       where: { userId },
-      skip: options?.skip,
-      take: options?.take,
-      orderBy: options?.orderBy,
-      include: options?.include,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -426,6 +431,12 @@ class PrismaSearchHistoryRepository implements SearchHistoryRepositoryInterface 
   async delete(id: string) {
     await this.prisma.searchHistory.delete({
       where: { id },
+    });
+  }
+
+  async deleteByUserId(userId: string) {
+    await this.prisma.searchHistory.deleteMany({
+      where: { userId },
     });
   }
 
@@ -455,7 +466,7 @@ class PrismaSearchHistoryRepository implements SearchHistoryRepositoryInterface 
  * Implementação do repositório de notificações
  */
 class PrismaNotificationRepository implements NotificationRepositoryInterface {
-  constructor(private prisma: PrismaClient | any) {}
+  constructor(private prisma: PrismaClient | any) { }
 
   async findById(id: string) {
     return this.prisma.notification.findUnique({
@@ -464,13 +475,16 @@ class PrismaNotificationRepository implements NotificationRepositoryInterface {
     });
   }
 
-  async findByUserId(userId: string, options?: FindManyOptions) {
+  async findByUserId(userId: string, options?: NotificationFindOptions) {
+    const where: any = { userId };
+    if (options?.unreadOnly) {
+      where.isRead = false;
+    }
     return this.prisma.notification.findMany({
-      where: { userId },
+      where,
       skip: options?.skip,
-      take: options?.take,
-      orderBy: options?.orderBy,
-      include: options?.include,
+      take: options?.limit,
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -499,9 +513,19 @@ class PrismaNotificationRepository implements NotificationRepositoryInterface {
     });
   }
 
-  async markAsRead(id: string) {
+  async markAsRead(id: string, userId: string) {
     await this.prisma.notification.update({
-      where: { id },
+      where: { id, userId },
+      data: {
+        isRead: true,
+        readAt: new Date(),
+      },
+    });
+  }
+
+  async markAllAsRead(userId: string) {
+    await this.prisma.notification.updateMany({
+      where: { userId, isRead: false },
       data: {
         isRead: true,
         readAt: new Date(),

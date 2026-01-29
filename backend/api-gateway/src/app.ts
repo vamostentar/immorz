@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import { config } from './config.js';
+import { registerAggregatedHandlers } from './handlers/aggregated.handlers.js';
 import { authenticateJWT } from './middleware/auth.middleware.js';
 import { setupProxy } from './proxy.js';
 
@@ -8,15 +9,15 @@ export async function createApp() {
     logger: config.NODE_ENV === 'production'
       ? { level: config.LOG_LEVEL }
       : {
-          level: config.LOG_LEVEL,
-          transport: {
-            target: 'pino-pretty',
-            options: {
-              colorize: true,
-              translateTime: 'HH:MM:ss Z',
-            },
+        level: config.LOG_LEVEL,
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            colorize: true,
+            translateTime: 'HH:MM:ss Z',
           },
         },
+      },
     // Disable automatic multipart processing to let proxy handle it
     disableRequestLogging: config.NODE_ENV === 'production',
     ignoreTrailingSlash: true,
@@ -170,6 +171,9 @@ export async function createApp() {
 
   // Setup proxy routes first
   await setupProxy(app);
+
+  // Register aggregated handlers for user data
+  registerAggregatedHandlers(app);
 
   // Global authentication middleware - AFTER CORS and proxy setup
   app.addHook('preHandler', authenticateJWT);

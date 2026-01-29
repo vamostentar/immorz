@@ -144,7 +144,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   // Error handler
   app.setErrorHandler(async (error, request, reply) => {
     const correlationId = request.correlationId || 'unknown';
-    
+
     // Log the error
     request.log.error(`Request error: ${error.message} (${request.method} ${request.url})`);
 
@@ -187,7 +187,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   // Not found handler
   app.setNotFoundHandler(async (request, reply) => {
     const correlationId = request.correlationId || 'unknown';
-    
+
     request.log.warn(`Route not found: ${request.method} ${request.url}`);
 
     const { metricsService } = container;
@@ -226,7 +226,19 @@ export async function buildServer(): Promise<FastifyInstance> {
     });
 
     // Background services can be started here if needed
-    logger.info('Background services initialization skipped for now');
+    if (config.IMAP_ENABLED) {
+      logger.info('Starting IMAP service...');
+      try {
+        const { imapService } = container;
+        await imapService.start();
+        logger.info('✅ IMAP service started');
+      } catch (error: any) {
+        logger.error('❌ Failed to start IMAP service', { error: error.message });
+        // Don't crash the server if IMAP fails
+      }
+    } else {
+      logger.info('IMAP service disabled (IMAP_ENABLED=false)');
+    }
   });
 
   return app;
@@ -235,17 +247,17 @@ export async function buildServer(): Promise<FastifyInstance> {
 // Start server if not in test mode
 if (process.env.NODE_ENV !== 'test') {
   logger.info('Starting server initialization...');
-  
+
   buildServer()
     .then(async (app) => {
       logger.info('Server built successfully, starting to listen...');
       server = app;
-      
-      const address = await app.listen({ 
-        host: config.HOST, 
-        port: config.PORT 
+
+      const address = await app.listen({
+        host: config.HOST,
+        port: config.PORT
       });
-      
+
       logger.info('🚀 Messages Service started successfully', {
         address,
         environment: config.NODE_ENV,
@@ -257,12 +269,12 @@ if (process.env.NODE_ENV !== 'test') {
           queue: !!config.REDIS_URL,
         },
       });
-      
+
       return address;
     })
     .catch((err) => {
-      logger.fatal('Failed to start server', { 
-        error: err.message, 
+      logger.fatal('Failed to start server', {
+        error: err.message,
         stack: err.stack,
         name: err.name,
         code: err.code

@@ -8,7 +8,7 @@ import { calculateDistance, transformPropertyFromDb } from '../utils/transform';
 export class PropertyRepositoryImpl implements PropertyRepository {
   async create(data: PropertyCreateInput): Promise<PropertyResponse> {
     const startTime = Date.now();
-    
+
     try {
       const property = await prisma.property.create({
         data: {
@@ -31,10 +31,10 @@ export class PropertyRepositoryImpl implements PropertyRepository {
           contactEmail: data.contactEmail,
         } as any, // Type assertion due to extended fields
       });
-      
+
       const duration = Date.now() - startTime;
       repositoryLogger.debug({ operation: 'create', table: 'property', duration }, 'Property created');
-      
+
       return transformPropertyFromDb(property);
     } catch (error) {
       repositoryLogger.error({ error, operation: 'create', data }, 'Failed to create property');
@@ -44,7 +44,7 @@ export class PropertyRepositoryImpl implements PropertyRepository {
 
   async findById(id: string): Promise<PropertyResponse | null> {
     const startTime = Date.now();
-    
+
     try {
       const property = await prisma.property.findUnique({
         where: { id },
@@ -54,7 +54,7 @@ export class PropertyRepositoryImpl implements PropertyRepository {
 
       const duration = Date.now() - startTime;
       repositoryLogger.debug({ operation: 'findById', table: 'property', duration, id }, 'Property lookup completed');
-      
+
       return property ? transformPropertyFromDb(property) : null;
     } catch (error) {
       repositoryLogger.error({ error, operation: 'findById', id }, 'Failed to find property by ID');
@@ -64,13 +64,13 @@ export class PropertyRepositoryImpl implements PropertyRepository {
 
   async findMany(filters: PropertyFilters): Promise<PropertyResponse[]> {
     const startTime = Date.now();
-    
+
     try {
       const where = this.buildWhereClause(filters);
       const orderBy = this.buildOrderByClause(filters.sortBy, filters.sortOrder);
-      
+
       let properties;
-      
+
       // Handle nearby search separately if coordinates provided
       if (filters.nearbySearch) {
         properties = await this.findNearby(filters);
@@ -82,16 +82,16 @@ export class PropertyRepositoryImpl implements PropertyRepository {
           ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
         });
       }
-      
+
       const duration = Date.now() - startTime;
-      repositoryLogger.debug({ 
-        operation: 'findMany', 
-        table: 'property', 
-        duration, 
+      repositoryLogger.debug({
+        operation: 'findMany',
+        table: 'property',
+        duration,
         count: properties.length,
-        filters 
+        filters
       }, 'Properties search completed');
-      
+
       return properties.map(transformPropertyFromDb);
     } catch (error) {
       repositoryLogger.error({ error, operation: 'findMany', filters }, 'Failed to find properties');
@@ -101,16 +101,16 @@ export class PropertyRepositoryImpl implements PropertyRepository {
 
   async update(id: string, data: PropertyUpdateInput): Promise<PropertyResponse> {
     const startTime = Date.now();
-    
+
     try {
       // Check if property exists
       const exists = await prisma.property.findUnique({ where: { id } });
       if (!exists) {
         throw new NotFoundError('Property', id);
       }
-      
+
       const updateData: any = {};
-      
+
       // Only include fields that are provided
       if (data.title !== undefined) updateData.title = data.title;
       if (data.location !== undefined) updateData.location = data.location;
@@ -131,15 +131,15 @@ export class PropertyRepositoryImpl implements PropertyRepository {
       if (data.features !== undefined) updateData.features = data.features;
       if (data.contactPhone !== undefined) updateData.contactPhone = data.contactPhone;
       if (data.contactEmail !== undefined) updateData.contactEmail = data.contactEmail;
-      
+
       const property = await prisma.property.update({
         where: { id },
         data: updateData,
       });
-      
+
       const duration = Date.now() - startTime;
       repositoryLogger.debug({ operation: 'update', table: 'property', duration, id }, 'Property updated');
-      
+
       // Debug log para verificar o adminStatus após update
       console.log('🔍 Propriedade após update no Prisma:', {
         id: property.id,
@@ -147,18 +147,18 @@ export class PropertyRepositoryImpl implements PropertyRepository {
         adminStatusType: typeof property.adminStatus,
         rawProperty: JSON.stringify(property, null, 2)
       });
-      
+
       // Verificar se o problema está na consulta imediatamente após o update
       const verifyProperty = await prisma.property.findUnique({
         where: { id }
       });
-      
+
       console.log('🔍 Propriedade após verificação:', {
         id: verifyProperty?.id,
         adminStatus: verifyProperty?.adminStatus,
         adminStatusType: typeof verifyProperty?.adminStatus
       });
-      
+
       return transformPropertyFromDb(property);
     } catch (error) {
       repositoryLogger.error({ error, operation: 'update', id, data }, 'Failed to update property');
@@ -168,18 +168,18 @@ export class PropertyRepositoryImpl implements PropertyRepository {
 
   async delete(id: string): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
       // Check if property exists
       const exists = await prisma.property.findUnique({ where: { id } });
       if (!exists) {
         throw new NotFoundError('Property', id);
       }
-      
+
       await prisma.property.delete({
         where: { id },
       });
-      
+
       const duration = Date.now() - startTime;
       repositoryLogger.debug({ operation: 'delete', table: 'property', duration, id }, 'Property deleted');
     } catch (error) {
@@ -190,15 +190,15 @@ export class PropertyRepositoryImpl implements PropertyRepository {
 
   async count(filters?: Partial<PropertyFilters>): Promise<number> {
     const startTime = Date.now();
-    
+
     try {
       const where = filters ? this.buildWhereClause(filters as PropertyFilters) : {};
-      
+
       const count = await prisma.property.count({ where });
-      
+
       const duration = Date.now() - startTime;
       repositoryLogger.debug({ operation: 'count', table: 'property', duration, count }, 'Property count completed');
-      
+
       return count;
     } catch (error) {
       repositoryLogger.error({ error, operation: 'count', filters }, 'Failed to count properties');
@@ -208,17 +208,28 @@ export class PropertyRepositoryImpl implements PropertyRepository {
 
   private buildWhereClause(filters: PropertyFilters): Prisma.PropertyWhereInput {
     const where: Prisma.PropertyWhereInput = {};
-    
+
     // Status filter
     if (filters.status) {
       where.status = filters.status;
     }
-    
+
+    // Agent filter
+    if (filters.agentId) {
+      where.agentId = filters.agentId;
+    }
+
+    // Admin Status filter
+    if (filters.adminStatus) {
+      where.adminStatus = filters.adminStatus;
+    }
+
+
     // Type filter
     if (filters.type) {
       where.type = filters.type;
     }
-    
+
     // Location filter (case-insensitive search)
     if (filters.location) {
       where.location = {
@@ -226,7 +237,7 @@ export class PropertyRepositoryImpl implements PropertyRepository {
         mode: 'insensitive',
       };
     }
-    
+
     // Price range
     if (filters.minPrice || filters.maxPrice) {
       where.price = {};
@@ -237,7 +248,7 @@ export class PropertyRepositoryImpl implements PropertyRepository {
         where.price.lte = new Prisma.Decimal(filters.maxPrice);
       }
     }
-    
+
     // Area range
     if (filters.minArea || filters.maxArea) {
       (where as any).area = {};
@@ -248,7 +259,7 @@ export class PropertyRepositoryImpl implements PropertyRepository {
         (where as any).area.lte = new Prisma.Decimal(filters.maxArea);
       }
     }
-    
+
     // Bedrooms range
     if (filters.minBedrooms !== undefined || filters.maxBedrooms !== undefined) {
       (where as any).bedrooms = {};
@@ -259,7 +270,7 @@ export class PropertyRepositoryImpl implements PropertyRepository {
         (where as any).bedrooms.lte = filters.maxBedrooms;
       }
     }
-    
+
     // Bathrooms range
     if (filters.minBathrooms !== undefined || filters.maxBathrooms !== undefined) {
       (where as any).bathrooms = {};
@@ -270,7 +281,7 @@ export class PropertyRepositoryImpl implements PropertyRepository {
         (where as any).bathrooms.lte = filters.maxBathrooms;
       }
     }
-    
+
     // Year built range
     if (filters.minYearBuilt || filters.maxYearBuilt) {
       (where as any).yearBuilt = {};
@@ -281,14 +292,14 @@ export class PropertyRepositoryImpl implements PropertyRepository {
         (where as any).yearBuilt.lte = filters.maxYearBuilt;
       }
     }
-    
+
     // Features filter
     if (filters.features && filters.features.length > 0) {
       (where as any).features = {
         hasEvery: filters.features,
       };
     }
-    
+
     // Text search (searches in title, description, and location)
     if (filters.q) {
       where.OR = [
@@ -297,16 +308,16 @@ export class PropertyRepositoryImpl implements PropertyRepository {
         { location: { contains: filters.q, mode: 'insensitive' } },
       ];
     }
-    
+
     return where;
   }
-  
+
   private buildOrderByClause(
-    sortBy: PropertyFilters['sortBy'], 
+    sortBy: PropertyFilters['sortBy'],
     sortOrder: PropertyFilters['sortOrder']
   ): Prisma.PropertyOrderByWithRelationInput {
     const orderBy: Prisma.PropertyOrderByWithRelationInput = {};
-    
+
     switch (sortBy) {
       case 'price':
         orderBy.price = sortOrder;
@@ -322,33 +333,33 @@ export class PropertyRepositoryImpl implements PropertyRepository {
         orderBy.createdAt = sortOrder;
         break;
     }
-    
+
     return orderBy;
   }
-  
+
   private async findNearby(filters: PropertyFilters): Promise<any[]> {
     if (!filters.nearbySearch) return [];
-    
+
     const { latitude, longitude, radiusKm } = filters.nearbySearch;
-    
+
     // Note: This is a simplified implementation. For production, you'd want to use PostGIS
     // or similar geospatial database extensions for better performance.
     const properties = await prisma.property.findMany({
       where: this.buildWhereClause(filters),
     });
-    
+
     // Filter by distance and sort by proximity
     const nearby = properties
       .filter((property: any) => {
         if (!property.coordinates) return false;
-        
+
         const distance = calculateDistance(
           latitude,
           longitude,
           property.coordinates.latitude,
           property.coordinates.longitude
         );
-        
+
         return distance <= radiusKm;
       })
       .sort((a: any, b: any) => {
@@ -364,11 +375,11 @@ export class PropertyRepositoryImpl implements PropertyRepository {
           b.coordinates.latitude,
           b.coordinates.longitude
         );
-        
+
         return distanceA - distanceB;
       })
       .slice(0, filters.limit);
-    
+
     return nearby;
   }
 }

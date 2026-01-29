@@ -12,6 +12,8 @@ export interface CreateMessageDto {
   phone?: string;
   body: string;
   context?: any;
+  propertyId?: string;
+  agentId?: string;
   correlationId?: string;
 }
 
@@ -41,7 +43,7 @@ export class MessageService {
     private cacheService: CacheService,
     private emailService: EmailService,
     private emailQueue?: Queue
-  ) {}
+  ) { }
 
   /**
    * Create and process a new message
@@ -59,6 +61,31 @@ export class MessageService {
         bodyLength: data.body.length,
       });
 
+      // If propertyId is provided but agentId is not, fetch agentId from the property
+      let agentId = data.agentId;
+      if (data.propertyId && !agentId) {
+        try {
+          // Fetch property to get agentId
+          const property = await this.prisma.$queryRaw`
+            SELECT "agentId" FROM properties.properties WHERE id = ${data.propertyId}::uuid LIMIT 1
+          ` as any[];
+
+          if (property && property[0] && property[0].agentId) {
+            agentId = property[0].agentId;
+            messageLogger.info('Auto-assigned agentId from property', {
+              propertyId: data.propertyId,
+              agentId,
+            });
+          }
+        } catch (propertyError: any) {
+          messageLogger.warn('Failed to fetch property for agentId', {
+            propertyId: data.propertyId,
+            error: propertyError.message,
+          });
+          // Continue without agentId - not critical
+        }
+      }
+
       // Create message in database
       const message = await this.prisma.message.create({
         data: {
@@ -67,6 +94,8 @@ export class MessageService {
           phone: data.phone,
           body: data.body,
           context: data.context,
+          propertyId: data.propertyId,
+          agentId: agentId,
           status: 'QUEUED',
           events: {
             create: {
@@ -121,7 +150,7 @@ export class MessageService {
             error: error.message,
             messageId: message.id,
           });
-          
+
           await this.updateMessageStatus(message.id, 'FAILED', correlationId, error.message);
         }
       }
@@ -173,7 +202,7 @@ export class MessageService {
 
     try {
       const eventType = this.getEventTypeFromStatus(status);
-      
+
       const message = await this.prisma.message.update({
         where: { id: messageId },
         data: {
@@ -221,7 +250,7 @@ export class MessageService {
    */
   async getMessageById(id: string, useCache = true): Promise<MessageWithEvents | null> {
     const cacheKey = `message:${id}`;
-    
+
     if (useCache) {
       const cached = await this.cacheService.get<MessageWithEvents>(cacheKey);
       if (cached) {
@@ -231,7 +260,7 @@ export class MessageService {
     }
 
     const startTime = Date.now();
-    
+
     try {
       const message = await this.prisma.message.findUnique({
         where: { id },
@@ -274,19 +303,32 @@ export class MessageService {
     limit = 20,
     filters: {
       status?: MessageStatus;
+      type?: 'INBOUND' | 'OUTBOUND';
       fromEmail?: string;
       dateFrom?: Date;
       dateTo?: Date;
+      propertyId?: string;
+      agentId?: string;
+      read?: boolean;
+      deleted?: boolean;
+      search?: string;
     } = {}
   ): Promise<PaginatedMessages> {
     const startTime = Date.now();
     const offset = (page - 1) * limit;
 
     try {
-      const where: any = {};
+      const where: any = {
+        // By default, don't show deleted messages unless explicitly requested
+        deleted: filters.deleted ?? false,
+      };
 
       if (filters.status) {
         where.status = filters.status;
+      }
+
+      if (filters.type) {
+        where.type = filters.type;
       }
 
       if (filters.fromEmail) {
@@ -298,12 +340,33 @@ export class MessageService {
 
       if (filters.dateFrom || filters.dateTo) {
         where.createdAt = {};
-        if (filters.dateFrom) {
-          where.createdAt.gte = filters.dateFrom;
+        if (filters.dateTo) {
+          where.createdAt.lte = filters.dateTo;
         }
         if (filters.dateTo) {
           where.createdAt.lte = filters.dateTo;
         }
+      }
+
+      if (filters.propertyId) {
+        where.propertyId = filters.propertyId;
+      }
+
+      if (filters.agentId) {
+        where.agentId = filters.agentId;
+      }
+
+      if (filters.read !== undefined) {
+        where.read = filters.read;
+      }
+
+      // Search filter: searches in body, fromName, and fromEmail
+      if (filters.search) {
+        where.OR = [
+          { body: { contains: filters.search, mode: 'insensitive' } },
+          { fromName: { contains: filters.search, mode: 'insensitive' } },
+          { fromEmail: { contains: filters.search, mode: 'insensitive' } },
+        ];
       }
 
       const [messages, total] = await Promise.all([
@@ -345,47 +408,170 @@ export class MessageService {
   }
 
   /**
+   * Mark a message as read
+   */
+  async markAsRead(messageId: string): Promise<void> {
+    try {
+      await this.prisma.message.update({
+        where: { id: messageId },
+        data: { read: true },
+      });
+
+      // Clear cache for this message
+      await this.cacheService.delete(`message:${messageId}`);
+
+      this.logger.info('Message marked as read', { messageId });
+    } catch (error: any) {
+      this.logger.error('Failed to mark message as read', {
+        error: error.message,
+        messageId,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Mark a message as unread
+   */
+  async markAsUnread(messageId: string): Promise<void> {
+    try {
+      await this.prisma.message.update({
+        where: { id: messageId },
+        data: { read: false },
+      });
+
+      // Clear cache for this message
+      await this.cacheService.delete(`message:${messageId}`);
+
+      this.logger.info('Message marked as unread', { messageId });
+    } catch (error: any) {
+      this.logger.error('Failed to mark message as unread', {
+        error: error.message,
+        messageId,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Soft delete a message (move to trash)
+   */
+  async deleteMessage(messageId: string): Promise<void> {
+    try {
+      // Soft delete - mark as deleted instead of removing
+      await this.prisma.message.update({
+        where: { id: messageId },
+        data: { deleted: true },
+      });
+
+      // Clear cache for this message
+      await this.cacheService.delete(`message:${messageId}`);
+
+      this.logger.info('Message moved to trash', { messageId });
+    } catch (error: any) {
+      this.logger.error('Failed to delete message', {
+        error: error.message,
+        messageId,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Restore a message from trash
+   */
+  async restoreMessage(messageId: string): Promise<void> {
+    try {
+      await this.prisma.message.update({
+        where: { id: messageId },
+        data: { deleted: false },
+      });
+
+      // Clear cache for this message
+      await this.cacheService.delete(`message:${messageId}`);
+
+      this.logger.info('Message restored from trash', { messageId });
+    } catch (error: any) {
+      this.logger.error('Failed to restore message', {
+        error: error.message,
+        messageId,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Permanently delete a message
+   */
+  async permanentlyDeleteMessage(messageId: string): Promise<void> {
+    try {
+      await this.prisma.message.delete({
+        where: { id: messageId },
+      });
+
+      // Clear cache for this message
+      await this.cacheService.delete(`message:${messageId}`);
+
+      this.logger.info('Message permanently deleted', { messageId });
+    } catch (error: any) {
+      this.logger.error('Failed to permanently delete message', {
+        error: error.message,
+        messageId,
+      });
+      throw error;
+    }
+  }
+
+  /**
    * Get message statistics
    */
-  async getMessageStats(): Promise<{
+  async getMessageStats(agentId?: string): Promise<{
     total: number;
     byStatus: Record<MessageStatus, number>;
     last24Hours: number;
     last7Days: number;
   }> {
-    const cacheKey = 'message:stats';
+    const cacheKey = agentId ? `message:stats:agent:${agentId}` : 'message:stats';
     const cached = await this.cacheService.get<{
       total: number;
       byStatus: Record<MessageStatus, number>;
       last24Hours: number;
       last7Days: number;
     }>(cacheKey);
-    
+
     if (cached) {
       this.metricsService.incrementCounter('message_stats_cache_hits_total');
       return cached;
     }
 
     const startTime = Date.now();
-    
+
     try {
       const now = new Date();
       const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+      // Build where clause with optional agentId filter
+      const baseWhere = agentId ? { agentId } : {};
+
       const [total, byStatus, last24Hours, last7Days] = await Promise.all([
-        this.prisma.message.count(),
+        this.prisma.message.count({
+          where: baseWhere,
+        }),
         this.prisma.message.groupBy({
           by: ['status'],
+          where: baseWhere,
           _count: true,
         }),
         this.prisma.message.count({
           where: {
+            ...baseWhere,
             createdAt: { gte: yesterday },
           },
         }),
         this.prisma.message.count({
           where: {
+            ...baseWhere,
             createdAt: { gte: weekAgo },
           },
         }),
@@ -425,7 +611,7 @@ export class MessageService {
    */
   async retryFailedMessages(limit = 10): Promise<number> {
     const startTime = Date.now();
-    
+
     try {
       const failedMessages = await this.prisma.message.findMany({
         where: {
@@ -521,6 +707,98 @@ export class MessageService {
       this.logger.error('Failed to cleanup old messages', {
         error: error.message,
         cutoffDate,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Reply to a message and persist the reply
+   */
+  async replyToMessage(
+    originalMessageId: string,
+    body: string,
+    subject?: string
+  ): Promise<Message> {
+    const startTime = Date.now();
+    const correlationId = uuidv4();
+    const messageLogger = this.logger.child({ correlationId, operation: 'replyToMessage' });
+
+    try {
+      // Get the original message
+      const originalMessage = await this.prisma.message.findUnique({
+        where: { id: originalMessageId },
+      });
+
+      if (!originalMessage) {
+        throw new Error('Original message not found');
+      }
+
+      const replySubject = subject || `Re: Contacto de ${originalMessage.fromName}`;
+
+      // Send the reply email
+      await this.emailService.sendCustomEmail(
+        originalMessage.fromEmail,
+        replySubject,
+        `
+          <div style="font-family: Arial, sans-serif; padding: 20px;">
+            <p>${body.replace(/\n/g, '<br>')}</p>
+            <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+            <p style="color: #666; font-size: 12px;">
+              Esta é uma resposta à sua mensagem enviada através do nosso portal.
+            </p>
+          </div>
+        `,
+        body // plain text version
+      );
+
+      // Create message in database
+      const { config } = await import('@/utils/config');
+
+      const message = await this.prisma.message.create({
+        data: {
+          fromName: 'RibeirAzul', // TODO: Make configurable or dynamic
+          fromEmail: config.EMAIL_FROM,
+          body: body,
+          status: 'SENT',
+          type: 'OUTBOUND',
+          context: {
+            originalMessageId,
+            replyTo: originalMessage.fromEmail,
+            subject: replySubject,
+            correlationId,
+          },
+          events: {
+            create: {
+              type: 'OUTBOUND_SENT',
+              details: { correlationId, originalMessageId },
+            },
+          },
+        },
+        include: {
+          events: true,
+        },
+      });
+
+      // Log success
+      const duration = Date.now() - startTime;
+      messageLogger.info('Reply sent and persisted successfully', {
+        messageId: message.id,
+        originalMessageId,
+        duration,
+      });
+
+      // Update metrics
+      this.metricsService.incrementCounter('messages_replied_total');
+      this.metricsService.recordHistogram('message_reply_duration_ms', duration);
+
+      return message;
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      messageLogger.error('Failed to reply to message', {
+        error: error.message,
+        originalMessageId,
+        duration,
       });
       throw error;
     }

@@ -1,4 +1,6 @@
+# ====================================
 # Dependencies
+# ====================================
 node_modules/
 .yarn/*
 !.yarn/patches
@@ -8,61 +10,161 @@ node_modules/
 !.yarn/versions
 .pnp.*
 
-# Environment variables
+# ====================================
+# Environment Variables (PROTECTED)
+# ====================================
+# NEVER commit .env files with real credentials!
 .env
 .env.local
+.env.development
 .env.production
 .env.*.local
 *.env
+!.env.example
 
-# Production
+# Protect .env files in all microservices
+backend/**/.env
+backend/**/.env.local
+backend/**/.env.production
+backend/**/.env.development
+
+# ====================================
+# Build Output
+# ====================================
 dist/
 build/
-*.log
+.next/
+out/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Build artifacts in microservices
+backend/*/dist/
+backend/*/build/
+frontend/dist/
+frontend/build/
 
-# OS
-.DS_Store
-Thumbs.db
+# TypeScript Build Info
+*.tsbuildinfo
 
-# Testing
-coverage/
-.nyc_output/
-
-# Docker
-docker-compose.override.yml
-*.pid
-
-# Backups
-*.backup
-*.bak
-backup/
-
-# Uploads
-uploads/
-media/
-
+# ====================================
 # Logs
+# ====================================
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
 
-# Security
+# Custom logs
+logs_debug.txt
+debug.log
+error.log
+
+# ====================================
+# Database Dumps & Backups
+# ====================================
+*.dump
+*.sql
+*.backup
+*.bak
+backup/
+backups/
+dumps/
+
+# Prisma migrations backup
+backend/*/prisma/migrations/*.backup
+
+# ====================================
+# IDE & Editors
+# ====================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ====================================
+# OS
+# ====================================
+Thumbs.db
+Desktop.ini
+.Spotlight-V100
+.Trashes
+
+# ====================================
+# Testing
+# ====================================
+coverage/
+.nyc_output/
+.jest-cache/
+*.lcov
+
+# ====================================
+# Docker
+# ====================================
+docker-compose.override.yml
+*.pid
+
+# Docker volumes (if local)
+volumes/
+data/
+
+# ====================================
+# Uploads & Media
+# ====================================
+uploads/
+media/
+public/uploads/
+tmp/
+
+# ====================================
+# Security & Certificates
+# ====================================
 *.pem
 *.key
 *.crt
 *.p12
+*.pfx
 certificates/
+ssl/
+.ssl/
 
-# Database
+# Private keys
+id_rsa
+id_rsa.pub
+*.ppk
+
+# ====================================
+# Database Files
+# ====================================
 *.sqlite
 *.sqlite3
 *.db
+*.db-shm
+*.db-wal
+
+# ====================================
+# Temporary Files
+# ====================================
+tmp/
+temp/
+*.tmp
+*.temp
+.cache/
+
+# ====================================
+# Package Manager
+# ====================================
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.pnpm-store/
+
+# ====================================
+# Misc
+# ====================================
+.turbo/
+.vercel/
+.netlify/

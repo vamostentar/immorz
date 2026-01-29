@@ -36,8 +36,8 @@ interface User {
   phone?: string;
   isActive: boolean;
   isVerified: boolean;
-  role: string;
-  roleId: string;
+  role: string | { id: string; name: string; displayName: string };
+  roleId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -324,7 +324,7 @@ export function useBackups() {
 
 export function useCreateBackup() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (request: CreateBackupRequest) => {
       const { data } = await api.post('/api/v1/backup', request);
@@ -338,7 +338,7 @@ export function useCreateBackup() {
 
 export function useRestoreBackup() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (request: RestoreBackupRequest) => {
       const { data } = await api.post('/api/v1/backup/restore', request);
@@ -353,7 +353,7 @@ export function useRestoreBackup() {
 
 export function useDeleteBackup() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (backupId: string) => {
       const { data } = await api.delete(`/api/v1/backup/${backupId}`);
@@ -652,13 +652,44 @@ interface Role {
   updatedAt: string;
 }
 
+// Fallback roles when API is unavailable
+const FALLBACK_ROLES: Role[] = [
+  { id: 'super_admin', name: 'super_admin', displayName: 'Super Administrador', permissions: ['*'], isActive: true, createdAt: '', updatedAt: '' },
+  { id: 'admin', name: 'admin', displayName: 'Administrador', permissions: [], isActive: true, createdAt: '', updatedAt: '' },
+  { id: 'agent', name: 'agent', displayName: 'Agente', permissions: [], isActive: true, createdAt: '', updatedAt: '' },
+  { id: 'client', name: 'client', displayName: 'Cliente', permissions: [], isActive: true, createdAt: '', updatedAt: '' },
+];
+
 export function useRoles() {
   return useQuery<Role[]>({
     queryKey: ['roles'],
     queryFn: async () => {
-      const { data } = await api.get('/api/v1/roles');
-      return data.data;
+      try {
+        console.log('🔄 Fetching roles from API...');
+        const response = await api.get('/api/v1/roles');
+        console.log('📥 Raw API response:', response);
+
+        // Handle different response structures
+        let roles = response.data?.data || response.data || [];
+        console.log('📋 Extracted roles:', roles);
+
+        // Validate each role has required fields
+        if (Array.isArray(roles) && roles.length > 0) {
+          const validRoles = roles.filter((r: any) => r && (r.id || r.name));
+          if (validRoles.length > 0) {
+            console.log('✅ Using API roles:', validRoles);
+            return validRoles;
+          }
+        }
+
+        console.warn('⚠️ No valid roles from API, using fallback');
+        return FALLBACK_ROLES;
+      } catch (error) {
+        console.warn('❌ Failed to fetch roles, using fallback:', error);
+        return FALLBACK_ROLES;
+      }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: false, // Don't retry, use fallback immediately
   });
 }

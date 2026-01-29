@@ -2,6 +2,7 @@ import { CacheService } from '@/services/cache.service';
 import { CircuitBreakerService } from '@/services/circuit-breaker.service';
 import { EmailService } from '@/services/email.service';
 import { HealthService } from '@/services/health.service';
+import { ImapService } from '@/services/imap.service';
 import { MessageService } from '@/services/message.service';
 import { MetricsService } from '@/services/metrics.service';
 import { config, configService } from '@/utils/config';
@@ -19,6 +20,7 @@ export class SimpleContainer {
   private _healthService?: HealthService;
   private _cacheService?: CacheService;
   private _circuitBreakerService?: CircuitBreakerService;
+  private _imapService?: ImapService;
 
   get prisma(): PrismaClient {
     if (!this._prisma) {
@@ -41,7 +43,7 @@ export class SimpleContainer {
 
   get redis(): Redis | undefined {
     if (!config.REDIS_URL) return undefined;
-    
+
     if (!this._redis) {
       this._redis = new Redis(config.REDIS_URL, {
         password: config.REDIS_PASSWORD,
@@ -103,6 +105,24 @@ export class SimpleContainer {
     return this._emailService;
   }
 
+  get imapService(): ImapService {
+    if (!this._imapService) {
+      logger.info('Initializing ImapService...');
+      try {
+        this._imapService = new ImapService(
+          this.prisma,
+          this.metricsService,
+          this.circuitBreakerService
+        );
+        logger.info('ImapService initialized successfully');
+      } catch (error: any) {
+        logger.error('Failed to initialize ImapService', { error: error.message });
+        throw error;
+      }
+    }
+    return this._imapService;
+  }
+
   get messageService(): MessageService {
     if (!this._messageService) {
       this._messageService = new MessageService(
@@ -129,20 +149,26 @@ export class SimpleContainer {
 
   async shutdown(): Promise<void> {
     logger.info('Shutting down container...');
-    
+
     try {
+      // Stop IMAP service
+      if (this._imapService) {
+        logger.info('Stopping IMAP service...');
+        await this._imapService.stop();
+      }
+
       // Close Redis connection
       if (this._redis) {
         logger.info('Closing Redis connection...');
         this._redis.disconnect();
       }
-      
+
       // Close Prisma connection
       if (this._prisma) {
         logger.info('Closing database connection...');
         await this._prisma.$disconnect();
       }
-      
+
       logger.info('Container shutdown complete');
     } catch (error: any) {
       logger.error('Error during container shutdown', { error: error.message });
@@ -156,3 +182,4 @@ export const container = new SimpleContainer();
 export async function shutdownContainer(): Promise<void> {
   return container.shutdown();
 }
+

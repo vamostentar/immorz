@@ -84,7 +84,7 @@ export class ImapService {
       if (this.reconnectAttempts < this.maxReconnectAttempts) {
         this.reconnectAttempts++;
         const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-        
+
         this.logger.info('Retrying IMAP connection', {
           attempt: this.reconnectAttempts,
           delay,
@@ -131,7 +131,7 @@ export class ImapService {
       this.client.on('close', () => {
         this.logger.warn('IMAP connection closed');
         this.metricsService.incrementCounter('imap_disconnections_total');
-        
+
         // Attempt to reconnect if service is still running
         if (this.isRunning) {
           setTimeout(() => {
@@ -145,9 +145,9 @@ export class ImapService {
       });
 
       await this.client.connect();
-      
+
       const mailbox = await this.client.mailboxOpen('INBOX');
-      
+
       const duration = Date.now() - startTime;
       this.logger.info('IMAP connected successfully', {
         mailbox: mailbox.path,
@@ -157,7 +157,7 @@ export class ImapService {
 
       this.metricsService.incrementCounter('imap_connections_total');
       this.metricsService.recordHistogram('imap_connection_duration_ms', duration);
-      
+
       // Reset reconnection attempts on successful connection
       this.reconnectAttempts = 0;
     } catch (error: any) {
@@ -206,11 +206,11 @@ export class ImapService {
 
     try {
       const lock = await this.client.getMailboxLock('INBOX');
-      
+
       try {
         // Search for unseen messages
         const messages = await this.client.search({ seen: false });
-        
+
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
           this.logger.debug('No new messages found');
           return;
@@ -288,6 +288,20 @@ export class ImapService {
         throw new Error('Message has no sender address');
       }
 
+      // Skip emails sent by our own system to prevent duplicates
+      const { config } = await import('@/utils/config');
+      const systemEmails = [config.EMAIL_FROM, config.SMTP_USER].map(e => e.toLowerCase());
+      if (systemEmails.includes(from.address.toLowerCase())) {
+        this.logger.info('Skipping system-generated email', {
+          from: from.address,
+          subject,
+          uid,
+        });
+        // Mark as seen but don't save to database
+        await this.client.messageFlagsAdd(uid, ['\\Seen']);
+        return;
+      }
+
       // Store message in database
       const savedMessage = await this.prisma.message.create({
         data: {
@@ -295,6 +309,7 @@ export class ImapService {
           fromEmail: from.address,
           body: String(body).trim(),
           status: 'RECEIVED',
+          type: 'INBOUND',
           context: {
             subject,
             uid,
@@ -385,7 +400,7 @@ export class ImapService {
   }> {
     const lastCheck = new Date();
     const connected = !!(this.client && this.isRunning);
-    
+
     return {
       status: connected ? 'healthy' : 'unhealthy',
       connected,

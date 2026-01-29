@@ -13,7 +13,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, helperText, leftIcon, rightIcon, fullWidth = false, ...props }, ref) => {
     const widthClass = fullWidth ? 'w-full' : '';
-    
+
     return (
       <div className={cn('space-y-1', widthClass)}>
         {label && (
@@ -39,7 +39,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
           {rightIcon && (
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
               <div className="text-gray-400">{rightIcon}</div>
             </div>
           )}

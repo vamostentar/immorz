@@ -1,20 +1,20 @@
-import { 
-  UserProfile, 
-  UserPreferences, 
-  PropertyInterest, 
-  SavedProperty, 
-  SearchHistory, 
-  Notification,
-  Gender,
+import {
   ContactMethod,
-  ProfileVisibility,
-  PropertyType,
+  DeliveryMethod,
+  Gender,
   InterestType,
-  Priority,
-  SortBy,
-  ViewMode,
+  Notification,
   NotificationType,
-  DeliveryMethod
+  Priority,
+  ProfileVisibility,
+  PropertyInterest,
+  PropertyType,
+  SavedProperty,
+  SearchHistory,
+  SortBy,
+  UserPreferences,
+  UserProfile,
+  ViewMode
 } from '@/types/user';
 
 /**
@@ -101,6 +101,7 @@ export interface SavedPropertyRepositoryInterface {
   create(data: CreateSavedPropertyData): Promise<SavedProperty>;
   update(id: string, data: UpdateSavedPropertyData): Promise<SavedProperty>;
   delete(id: string): Promise<void>;
+  deleteByUserAndProperty(userId: string, propertyId: string): Promise<void>;
   findByFolder(userId: string, folder: string): Promise<SavedProperty[]>;
   findByTag(userId: string, tag: string): Promise<SavedProperty[]>;
 }
@@ -110,9 +111,10 @@ export interface SavedPropertyRepositoryInterface {
  */
 export interface SearchHistoryRepositoryInterface {
   findById(id: string): Promise<SearchHistory | null>;
-  findByUserId(userId: string, options?: FindManyOptions): Promise<SearchHistory[]>;
+  findByUserId(userId: string, limit?: number): Promise<SearchHistory[]>;
   create(data: CreateSearchHistoryData): Promise<SearchHistory>;
   delete(id: string): Promise<void>;
+  deleteByUserId(userId: string): Promise<void>;
   deleteOldEntries(olderThan: Date): Promise<number>;
   getPopularSearches(limit?: number): Promise<SearchHistory[]>;
 }
@@ -122,16 +124,26 @@ export interface SearchHistoryRepositoryInterface {
  */
 export interface NotificationRepositoryInterface {
   findById(id: string): Promise<Notification | null>;
-  findByUserId(userId: string, options?: FindManyOptions): Promise<Notification[]>;
+  findByUserId(userId: string, options?: NotificationFindOptions): Promise<Notification[]>;
   create(data: CreateNotificationData): Promise<Notification>;
   update(id: string, data: UpdateNotificationData): Promise<Notification>;
   delete(id: string): Promise<void>;
-  markAsRead(id: string): Promise<void>;
+  markAsRead(id: string, userId: string): Promise<void>;
+  markAllAsRead(userId: string): Promise<void>;
   markAsUnread(id: string): Promise<void>;
   markAsArchived(id: string): Promise<void>;
   markAsUnarchived(id: string): Promise<void>;
   getUnreadCount(userId: string): Promise<number>;
   deleteOldNotifications(olderThan: Date): Promise<number>;
+}
+
+/**
+ * Opções de pesquisa para notificações
+ */
+export interface NotificationFindOptions {
+  unreadOnly?: boolean;
+  limit?: number;
+  skip?: number;
 }
 
 /**
@@ -146,20 +158,23 @@ export interface FindManyOptions {
 }
 
 // Data transfer objects
+
+/**
+ * Dados para criação de perfil
+ * NOTA: Com a nova arquitectura, firstName/lastName/email vêm do auth-service
+ * O ID DEVE ser o mesmo do utilizador no auth-service
+ */
 export interface CreateUserProfileData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  avatar?: string;
+  id: string; // Obrigatório - mesmo ID do auth-service
   bio?: string;
-  dateOfBirth?: Date;
-  gender?: Gender;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  postalCode?: string;
+  avatar?: string;
+  dateOfBirth?: Date | null;
+  gender?: Gender | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  postalCode?: string | null;
   preferredContactMethod?: ContactMethod;
   language?: string;
   timezone?: string;

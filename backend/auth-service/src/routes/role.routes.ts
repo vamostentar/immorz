@@ -2,9 +2,9 @@ import { RoleController } from '@/controllers/role.controller';
 import { authenticate, requireRole } from '@/middlewares/auth.middleware';
 import { RoleService } from '@/services/role.service';
 import {
-    type CreateRoleRequest,
-    type RoleListQuery,
-    type UpdateRoleRequest,
+  type CreateRoleRequest,
+  type RoleListQuery,
+  type UpdateRoleRequest,
 } from '@/types/auth';
 import { PrismaClient } from '@prisma/client';
 import type { FastifyInstance } from 'fastify';
@@ -70,7 +70,7 @@ export async function roleRoutes(fastify: FastifyInstance) {
             success: { type: 'boolean' },
             data: {
               type: 'array',
-              items: { type: 'object' },
+              items: { type: 'object', additionalProperties: true },
             },
             meta: {
               type: 'object',
@@ -104,7 +104,7 @@ export async function roleRoutes(fastify: FastifyInstance) {
         type: 'object',
         required: ['roleId'],
         properties: {
-          roleId: { type: 'string', format: 'uuid' },
+          roleId: { type: 'string' },
         },
       },
       response: {
@@ -135,7 +135,7 @@ export async function roleRoutes(fastify: FastifyInstance) {
         type: 'object',
         required: ['roleId'],
         properties: {
-          roleId: { type: 'string', format: 'uuid' },
+          roleId: { type: 'string' },
         },
       },
       querystring: {
@@ -172,7 +172,7 @@ export async function roleRoutes(fastify: FastifyInstance) {
         type: 'object',
         required: ['roleId'],
         properties: {
-          roleId: { type: 'string', format: 'uuid' },
+          roleId: { type: 'string' },
         },
       },
       response: {
@@ -246,7 +246,7 @@ export async function roleRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['roleId'],
           properties: {
-            roleId: { type: 'string', format: 'uuid' },
+            roleId: { type: 'string' },
           },
         },
         body: {
@@ -285,7 +285,7 @@ export async function roleRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['roleId'],
           properties: {
-            roleId: { type: 'string', format: 'uuid' },
+            roleId: { type: 'string' },
           },
         },
         response: {
@@ -329,7 +329,7 @@ export async function roleRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['roleId'],
           properties: {
-            roleId: { type: 'string', format: 'uuid' },
+            roleId: { type: 'string' },
           },
         },
         body: {

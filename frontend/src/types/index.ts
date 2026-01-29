@@ -13,6 +13,7 @@ export type Property = {
   area?: number | null;
   createdAt: string;
   updatedAt: string;
+  agentId?: string | null;
 };
 
 export type PropertiesPagination = {
@@ -136,4 +137,33 @@ export type SettingsOperationResult<T = any> = {
   };
   error?: string;
   code?: string;
+};
+
+export type MessageStatus = 'QUEUED' | 'SENT' | 'FAILED' | 'RECEIVED';
+
+export type Message = {
+  id: string;
+  fromName: string;
+  fromEmail: string;
+  phone?: string | null;
+  body: string;
+  status: MessageStatus;
+  context?: any;
+  error?: string | null;
+  propertyId?: string | null;
+  agentId?: string | null;
+  read: boolean;
+  createdAt: string;
+  updatedAt: string;
+  retries: number;
+  type?: 'INBOUND' | 'OUTBOUND';
+  deleted?: boolean;
+};
+
+export type PaginatedMessages = {
+  data: Message[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 };

@@ -5,11 +5,11 @@ import { repositoryLogger } from '../../utils/logger';
 import { calculateDistance, transformPropertyFromDb } from '../../utils/transform';
 
 export class PrismaPropertyRepository implements IPropertyRepository {
-  constructor(private prisma: any) {}
+  constructor(private prisma: any) { }
 
   async create(data: PropertyCreateInput): Promise<PropertyResponse> {
     const startTime = Date.now();
-    
+
     try {
       repositoryLogger.debug({ adminStatus: (data as any).adminStatus }, 'PrismaPropertyRepository.create received adminStatus');
       const property = await this.prisma.property.create({
@@ -18,7 +18,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
           location: data.location,
           price: new Prisma.Decimal(data.price),
           status: data.status,
-          adminStatus: data.adminStatus, 
+          adminStatus: data.adminStatus,
           type: data.type,
           imageUrl: data.imageUrl,
           description: data.description,
@@ -30,12 +30,13 @@ export class PrismaPropertyRepository implements IPropertyRepository {
           features: data.features,
           contactPhone: data.contactPhone,
           contactEmail: data.contactEmail,
+          agentId: data.agentId, // Atribuir agente responsável
         } as any,
       });
-      
+
       const duration = Date.now() - startTime;
       repositoryLogger.debug({ operation: 'create', table: 'property', duration }, 'Property created');
-      
+
       return transformPropertyFromDb(property);
     } catch (error) {
       repositoryLogger.error({ error, operation: 'create', data }, 'Failed to create property');
@@ -45,15 +46,15 @@ export class PrismaPropertyRepository implements IPropertyRepository {
 
   async findById(id: string): Promise<PropertyResponse | null> {
     const startTime = Date.now();
-    
+
     try {
       const property = await this.prisma.property.findUnique({
         where: { id },
       });
-      
+
       const duration = Date.now() - startTime;
       repositoryLogger.debug({ operation: 'findById', table: 'property', duration, id }, 'Property lookup completed');
-      
+
       return property ? transformPropertyFromDb(property) : null;
     } catch (error) {
       repositoryLogger.error({ error, operation: 'findById', id }, 'Failed to find property by ID');
@@ -63,13 +64,13 @@ export class PrismaPropertyRepository implements IPropertyRepository {
 
   async findMany(filters: PropertyFilters): Promise<PropertyResponse[]> {
     const startTime = Date.now();
-    
+
     try {
       const where = this.buildWhereClause(filters);
       const orderBy = this.buildOrderByClause(filters.sortBy, filters.sortOrder);
-      
+
       let properties;
-      
+
       if (filters.nearbySearch) {
         properties = await this.findNearby(filters);
       } else {
@@ -80,16 +81,16 @@ export class PrismaPropertyRepository implements IPropertyRepository {
           ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
         });
       }
-      
+
       const duration = Date.now() - startTime;
-      repositoryLogger.debug({ 
-        operation: 'findMany', 
-        table: 'property', 
-        duration, 
+      repositoryLogger.debug({
+        operation: 'findMany',
+        table: 'property',
+        duration,
         count: properties.length,
-        filters 
+        filters
       }, 'Properties search completed');
-      
+
       return properties.map(transformPropertyFromDb);
     } catch (error) {
       repositoryLogger.error({ error, operation: 'findMany', filters }, 'Failed to find properties');
@@ -99,14 +100,14 @@ export class PrismaPropertyRepository implements IPropertyRepository {
 
   async update(id: string, data: PropertyUpdateInput): Promise<PropertyResponse> {
     const startTime = Date.now();
-    
+
     try {
       console.log('🔧 PrismaPropertyRepository.update input:', { id, adminStatus: (data as any).adminStatus, fullData: data });
       repositoryLogger.debug({ id, adminStatus: (data as any).adminStatus }, 'PrismaPropertyRepository.update received adminStatus');
-      
+
       // Create update object more explicitly
       const updateData: any = {};
-      
+
       if (data.title !== undefined) updateData.title = data.title;
       if (data.location !== undefined) updateData.location = data.location;
       if (data.price !== undefined) updateData.price = new Prisma.Decimal(data.price);
@@ -123,19 +124,19 @@ export class PrismaPropertyRepository implements IPropertyRepository {
       if (data.features !== undefined) updateData.features = data.features;
       if (data.contactPhone !== undefined) updateData.contactPhone = data.contactPhone;
       if (data.contactEmail !== undefined) updateData.contactEmail = data.contactEmail;
-      
+
       console.log('🔧 PrismaPropertyRepository.update updateData:', updateData);
-      
+
       const property = await this.prisma.property.update({
         where: { id },
         data: updateData,
       });
-      
+
       console.log('🔧 PrismaPropertyRepository.update result:', { id: property.id, adminStatus: property.adminStatus });
-      
+
       const duration = Date.now() - startTime;
       repositoryLogger.debug({ operation: 'update', table: 'property', duration, id }, 'Property updated');
-      
+
       return transformPropertyFromDb(property);
     } catch (error) {
       console.error('❌ PrismaPropertyRepository.update error:', error);
@@ -146,12 +147,12 @@ export class PrismaPropertyRepository implements IPropertyRepository {
 
   async delete(id: string): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
       await this.prisma.property.delete({
         where: { id },
       });
-      
+
       const duration = Date.now() - startTime;
       repositoryLogger.debug({ operation: 'delete', table: 'property', duration, id }, 'Property deleted');
     } catch (error) {
@@ -176,7 +177,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
     }
 
     const { latitude, longitude, radiusKm } = filters.nearbySearch;
-    
+
     // Get all properties with coordinates first
     const properties = await this.prisma.property.findMany({
       where: {
@@ -208,6 +209,13 @@ export class PrismaPropertyRepository implements IPropertyRepository {
 
     if (filters.status) where.status = filters.status;
     if (filters.type) where.type = filters.type;
+
+    // Filtro por Agente
+    if (filters.agentId) where.agentId = filters.agentId;
+
+    // Filtro por Estado Administrativo
+    if (filters.adminStatus) where.adminStatus = filters.adminStatus;
+
     if (filters.location) {
       where.location = { contains: filters.location, mode: 'insensitive' };
     }
@@ -252,7 +260,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
 
   private buildOrderByClause(sortBy: string, sortOrder: string) {
     const orderBy: any = {};
-    
+
     switch (sortBy) {
       case 'price':
         orderBy.price = sortOrder;
@@ -266,7 +274,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
       default:
         orderBy.createdAt = sortOrder;
     }
-    
+
     return orderBy;
   }
 }

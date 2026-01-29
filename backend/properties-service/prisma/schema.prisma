@@ -1,5 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Schema do properties-service - Gestão de Imóveis
+// Este serviço NÃO armazena dados de utilizadores
+// Utiliza apenas referências externas (IDs do auth-service)
+// Dados de utilizador são enriquecidos pelo API Gateway quando necessário
 
 generator client {
   provider = "prisma-client-js"
@@ -9,6 +11,8 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// === ENUMERAÇÕES ===
 
 enum PropertyStatus {
   for_sale
@@ -62,12 +66,9 @@ enum PropertyFeature {
   CITY_VIEW
 }
 
-enum UserRole {
-  ADMIN
-  AGENT
-  USER
-}
+// === MODELOS ===
 
+// Imóvel - Modelo principal
 model Property {
   id          String   @id @default(uuid())
   title       String   @db.VarChar(200)
@@ -79,36 +80,40 @@ model Property {
   imageUrl    String?  @db.VarChar(2048)
   description String?  @db.Text
   
-  // Property characteristics
+  // Características do imóvel
   bedrooms    Int?     @db.SmallInt
   bathrooms   Int?     @db.SmallInt  
-  area        Decimal? @db.Decimal(8, 2) // in square meters
+  area        Decimal? @db.Decimal(8, 2) // em metros quadrados
   yearBuilt   Int?     @db.SmallInt
   
-  // Location data
+  // Dados de localização
   coordinates Json? // { latitude: number, longitude: number }
   
-  // Features and amenities
+  // Características e comodidades
   features    String[] @default([])
   
-  // Contact information
+  // Informação de contacto
   contactPhone String? @db.VarChar(20)
   contactEmail String? @db.VarChar(100)
   
-  // Metadata
+  // Referências externas (IDs do auth-service)
+  // NOTA: Não há relações FK - os dados são enriquecidos pelo API Gateway
+  ownerId     String?  // ID do proprietário (auth-service)
+  agentId     String?  // ID do agente responsável (auth-service)
+  createdBy   String?  // ID de quem criou o registo (auth-service)
+  updatedBy   String?  // ID de quem actualizou (auth-service)
+  
+  // Metadados
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
-  // Relationships
-  ownerId      String?
-  owner        User?    @relation(fields: [ownerId], references: [id])
-  agentId      String?
-  agent        Agent?   @relation(fields: [agentId], references: [id])
+  // Relacionamentos internos do serviço
   images       PropertyImage[]
   visits       PropertyVisit[]
   favorites    PropertyFavorite[]
   priceHistory PriceHistory[]
   
+  // Índices para pesquisa eficiente
   @@index([status])
   @@index([adminStatus])
   @@index([type])
@@ -124,10 +129,13 @@ model Property {
   @@index([status, price])
   @@index([type, price])
   @@index([adminStatus, status])
+  @@index([ownerId])
+  @@index([agentId])
   
   @@map("properties")
 }
 
+// Imagens do imóvel
 model PropertyImage {
   id         String   @id @default(uuid())
   propertyId String
@@ -141,6 +149,7 @@ model PropertyImage {
   @@map("property_images")
 }
 
+// Histórico de preços
 model PriceHistory {
   id         String   @id @default(uuid())
   propertyId String
@@ -149,17 +158,18 @@ model PriceHistory {
   newPrice   Decimal  @db.Decimal(12, 2)
   reason     String?  @db.VarChar(100)
   changedAt  DateTime @default(now())
-  changedBy  String?  // User ID who made the change
+  changedBy  String?  // ID do utilizador que fez a alteração (auth-service)
   
   @@index([propertyId, changedAt])
   @@map("price_history")
 }
 
+// Visitas ao imóvel (analytics)
 model PropertyVisit {
   id         String   @id @default(uuid())
   propertyId String
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  visitorId  String?  // User ID if logged in
+  visitorId  String?  // ID do utilizador se autenticado (auth-service)
   ipAddress  String   @db.Inet
   userAgent  String?  @db.Text
   visitedAt  DateTime @default(now())
@@ -169,12 +179,12 @@ model PropertyVisit {
   @@map("property_visits")
 }
 
+// Favoritos de imóveis
 model PropertyFavorite {
   id         String   @id @default(uuid())
   propertyId String
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
+  userId     String   // ID do utilizador (auth-service)
   createdAt  DateTime @default(now())
   
   @@unique([propertyId, userId])
@@ -182,41 +192,27 @@ model PropertyFavorite {
   @@map("property_favorites")
 }
 
-model User {
-  id         String     @id @default(uuid())
-  email      String     @unique @db.VarChar(100)
-  name       String     @db.VarChar(100)
-  phone      String?    @db.VarChar(20)
-  role       UserRole   @default(USER)
-  isActive   Boolean    @default(true)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+// Configurações do serviço
+model PropertySettings {
+  id                    String @id @default("singleton")
   
-  // Relationships
-  properties Property[]
-  favorites  PropertyFavorite[]
-  agent      Agent?
+  // Limites de listagem
+  maxImagesPerProperty  Int    @default(20)
+  maxFeaturesPerProperty Int   @default(15)
   
-  @@index([email])
-  @@index([role, isActive])
-  @@map("users")
-}
-
-model Agent {
-  id          String     @id @default(uuid())
-  userId      String     @unique
-  user        User       @relation(fields: [userId], references: [id])
-  license     String     @unique @db.VarChar(50)
-  company     String?    @db.VarChar(200)
-  specialties String[]   @default([])
-  isVerified  Boolean    @default(false)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  // Valores por defeito
+  defaultCurrency       String @default("EUR")
+  defaultStatus         PropertyStatus @default(for_sale)
   
-  // Relationships
-  properties  Property[]
+  // Validações
+  minPrice              Decimal? @db.Decimal(12, 2)
+  maxPrice              Decimal? @db.Decimal(12, 2)
+  minArea               Decimal? @db.Decimal(8, 2)
+  maxArea               Decimal? @db.Decimal(8, 2)
   
-  @@index([license])
-  @@index([isVerified])
-  @@map("agents")
+  // Metadados
+  updatedAt DateTime @updatedAt
+  updatedBy String?  // ID do utilizador que actualizou (auth-service)
+  
+  @@map("property_settings")
 }

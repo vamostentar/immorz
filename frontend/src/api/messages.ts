@@ -6,6 +6,8 @@ export interface ContactMessage {
   phone?: string;
   body: string;
   context?: any;
+  propertyId?: string;
+  agentId?: string;
 }
 
 export interface MessageResponse {
@@ -24,17 +26,17 @@ export interface MessageResponse {
  */
 export async function sendContactMessage(message: ContactMessage): Promise<MessageResponse> {
   try {
-    console.log('[Messages] Sending contact message:', { 
-      fromName: message.fromName, 
+    console.log('[Messages] Sending contact message:', {
+      fromName: message.fromName,
       fromEmail: message.fromEmail,
       hasPhone: !!message.phone,
-      bodyLength: message.body.length 
+      bodyLength: message.body.length
     });
 
     const response = await api.post('/api/v1/messages', message);
-    
+
     console.log('[Messages] Message sent successfully:', response.data);
-    
+
     return response.data;
   } catch (error: any) {
     console.error('[Messages] Error sending message:', {
@@ -42,13 +44,13 @@ export async function sendContactMessage(message: ContactMessage): Promise<Messa
       data: error.response?.data,
       message: error.message
     });
-    
+
     // Extract error message from response
-    const errorMessage = error.response?.data?.error || 
-                        error.response?.data?.message ||
-                        error.message ||
-                        'Falha ao enviar mensagem';
-    
+    const errorMessage = error.response?.data?.error ||
+      error.response?.data?.message ||
+      error.message ||
+      'Falha ao enviar mensagem';
+
     throw new Error(errorMessage);
   }
 }

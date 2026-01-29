@@ -49,31 +49,28 @@ export default function Dashboard() {
       <div className="space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard 
-            icon={Building} 
-            title="Total de Propriedades" 
-            value={stats.totalProperties.toLocaleString()} 
-            change={12}
+          <StatCard
+            icon={Building}
+            title="Total de Propriedades"
+            value={stats.totalProperties.toLocaleString()}
             color="bg-blue-500"
           />
-          <StatCard 
-            icon={Users} 
-            title="Utilizadores Ativos" 
-            value={stats.activeUsers.toLocaleString()} 
-            change={8}
+          <StatCard
+            icon={Users}
+            title="Utilizadores Ativos"
+            value={stats.activeUsers.toLocaleString()}
             color="bg-green-500"
           />
-          <StatCard 
-            icon={Eye} 
-            title="Visualizações/Mês" 
-            value={stats.monthlyViews.toLocaleString()} 
-            change={-3}
+          <StatCard
+            icon={Eye}
+            title="Visualizações/Mês"
+            value={stats.monthlyViews.toLocaleString()}
             color="bg-purple-500"
           />
-          <StatCard 
-            icon={AlertCircle} 
-            title="Aprovações Pendentes" 
-            value={stats.pendingApprovals} 
+          <StatCard
+            icon={AlertCircle}
+            title="Aprovações Pendentes"
+            value={stats.pendingApprovals}
             color="bg-orange-500"
           />
         </div>
@@ -90,11 +87,10 @@ export default function Dashboard() {
                       <p className="font-medium text-gray-800 text-sm">{property.title}</p>
                       <p className="text-xs text-gray-500">{property.type} • €{property.price}</p>
                     </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      property.status === 'Ativo' ? 'bg-green-100 text-green-700' :
-                      property.status === 'Pendente' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
+                    <span className={`px-2 py-1 text-xs rounded-full ${property.status === 'Ativo' ? 'bg-green-100 text-green-700' :
+                        property.status === 'Pendente' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
+                      }`}>
                       {property.status}
                     </span>
                   </div>

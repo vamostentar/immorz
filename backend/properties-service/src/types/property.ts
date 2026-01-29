@@ -15,50 +15,53 @@ export const propertyCreateSchema = z.object({
     .min(3, 'Title must be at least 3 characters')
     .max(config.MAX_PROPERTY_TITLE_LENGTH, `Title must not exceed ${config.MAX_PROPERTY_TITLE_LENGTH} characters`)
     .trim(),
-  
+
   location: z
     .string()
     .min(5, 'Location must be at least 5 characters')
     .max(500, 'Location must not exceed 500 characters')
     .trim(),
-  
+
   price: z
     .number()
     .positive('Price must be positive')
     .max(config.MAX_PRICE, `Price must not exceed ${config.MAX_PRICE}`),
-  
+
   status: PropertyStatusSchema.default(PropertyStatus.for_sale),
-  
+
   adminStatus: AdminStatusSchema.optional(),
-  
+
   type: PropertyTypeSchema.optional(),
-  
+
   imageUrl: urlSchema.optional(),
-  
+
   description: z
     .string()
     .max(config.MAX_PROPERTY_DESCRIPTION_LENGTH, `Description must not exceed ${config.MAX_PROPERTY_DESCRIPTION_LENGTH} characters`)
     .trim()
     .optional(),
-  
+
   // New fields for better real estate functionality
   bedrooms: z.number().int().min(0).max(20).optional(),
   bathrooms: z.number().int().min(0).max(20).optional(),
   area: z.number().positive().max(50000).optional(), // m²
   yearBuilt: z.number().int().min(1800).max(new Date().getFullYear()).optional(),
-  
+
   // Geolocation
   coordinates: z.object({
     latitude: z.number().min(-90).max(90),
     longitude: z.number().min(-180).max(180)
   }).optional(),
-  
+
   // Features
   features: z.array(z.string()).max(20).optional(),
-  
+
   // Contact info
   contactPhone: z.string().optional(),
   contactEmail: z.string().email().optional(),
+
+  // Agent assignment (supports CUID from auth-service)
+  agentId: z.string().min(1).optional(),
 });
 
 // Property update schema (all fields optional)
@@ -121,45 +124,51 @@ export const propertyUpdateSchema = z.object({
 export const propertyFiltersSchema = z.object({
   status: PropertyStatusSchema.optional(),
   type: PropertyTypeSchema.optional(),
-  
+
   // Price range
   minPrice: positiveNumberSchema.optional(),
   maxPrice: positiveNumberSchema.optional(),
-  
+
   // Location search
   location: z.string().optional(),
-  
+
   // Text search
   q: z.string().optional(),
-  
+
   // Property characteristics
   minBedrooms: z.coerce.number().int().min(0).optional(),
   maxBedrooms: z.coerce.number().int().max(20).optional(),
   minBathrooms: z.coerce.number().int().min(0).optional(),
   maxBathrooms: z.coerce.number().int().max(20).optional(),
-  
+
   // Area range
   minArea: positiveNumberSchema.optional(),
   maxArea: positiveNumberSchema.optional(),
-  
+
   // Year built range
   minYearBuilt: z.coerce.number().int().min(1800).optional(),
   maxYearBuilt: z.coerce.number().int().max(new Date().getFullYear()).optional(),
-  
+
   // Features
   features: z.array(z.string()).optional(),
-  
+
   // Geospatial search
   nearbySearch: z.object({
     latitude: z.number().min(-90).max(90),
     longitude: z.number().min(-180).max(180),
     radiusKm: z.number().positive().max(100).default(5)
   }).optional(),
-  
+
   // Sorting
   sortBy: z.enum(['createdAt', 'price', 'area', 'title']).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
-  
+
+  // Filtro por Agente (supports CUID from auth-service)
+  agentId: z.string().min(1).optional(),
+
+  // Filtro por Estado Administrativo
+  adminStatus: AdminStatusSchema.optional(),
+
 }).merge(paginationSchema);
 
 // Property response schema
@@ -186,7 +195,7 @@ export const propertyResponseSchema = z.object({
   contactEmail: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  
+
   // Computed fields
   pricePerSqm: z.number().nullable(),
   propertyAge: z.number().int().nullable(),

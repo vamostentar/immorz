@@ -90,7 +90,7 @@ export async function createApp() {
         method: req.method,
         requestId: req.requestContext?.requestId,
       }, 'System under pressure');
-      
+
       rep.code(503).send({
         success: false,
         error: {
@@ -130,8 +130,8 @@ export async function createApp() {
           description: config.API_DESCRIPTION,
           version: config.API_VERSION,
           contact: {
-            name: 'Ribeira Azul Team',
-            email: 'tech@ribeirazul.com',
+            name: 'RibeirAzul Team',
+            email: 'tech@immorz.pt',
           },
         },
         servers: [
@@ -155,6 +155,7 @@ export async function createApp() {
           },
         },
         tags: [
+          { name: 'Agents', description: 'Agent profile endpoints' },
           { name: 'Authentication', description: 'Authentication endpoints' },
           { name: 'Users', description: 'User management endpoints' },
           { name: 'Roles', description: 'Role management endpoints' },
@@ -192,12 +193,20 @@ export async function createApp() {
     app.post('/dev/create-admin', async (request, reply) => {
       try {
         const { hashPassword } = await import('./utils/crypto');
-        
+
+        // Check if admin credentials are configured
+        if (!config.DEFAULT_ADMIN_EMAIL || !config.DEFAULT_ADMIN_PASSWORD) {
+          return reply.code(400).send({
+            success: false,
+            message: 'Default admin credentials not configured in environment'
+          });
+        }
+
         // Check if admin user already exists
         const existingUser = await prisma.user.findUnique({
           where: { email: config.DEFAULT_ADMIN_EMAIL }
         });
-        
+
         if (existingUser) {
           return reply.send({
             success: true,
@@ -205,7 +214,7 @@ export async function createApp() {
             email: existingUser.email
           });
         }
-        
+
         // Create super admin role if it doesn't exist
         const superAdminRole = await prisma.role.upsert({
           where: { name: 'super_admin' },
@@ -218,7 +227,7 @@ export async function createApp() {
             isActive: true,
           },
         });
-        
+
         // Create admin user
         const adminPassword = config.DEFAULT_ADMIN_PASSWORD;
         const hashedPassword = await hashPassword(adminPassword);
@@ -234,14 +243,14 @@ export async function createApp() {
             roleId: superAdminRole.id,
           },
         });
-        
+
         return reply.send({
           success: true,
           message: 'Admin user created successfully',
           email: adminUser.email,
           // Don't expose password in response
         });
-        
+
       } catch (error) {
         console.error('Error creating admin user:', error);
         return reply.code(500).send({
@@ -257,7 +266,7 @@ export async function createApp() {
     try {
       // Test database connection
       await prisma.$queryRaw`SELECT 1`;
-      
+
       return {
         status: 'healthy',
         timestamp: new Date().toISOString(),
@@ -305,8 +314,9 @@ export async function createApp() {
   });
 
   // Register route modules
-  const { authRoutes, userRoutes, roleRoutes, sessionRoutes } = await import('./routes');
-  
+  const { agentRoutes, authRoutes, userRoutes, roleRoutes, sessionRoutes } = await import('./routes');
+
+  await app.register(agentRoutes, { prefix: '/api/v1' });
   await app.register(authRoutes, { prefix: '/api/v1/auth' });
   await app.register(userRoutes, { prefix: '/api/v1/users' });
   await app.register(roleRoutes, { prefix: '/api/v1/roles' });
@@ -315,11 +325,11 @@ export async function createApp() {
   // Graceful shutdown
   const gracefulShutdown = async (signal: string) => {
     logger.info(`🛑 Received ${signal}, shutting down gracefully`);
-    
+
     try {
       await prisma.$disconnect();
       logHelpers.databaseConnection('disconnected');
-      
+
       await app.close();
       logger.info('✅ Server closed successfully');
       process.exit(0);

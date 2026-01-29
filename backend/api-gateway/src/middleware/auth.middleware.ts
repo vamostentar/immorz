@@ -37,7 +37,7 @@ export interface FastifyReply {
  * Validates JWT tokens and sets user context
  */
 export async function authenticateJWT(
-  request: AuthenticatedRequest, 
+  request: AuthenticatedRequest,
   reply: FastifyReply
 ): Promise<void> {
   try {
@@ -50,7 +50,7 @@ export async function authenticateJWT(
     if (request.url.startsWith('/uploads')) {
       console.log(`🔍 Auth Debug: Checking uploads route: ${request.method} ${request.url}`);
     }
-    
+
     // Skip authentication for public routes
     if (isPublicRoute(request.url, request.method)) {
       if (request.url.startsWith('/uploads')) {
@@ -58,7 +58,7 @@ export async function authenticateJWT(
       }
       return;
     }
-    
+
     if (request.url.startsWith('/uploads')) {
       console.log(`❌ Auth Debug: Uploads route NOT recognized as public!`);
     }
@@ -107,7 +107,7 @@ export async function authenticateJWT(
 
   } catch (error) {
     // Log authentication failure
-    console.warn(`🚫 JWT Auth failed for ${request.method} ${request.url}:`, 
+    console.warn(`🚫 JWT Auth failed for ${request.method} ${request.url}:`,
       error instanceof Error ? error.message : 'Unknown error'
     );
 
@@ -131,35 +131,41 @@ export async function authenticateJWT(
  */
 function isPublicRoute(url: string, method: string): boolean {
   // SIMPLIFIED: Direct checks for better reliability
-  
+
   // Health checks
   if ((url === '/health' || url === '/') && method === 'GET') {
     return true;
   }
-  
+
   // Auth endpoints
   if (url.startsWith('/api/v1/auth/')) {
     return true;
   }
-  
+
+  // Public agent profiles endpoints
+  if (url.startsWith('/api/v1/agents') && method === 'GET') {
+    // Allow public access to GET /api/v1/agents and /api/v1/agents/:userId
+    return true;
+  }
+
   // Public properties endpoints (including query parameters)
   if (url.startsWith('/api/v1/properties') && method === 'GET') {
     // Allow /api/v1/properties, /api/v1/properties?limit=12, /api/v1/properties/search, etc.
     return true;
   }
-  
+
   // Public contact form endpoint (messages service)
   if (url.startsWith('/api/v1/messages') && method === 'POST') {
     // Allow public contact form submissions
     return true;
   }
-  
+
   // UPLOADS - Most important fix
   if (method === 'GET' && (url === '/uploads' || url.startsWith('/uploads/'))) {
     console.log(`✅ Auth: ${url} is a public upload route`);
     return true;
   }
-  
+
   return false;
 }
 
@@ -194,14 +200,14 @@ export function requirePermissions(requiredPermissions: string[]) {
     }
 
     const userPermissions = request.user.permissions || [];
-    
+
     // Super admin has all permissions
     if (userPermissions.includes('*')) {
       return;
     }
 
     // Check if user has required permissions
-    const hasPermission = requiredPermissions.some(permission => 
+    const hasPermission = requiredPermissions.some(permission =>
       userPermissions.includes(permission)
     );
 

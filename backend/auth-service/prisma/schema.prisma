@@ -21,6 +21,22 @@ model User {
   phone     String?
   avatar    String?  // URL to avatar image
   
+  // Perfil Profissional (para agentes)
+  bio          String?  // Biografia do agente
+  specialties  String[] @default([]) // Especialidades (ex: "Moradias", "Apartamentos")
+  experience   Int?     // Anos de experiência
+  rating       Decimal? @db.Decimal(3,2) // Média de avaliações (0-5)
+  reviewCount  Int      @default(0) // Número de avaliações
+  
+  // Redes Sociais
+  linkedin     String?
+  facebook     String?
+  instagram    String?
+  
+  // Visibilidade e Aprovação
+  isProfilePublic Boolean @default(true) // Perfil visível publicamente
+  isProfileApproved Boolean @default(false) // Admin aprovou perfil
+  
   // Status and verification
   isActive      Boolean @default(true)
   isEmailVerified Boolean @default(false)

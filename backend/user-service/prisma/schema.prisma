@@ -1,5 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Schema do user-service - Perfil Estendido do Utilizador
+// Este serviço NÃO duplica dados de autenticação (email, password, role)
+// Esses dados são geridos pelo auth-service
+// O ID do UserProfile é o MESMO ID do User no auth-service
 
 generator client {
   provider = "prisma-client-js"
@@ -10,70 +12,54 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User Profile model - Client users for the real estate platform
+// Perfil do Utilizador - Dados estendidos que complementam o auth-service
 model UserProfile {
-  id        String   @id @default(cuid())
+  id        String   @id // Mesmo ID do auth-service (não auto-gerado)
   
-  // Basic information
-  firstName String
-  lastName  String
-  email     String   @unique
-  phone     String?
-  
-  // Profile details
-  avatar    String?  // URL to avatar image
-  bio       String?  // Personal bio/description
+  // Dados de perfil (NÃO duplicados do auth)
+  bio       String?  // Biografia pessoal
+  avatar    String?  // URL para imagem de avatar
   dateOfBirth DateTime?
   gender    Gender?
   
-  // Address information
-  address   String?
-  city      String?
-  state     String?
-  country   String?
+  // Informação de endereço
+  address    String?
+  city       String?
+  state      String?
+  country    String?
   postalCode String?
   
-  // Preferences
+  // Preferências de contacto e idioma
   preferredContactMethod ContactMethod @default(EMAIL)
   language              String        @default("pt")
   timezone              String        @default("Europe/Lisbon")
   
-  // Status and verification
-  isActive         Boolean   @default(true)
-  isEmailVerified  Boolean   @default(false)
-  emailVerifiedAt  DateTime?
-  isPhoneVerified  Boolean   @default(false)
-  phoneVerifiedAt  DateTime?
+  // Definições de privacidade
+  profileVisibility  ProfileVisibility @default(PUBLIC)
+  allowMarketing     Boolean           @default(false)
+  allowNotifications Boolean           @default(true)
   
-  // Privacy settings
-  profileVisibility ProfileVisibility @default(PUBLIC)
-  allowMarketing    Boolean           @default(false)
-  allowNotifications Boolean         @default(true)
-  
-  // User role
-  role UserRole @default(CLIENT)
-  
-  // Relationships
+  // Relacionamentos com outras entidades deste serviço
   propertyInterests PropertyInterest[]
   savedProperties   SavedProperty[]
   searchHistory     SearchHistory[]
   notifications     Notification[]
   preferences       UserPreferences?
   
-  // Metadata
+  // Metadados
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   @@map("user_profiles")
 }
 
-// User Preferences model - Detailed user preferences
+// Preferências detalhadas do utilizador para pesquisa de imóveis
 model UserPreferences {
   id          String @id @default(cuid())
   userId      String @unique
   user        UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  // Property preferences
+  // Preferências de tipo de imóvel
   propertyTypes     PropertyType[]
   minPrice          Decimal?
   maxPrice          Decimal?
@@ -85,12 +71,12 @@ model UserPreferences {
   maxArea           Decimal?
   preferredLocation String?
   
-  // Search preferences
+  // Preferências de pesquisa
   searchRadius      Int?     @default(10) // km
   sortBy            SortBy   @default(RELEVANCE)
   viewMode          ViewMode @default(LIST)
   
-  // Notification preferences
+  // Preferências de notificações
   emailNotifications     Boolean @default(true)
   smsNotifications       Boolean @default(false)
   pushNotifications      Boolean @default(true)
@@ -98,33 +84,33 @@ model UserPreferences {
   newPropertyAlerts      Boolean @default(true)
   marketUpdateAlerts     Boolean @default(false)
   
-  // Metadata
+  // Metadados
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   @@map("user_preferences")
 }
 
-// Property Interest model - User's interest in specific properties
+// Interesse em imóveis específicos
 model PropertyInterest {
   id         String @id @default(cuid())
   userId     String
   user       UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  // Property reference (external ID from properties service)
+  // Referência externa ao imóvel (ID do properties-service)
   propertyId String
   
-  // Interest details
+  // Detalhes do interesse
   interestType InterestType @default(VIEW)
   notes        String?
   priority     Priority     @default(MEDIUM)
   
-  // Status
+  // Estado
   isActive     Boolean @default(true)
   contacted    Boolean @default(false)
   contactedAt  DateTime?
   
-  // Metadata
+  // Metadados
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
@@ -132,21 +118,21 @@ model PropertyInterest {
   @@map("property_interests")
 }
 
-// Saved Property model - User's saved/favorited properties
+// Imóveis guardados/favoritos
 model SavedProperty {
   id         String @id @default(cuid())
   userId     String
   user       UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  // Property reference (external ID from properties service)
+  // Referência externa ao imóvel (ID do properties-service)
   propertyId String
   
-  // Save details
-  folder     String? // Custom folder name
-  notes      String?
-  tags       String[] // User-defined tags
+  // Detalhes de organização
+  folder     String?   // Pasta personalizada
+  notes      String?   // Notas do utilizador
+  tags       String[]  // Etiquetas definidas pelo utilizador
   
-  // Metadata
+  // Metadados
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
@@ -154,13 +140,13 @@ model SavedProperty {
   @@map("saved_properties")
 }
 
-// Search History model - User's property search history
+// Histórico de pesquisas
 model SearchHistory {
   id     String @id @default(cuid())
   userId String
   user   UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  // Search parameters
+  // Parâmetros de pesquisa
   query        String?
   location     String?
   propertyType PropertyType[]
@@ -173,47 +159,48 @@ model SearchHistory {
   minArea      Decimal?
   maxArea      Decimal?
   
-  // Search metadata
-  resultsCount Int?
-  searchTime   Int? // milliseconds
+  // Metadados da pesquisa
+  resultsCount Int?  // Número de resultados
+  searchTime   Int?  // Tempo em milissegundos
   
-  // Metadata
+  // Metadados
   createdAt DateTime @default(now())
   
   @@map("search_history")
 }
 
-// Notification model - User notifications
+// Notificações do utilizador
 model Notification {
   id     String @id @default(cuid())
   userId String
   user   UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  // Notification details
+  // Detalhes da notificação
   type        NotificationType
   title       String
   message     String
-  data        Json? // Additional data
+  data        Json? // Dados adicionais em JSON
   
-  // Status
+  // Estado
   isRead      Boolean   @default(false)
   readAt      DateTime?
   isArchived  Boolean   @default(false)
   archivedAt  DateTime?
   
-  // Delivery
+  // Entrega
   deliveryMethod DeliveryMethod @default(IN_APP)
   sentAt         DateTime?
   deliveredAt    DateTime?
   
-  // Metadata
+  // Metadados
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   @@map("notifications")
 }
 
-// Enums
+// === ENUMERAÇÕES ===
+
 enum Gender {
   MALE
   FEMALE
@@ -294,11 +281,4 @@ enum DeliveryMethod {
   EMAIL
   SMS
   PUSH
-}
-
-enum UserRole {
-  ADMIN
-  CLIENT
-  AGENT
-  MODERATOR
 }

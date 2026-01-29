@@ -5,7 +5,7 @@ interface UploadedImage {
   id: string;
   file: File;
   preview: string;
-  status: 'uploading' | 'success' | 'error';
+  status: 'pending' | 'uploading' | 'success' | 'error';
   progress: number;
   url?: string;
   error?: string;
@@ -23,8 +23,9 @@ interface MultiImageUploadProps {
 }
 
 export interface MultiImageUploadRef {
-  updateImageProgress: (imageIndex: number, progress: number, status?: 'uploading' | 'success' | 'error', url?: string) => void;
-  updateAllImagesStatus: (status: 'uploading' | 'success' | 'error') => void;
+  updateImageProgress: (imageIndex: number, progress: number, status?: 'pending' | 'uploading' | 'success' | 'error', url?: string) => void;
+  updateAllImagesStatus: (status: 'pending' | 'uploading' | 'success' | 'error') => void;
+  startUpload: () => void;
 }
 
 const MultiImageUpload = forwardRef<MultiImageUploadRef, MultiImageUploadProps>(({
@@ -48,38 +49,38 @@ const MultiImageUpload = forwardRef<MultiImageUploadRef, MultiImageUploadProps>(
   }, [value]);
 
   // Expor função para atualizar progresso externamente
-  const updateImageProgress = useCallback((imageIndex: number, progress: number, status?: 'uploading' | 'success' | 'error', url?: string) => {
+  const updateImageProgress = useCallback((imageIndex: number, progress: number, status?: 'pending' | 'uploading' | 'success' | 'error', url?: string) => {
     console.log(`🔄 MultiImageUpload: updateImageProgress chamado com imageIndex=${imageIndex}, progress=${progress}%, status=${status}, url=${url}`);
     console.log(`🔄 MultiImageUpload: Estado atual - total de imagens: ${value.length}`);
 
     if (imageIndex >= 0 && imageIndex < value.length) {
       const updatedImages = [...value];
       const currentImage = updatedImages[imageIndex];
-      
+
       // Determinar o status correto baseado no progresso e status fornecido
-      let finalStatus: 'uploading' | 'success' | 'error';
+      let finalStatus: 'pending' | 'uploading' | 'success' | 'error';
       if (status) {
         finalStatus = status;
       } else if (progress === 100) {
         finalStatus = 'success';
-      } else if (progress >= 0) {
-        finalStatus = 'uploading'; // Manter como uploading desde que progresso seja >= 0
+      } else if (progress > 0) {
+        finalStatus = 'uploading'; // Manter como uploading desde que progresso seja > 0
       } else {
-        finalStatus = 'uploading'; // Fallback
+        finalStatus = currentImage.status; // Manter status atual se progresso = 0
       }
-      
+
       // Forçar atualização do progresso se status for 'success'
       if (finalStatus === 'success') {
         progress = 100;
       }
-      
+
       updatedImages[imageIndex] = {
         ...currentImage,
         progress: Math.max(0, Math.min(100, progress)), // Garantir que progresso esteja entre 0-100
         status: finalStatus,
         url: url || currentImage.url,
       };
-      
+
       console.log(`✅ MultiImageUpload: Imagem ${imageIndex} atualizada:`, {
         id: updatedImages[imageIndex].id,
         filename: updatedImages[imageIndex].file.name,
@@ -111,7 +112,17 @@ const MultiImageUpload = forwardRef<MultiImageUploadRef, MultiImageUploadProps>(
   }, [value, onChange]);
 
   // Expor função para atualizar status de todas as imagens
-  const updateAllImagesStatus = useCallback((status: 'uploading' | 'success' | 'error') => {
+  // Função para iniciar o upload (mudar de 'pending' para 'uploading')
+  const startUpload = useCallback(() => {
+    console.log(`🚀 MultiImageUpload: Iniciando upload de todas as imagens pendentes`);
+    const updatedImages = value.map(img => ({
+      ...img,
+      status: img.status === 'pending' ? 'uploading' as const : img.status,
+    }));
+    onChange(updatedImages);
+  }, [value, onChange]);
+
+  const updateAllImagesStatus = useCallback((status: 'pending' | 'uploading' | 'success' | 'error') => {
     console.log(`🔄 MultiImageUpload: Atualizando status de todas as imagens para: ${status}`);
 
     const updatedImages = value.map(img => ({
@@ -119,7 +130,7 @@ const MultiImageUpload = forwardRef<MultiImageUploadRef, MultiImageUploadProps>(
       status,
       progress: status === 'success' ? 100 : status === 'error' ? 0 : img.progress,
     }));
-    
+
     console.log(`✅ MultiImageUpload: Todas as imagens atualizadas para status: ${status}`, {
       total: updatedImages.length,
       images: updatedImages.map((img, idx) => ({
@@ -139,6 +150,7 @@ const MultiImageUpload = forwardRef<MultiImageUploadRef, MultiImageUploadProps>(
   useImperativeHandle(ref, () => ({
     updateImageProgress,
     updateAllImagesStatus,
+    startUpload,
   }));
 
   const validateFile = useMemo(() => {
@@ -184,7 +196,7 @@ const MultiImageUpload = forwardRef<MultiImageUploadRef, MultiImageUploadProps>(
         id: imageId,
         file,
         preview: createPreviewUrl(file),
-        status: validation.valid ? 'uploading' : 'error',
+        status: validation.valid ? 'pending' : 'error',
         progress: 0,
         error: validation.error,
       };
@@ -296,6 +308,13 @@ const MultiImageUpload = forwardRef<MultiImageUploadRef, MultiImageUploadProps>(
                   ${image.status === 'uploading' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
                   transition-opacity
                 `}>
+                  {image.status === 'pending' && (
+                    <div className="text-white text-center">
+                      <CheckCircle className="w-8 h-8 text-blue-400 mb-2" />
+                      <div className="text-sm font-medium">Pronto para enviar</div>
+                    </div>
+                  )}
+
                   {image.status === 'uploading' && (
                     <div className="text-white text-center">
                       <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mb-2"></div>
@@ -349,8 +368,12 @@ const MultiImageUpload = forwardRef<MultiImageUploadRef, MultiImageUploadProps>(
               {value.filter(img => img.status === 'success').length} carregadas
             </span>
             <span className="flex items-center">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
+              {value.filter(img => img.status === 'pending').length} prontas
+            </span>
+            <span className="flex items-center">
               <div className="w-2 h-2 bg-yellow-500 rounded-full mr-1"></div>
-              {value.filter(img => img.status === 'uploading').length} carregando
+              {value.filter(img => img.status === 'uploading').length} enviando
             </span>
             <span className="flex items-center">
               <div className="w-2 h-2 bg-red-500 rounded-full mr-1"></div>

@@ -9,23 +9,23 @@ if (process.env.NODE_ENV !== 'production') {
 
 const schema = z.object({
   // Environment
-  NODE_ENV: z.enum(['development','test','production']).default('development'),
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   HOST: z.string().default('0.0.0.0'),
   PORT: z.coerce.number().default(8090),
-  LOG_LEVEL: z.enum(['fatal','error','warn','info','debug','trace']).default('info'),
-  
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+
   // Database
   DATABASE_URL: z.string().min(1),
   DB_POOL_SIZE: z.coerce.number().default(10),
   DB_TIMEOUT: z.coerce.number().default(30000),
-  
+
   // Redis
   REDIS_URL: z.string().optional(),
   REDIS_PASSWORD: z.string().optional(),
   REDIS_DB: z.coerce.number().default(0),
   REDIS_MAX_RETRIES: z.coerce.number().default(3),
   REDIS_RETRY_DELAY: z.coerce.number().default(1000),
-  
+
   // SMTP Configuration
   SMTP_HOST: z.string().min(1),
   SMTP_PORT: z.coerce.number().default(465),
@@ -35,7 +35,7 @@ const schema = z.object({
   EMAIL_FROM: z.string().email(),
   EMAIL_TIMEOUT: z.coerce.number().default(30000),
   SMTP_VERIFY_CONNECTION: z.coerce.boolean().default(false),
-  
+
   // IMAP Configuration
   IMAP_HOST: z.string().min(1),
   IMAP_PORT: z.coerce.number().default(993),
@@ -43,43 +43,44 @@ const schema = z.object({
   IMAP_USER: z.string().min(1),
   IMAP_PASS: z.string().min(1),
   IMAP_POLL_INTERVAL: z.coerce.number().default(30000),
-  
+  IMAP_ENABLED: z.coerce.boolean().default(false),
+
   // Queue Configuration
   QUEUE_CONCURRENCY: z.coerce.number().default(5),
   QUEUE_MAX_ATTEMPTS: z.coerce.number().default(3),
   QUEUE_BACKOFF_DELAY: z.coerce.number().default(2000),
   QUEUE_RETRY_MULTIPLIER: z.coerce.number().default(2),
-  
+
   // Rate Limiting
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   RATE_LIMIT_WINDOW: z.string().default('1 minute'),
   RATE_LIMIT_PER_USER_MAX: z.coerce.number().default(10),
-  
+
   // Security
   JWT_SECRET: z.string().min(32).optional(),
   API_KEY_HEADER: z.string().default('x-api-key'),
   ALLOWED_API_KEYS: z.string().optional(),
   CORS_ORIGINS: z.string().optional(),
   TRUST_PROXY: z.coerce.boolean().default(false),
-  
+
   // Circuit Breaker
   CIRCUIT_BREAKER_TIMEOUT: z.coerce.number().default(10000),
   CIRCUIT_BREAKER_ERROR_THRESHOLD: z.coerce.number().default(5),
   CIRCUIT_BREAKER_RESET_TIMEOUT: z.coerce.number().default(30000),
-  
+
   // Monitoring & Observability
   METRICS_ENABLED: z.coerce.boolean().default(true),
   METRICS_PORT: z.coerce.number().default(9090),
   TRACING_ENABLED: z.coerce.boolean().default(true),
   HEALTH_CHECK_TIMEOUT: z.coerce.number().default(5000),
-  
+
   // Cache
   CACHE_TTL: z.coerce.number().default(300),
   CACHE_MAX_SIZE: z.coerce.number().default(1000),
-  
+
   // Graceful Shutdown
   SHUTDOWN_TIMEOUT: z.coerce.number().default(10000),
-  
+
   // Performance
   MAX_PAYLOAD_SIZE: z.coerce.number().default(1048576), // 1MB
   REQUEST_TIMEOUT: z.coerce.number().default(30000),
@@ -93,14 +94,14 @@ class ConfigService {
 
   private constructor() {
     const result = schema.safeParse(process.env);
-    
+
     if (!result.success) {
       console.error('❌ Invalid configuration:', result.error.format());
       throw new Error('Invalid configuration');
     }
-    
+
     this._config = result.data;
-    
+
     // Log important config (without secrets)
     console.log('✅ Configuration loaded:', {
       NODE_ENV: this._config.NODE_ENV,
@@ -149,9 +150,9 @@ class ConfigService {
   }
 
   get allowedApiKeys(): Set<string> {
-    if (!this._config.ALLOWED_API_KEYS || 
-        this._config.ALLOWED_API_KEYS.trim().length === 0 ||
-        this._config.ALLOWED_API_KEYS === 'your-production-api-keys-here') {
+    if (!this._config.ALLOWED_API_KEYS ||
+      this._config.ALLOWED_API_KEYS.trim().length === 0 ||
+      this._config.ALLOWED_API_KEYS === 'your-production-api-keys-here') {
       return new Set();
     }
     return new Set(this._config.ALLOWED_API_KEYS.split(',').map(key => key.trim()).filter(Boolean));

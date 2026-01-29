@@ -26,26 +26,26 @@ export async function setupProxy(app: FastifyInstance) {
       'x-forwarded-for': originalReq.ip,
       'x-forwarded-proto': incomingXfp || originalReq.protocol,
     };
-    
+
     // Pass authenticated user information to backend services
     if (originalReq.user) {
       processedHeaders['x-user-id'] = originalReq.user.id;
       processedHeaders['x-user-email'] = originalReq.user.email;
       processedHeaders['x-user-role'] = originalReq.user.role;
     }
-    
+
     // CRITICAL: Preserve multipart/form-data Content-Type for file uploads
     const originalContentType = headers['content-type'];
     if (originalContentType && originalContentType.includes('multipart/form-data')) {
       processedHeaders['content-type'] = originalContentType;
       console.log('🔧 Preserving multipart Content-Type:', originalContentType);
     }
-    
+
     // Remove problematic headers (but NOT content-type for multipart)
     delete processedHeaders.expect;
     delete processedHeaders.Expect;
     delete processedHeaders.host; // Let proxy set the correct host
-    
+
     return processedHeaders;
   };
 
@@ -60,21 +60,13 @@ export async function setupProxy(app: FastifyInstance) {
     }
   });
 
-  // 2. USERS SERVICE PROXY (Admin Management)
-  // Note: Register specific routes before wildcard routes to avoid conflicts
-  await app.register(import('@fastify/http-proxy'), {
-    upstream: config.USERS_SERVICE_URL,
-    prefix: '/api/v1/users',
-    websocket: false,
-    rewritePrefix: '/api/v1/users',
-    replyOptions: {
-      rewriteRequestHeaders: standardHeaderProcessor,
-    }
-  });
+  // 2. USERS SERVICE PROXY removido - as rotas /api/v1/users são tratadas
+  // pelos handlers agregadores em aggregated.handlers.ts que encaminham
+  // para o auth-service (fonte de verdade para dados de utilizador)
 
-  // 3. ROLES ENDPOINT PROXY
+  // 3. ROLES ENDPOINT PROXY - encaminha para auth-service onde as roles estão definidas
   await app.register(import('@fastify/http-proxy'), {
-    upstream: config.USERS_SERVICE_URL,
+    upstream: config.AUTH_SERVICE_URL,
     prefix: '/api/v1/roles',
     websocket: false,
     rewritePrefix: '/api/v1/roles',
@@ -83,7 +75,18 @@ export async function setupProxy(app: FastifyInstance) {
     }
   });
 
-  // 4. USER PROFILES PROXY
+  // 4. AGENTS PROXY - Public agent profiles
+  await app.register(import('@fastify/http-proxy'), {
+    upstream: config.AUTH_SERVICE_URL,
+    prefix: '/api/v1/agents',
+    websocket: false,
+    rewritePrefix: '/api/v1/agents',
+    replyOptions: {
+      rewriteRequestHeaders: standardHeaderProcessor,
+    }
+  });
+
+  // 5. USER PROFILES PROXY
   await app.register(import('@fastify/http-proxy'), {
     upstream: config.USERS_SERVICE_URL,
     prefix: '/api/v1/user-profiles',
@@ -94,7 +97,7 @@ export async function setupProxy(app: FastifyInstance) {
     }
   });
 
-  // 5. ADMIN ENDPOINTS PROXY
+  // 6. ADMIN ENDPOINTS PROXY
   await app.register(import('@fastify/http-proxy'), {
     upstream: config.USERS_SERVICE_URL,
     prefix: '/api/v1/admin',
@@ -110,14 +113,14 @@ export async function setupProxy(app: FastifyInstance) {
     const processedHeaders: IncomingHttpHeaders = {
       ...headers, // Preserve ALL original headers including Content-Type
     };
-    
+
     // Only add auth headers
     if (originalReq.user) {
       processedHeaders['x-user-id'] = originalReq.user.id;
       processedHeaders['x-user-email'] = originalReq.user.email;
       processedHeaders['x-user-role'] = originalReq.user.role;
     }
-    
+
     // DO NOT remove any headers - preserve everything for multipart
     return processedHeaders;
   };
@@ -275,7 +278,7 @@ export async function setupProxy(app: FastifyInstance) {
 
   if (config.ENABLE_DETAILED_LOGGING) {
     console.log('✅ PRODUCTION-READY proxy configured for ALL services');
-    console.log('📍 Total Proxies Configured: 19');
+    console.log('📍 Total Proxies Configured: 20');
     console.log(`📍 Auth Service: ${config.AUTH_SERVICE_URL}`);
     console.log(`📍 Users Service: ${config.USERS_SERVICE_URL}`);
     console.log(`📍 Properties Service: ${config.PROPERTIES_SERVICE_URL}`);
