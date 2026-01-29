@@ -5,10 +5,11 @@
 ### Para Começar AGORA (3 passos):
 
 1. **Setup Inicial**:
+
    ```powershell
    # Windows
    .\dev-start.ps1
-   
+
    # Linux/Mac
    chmod +x dev-start.sh && ./dev-start.sh
    ```
@@ -19,13 +20,13 @@
 
 ## 📚 Documentação
 
-| Arquivo | Quando Usar |
-|---------|-------------|
-| **[QUICKSTART.md](./QUICKSTART.md)** | 👈 Começar em 3 passos |
-| [DOCKER_SETUP.md](./DOCKER_SETUP.md) | Guia completo |
-| [DOCKER_STRATEGY.md](./DOCKER_STRATEGY.md) | Arquitetura e design |
-| [SUMMARY.md](./SUMMARY.md) | Resumo executivo |
-| [README.md](./README.md) | Info geral do projeto |
+| Arquivo                                    | Quando Usar            |
+| ------------------------------------------ | ---------------------- |
+| **[QUICKSTART.md](./QUICKSTART.md)**       | 👈 Começar em 3 passos |
+| [DOCKER_SETUP.md](./DOCKER_SETUP.md)       | Guia completo          |
+| [DOCKER_STRATEGY.md](./DOCKER_STRATEGY.md) | Arquitetura e design   |
+| [SUMMARY.md](./SUMMARY.md)                 | Resumo executivo       |
+| [README.md](./README.md)                   | Info geral do projeto  |
 
 ## 🛠️ Comandos Rápidos
 
@@ -51,7 +52,7 @@ docker-compose -f docker-compose.yaml up -d    # Prod (sem override)
 
 - **Frontend**: http://localhost:3000
 - **API Gateway**: http://localhost:8081
-- **MinIO Console**: http://localhost:9001 (minioadmin / minioadmin123)
+- **MinIO Console**: http://localhost:9001
 - **PostgreSQL**: localhost:5432
 - **Redis**: localhost:6379
 

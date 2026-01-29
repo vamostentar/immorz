@@ -10,49 +10,49 @@ Como **Dev Sênior com 15+ anos de experiência**, implementei uma solução pro
 
 ### 🐳 Configurações Docker
 
-| Arquivo | Propósito | Status |
-|---------|-----------|--------|
-| `docker-compose.yaml` | ✅ Base (Produção) - **NÃO MODIFICADO** | Existente |
-| `docker-compose.dev.yml` | 🔧 Override explícito para dev | ✅ Criado |
-| `docker-compose.override.yml.example` | 📝 Template do override automático | ✅ Criado |
+| Arquivo                               | Propósito                               | Status    |
+| ------------------------------------- | --------------------------------------- | --------- |
+| `docker-compose.yaml`                 | ✅ Base (Produção) - **NÃO MODIFICADO** | Existente |
+| `docker-compose.dev.yml`              | 🔧 Override explícito para dev          | ✅ Criado |
+| `docker-compose.override.yml.example` | 📝 Template do override automático      | ✅ Criado |
 
 ### ⚙️ Variáveis de Ambiente
 
-| Arquivo | Propósito | Status |
-|---------|-----------|--------|
+| Arquivo            | Propósito                      | Status    |
+| ------------------ | ------------------------------ | --------- |
 | `.env.development` | 📝 Template com valores de dev | ✅ Criado |
-| `.env.example` | 📝 Template básico | Existente |
+| `.env.example`     | 📝 Template básico             | Existente |
 
 ### 🚀 Scripts de Inicialização
 
-| Arquivo | Plataforma | Ambiente | Status |
-|---------|-----------|----------|--------|
-| `dev-start.ps1` | Windows | Desenvolvimento | ✅ Criado |
-| `dev-start.sh` | Linux/Mac | Desenvolvimento | ✅ Criado |
-| `prod-start.ps1` | Windows | Produção | ✅ Criado |
-| `prod-start.sh` | Linux/Mac | Produção | ✅ Criado |
+| Arquivo          | Plataforma | Ambiente        | Status    |
+| ---------------- | ---------- | --------------- | --------- |
+| `dev-start.ps1`  | Windows    | Desenvolvimento | ✅ Criado |
+| `dev-start.sh`   | Linux/Mac  | Desenvolvimento | ✅ Criado |
+| `prod-start.ps1` | Windows    | Produção        | ✅ Criado |
+| `prod-start.sh`  | Linux/Mac  | Produção        | ✅ Criado |
 
 ### 🔍 Scripts de Verificação
 
-| Arquivo | Plataforma | Status |
-|---------|-----------|--------|
-| `verify-env.ps1` | Windows | ✅ Criado |
-| `verify-env.sh` | Linux/Mac | ✅ Criado |
+| Arquivo          | Plataforma | Status    |
+| ---------------- | ---------- | --------- |
+| `verify-env.ps1` | Windows    | ✅ Criado |
+| `verify-env.sh`  | Linux/Mac  | ✅ Criado |
 
 ### 🛠️ Ferramentas
 
-| Arquivo | Propósito | Status |
-|---------|-----------|--------|
+| Arquivo    | Propósito                                    | Status    |
+| ---------- | -------------------------------------------- | --------- |
 | `Makefile` | Comandos rápidos (make dev, make prod, etc.) | ✅ Criado |
 
 ### 📚 Documentação
 
-| Arquivo | Conteúdo | Status |
-|---------|----------|--------|
-| `QUICKSTART.md` | Guia rápido de 3 passos | ✅ Criado |
-| `DOCKER_SETUP.md` | Guia completo e detalhado | ✅ Criado |
-| `DOCKER_STRATEGY.md` | Arquitetura e estratégia | ✅ Criado |
-| `SUMMARY.md` | Este arquivo | ✅ Criado |
+| Arquivo              | Conteúdo                  | Status    |
+| -------------------- | ------------------------- | --------- |
+| `QUICKSTART.md`      | Guia rápido de 3 passos   | ✅ Criado |
+| `DOCKER_SETUP.md`    | Guia completo e detalhado | ✅ Criado |
+| `DOCKER_STRATEGY.md` | Arquitetura e estratégia  | ✅ Criado |
+| `SUMMARY.md`         | Este arquivo              | ✅ Criado |
 
 ---
 
@@ -73,13 +73,13 @@ graph TD
 
 ### Vantagens
 
-| ✅ Benefício | Descrição |
-|-------------|-----------|
-| **Sem Breaking Changes** | `docker-compose.yaml` original intocado |
-| **Seguro** | Prod não afetada por configs locais |
-| **Flexível** | Override automático ou explícito |
-| **Padrão da Indústria** | Prática recomendada pelo Docker |
-| **Fácil de Usar** | Scripts automatizados para ambos ambientes |
+| ✅ Benefício             | Descrição                                  |
+| ------------------------ | ------------------------------------------ |
+| **Sem Breaking Changes** | `docker-compose.yaml` original intocado    |
+| **Seguro**               | Prod não afetada por configs locais        |
+| **Flexível**             | Override automático ou explícito           |
+| **Padrão da Indústria**  | Prática recomendada pelo Docker            |
+| **Fácil de Usar**        | Scripts automatizados para ambos ambientes |
 
 ---
 
@@ -90,17 +90,20 @@ graph TD
 #### Opção A: Script Automatizado (Recomendado)
 
 **Windows**:
+
 ```powershell
 .\dev-start.ps1
 ```
 
 **Linux/Mac**:
+
 ```bash
 chmod +x dev-start.sh
 ./dev-start.sh
 ```
 
 O script irá:
+
 - ✅ Criar `.env` se não existir
 - ✅ Criar `docker-compose.override.yml` se não existir
 - ✅ Build das imagens (opcional)
@@ -133,11 +136,13 @@ docker-compose up -d
 #### Com Script:
 
 **Windows**:
+
 ```powershell
 .\prod-start.ps1
 ```
 
 **Linux/Mac**:
+
 ```bash
 chmod +x prod-start.sh
 ./prod-start.sh
@@ -176,27 +181,27 @@ chmod +x verify-env.sh
 
 Após iniciar com `docker-compose up -d` ou `./dev-start.ps1`:
 
-| Serviço | URL | Descrição |
-|---------|-----|-----------|
-| **Frontend** | http://localhost:3000 | Interface principal |
-| **API Gateway** | http://localhost:8081 | Backend API |
-| **MinIO Console** | http://localhost:9001 | Storage (user: minioadmin / pass: minioadmin123) |
-| **PostgreSQL** | localhost:5432 | Database |
-| **Redis** | localhost:6379 | Cache |
+| Serviço           | URL                   | Descrição           |
+| ----------------- | --------------------- | ------------------- |
+| **Frontend**      | http://localhost:3000 | Interface principal |
+| **API Gateway**   | http://localhost:8081 | Backend API         |
+| **MinIO Console** | http://localhost:9001 | Storage interface   |
+| **PostgreSQL**    | localhost:5432        | Database            |
+| **Redis**         | localhost:6379        | Cache               |
 
 ---
 
 ## 📊 Comparação: Dev vs Prod
 
-| Configuração | Desenvolvimento | Produção |
-|--------------|----------------|----------|
-| **NODE_ENV** | development | production |
-| **LOG_LEVEL** | debug | warn |
-| **Portas** | Expostas | Internas apenas |
-| **CORS** | localhost:* | Domínios reais |
-| **Hot Reload** | Sim (com volumes) | Não |
-| **Healthchecks** | Rápidos (10s) | Robustos (30s) |
-| **Restart Policy** | Herdado | unless-stopped |
+| Configuração       | Desenvolvimento   | Produção        |
+| ------------------ | ----------------- | --------------- |
+| **NODE_ENV**       | development       | production      |
+| **LOG_LEVEL**      | debug             | warn            |
+| **Portas**         | Expostas          | Internas apenas |
+| **CORS**           | localhost:\*      | Domínios reais  |
+| **Hot Reload**     | Sim (com volumes) | Não             |
+| **Healthchecks**   | Rápidos (10s)     | Robustos (30s)  |
+| **Restart Policy** | Herdado           | unless-stopped  |
 
 ---
 
@@ -278,13 +283,13 @@ graph LR
 
 ## 🔍 Troubleshooting Common
 
-| Problema | Solução |
-|----------|---------|
-| **CORS Error** | Verificar `CORS_ORIGINS` no `.env` |
-| **Container reinicia** | `docker-compose logs -f [service]` |
-| **Porta em uso** | `netstat -ano \| findstr :3000` (Windows) ou `lsof -i :3000` (Linux) |
-| **Override não funciona** | `docker-compose config` para ver merge |
-| **DB não conecta** | `docker-compose exec db psql -U ribeirazul` |
+| Problema                  | Solução                                                              |
+| ------------------------- | -------------------------------------------------------------------- |
+| **CORS Error**            | Verificar `CORS_ORIGINS` no `.env`                                   |
+| **Container reinicia**    | `docker-compose logs -f [service]`                                   |
+| **Porta em uso**          | `netstat -ano \| findstr :3000` (Windows) ou `lsof -i :3000` (Linux) |
+| **Override não funciona** | `docker-compose config` para ver merge                               |
+| **DB não conecta**        | `docker-compose exec db psql -U ribeirazul`                          |
 
 ---
 
@@ -307,12 +312,12 @@ Antes de fazer deploy em produção:
 
 ## 📚 Documentação Adicional
 
-| Documento | Quando Usar |
-|-----------|-------------|
-| [QUICKSTART.md](./QUICKSTART.md) | Começar rapidamente (3 passos) |
-| [DOCKER_SETUP.md](./DOCKER_SETUP.md) | Guia completo com troubleshooting |
-| [DOCKER_STRATEGY.md](./DOCKER_STRATEGY.md) | Entender a arquitetura |
-| [README.md](./README.md) | Documentação geral do projeto |
+| Documento                                  | Quando Usar                       |
+| ------------------------------------------ | --------------------------------- |
+| [QUICKSTART.md](./QUICKSTART.md)           | Começar rapidamente (3 passos)    |
+| [DOCKER_SETUP.md](./DOCKER_SETUP.md)       | Guia completo com troubleshooting |
+| [DOCKER_STRATEGY.md](./DOCKER_STRATEGY.md) | Entender a arquitetura            |
+| [README.md](./README.md)                   | Documentação geral do projeto     |
 
 ---
 
@@ -376,7 +381,7 @@ Você agora tem uma **infraestrutura Docker profissional** com:
 ✅ **Documentação completa** e profissional  
 ✅ **Verificação automática** de ambiente  
 ✅ **Comandos Make** para produtividade  
-✅ **Zero breaking changes** nas configurações atuais  
+✅ **Zero breaking changes** nas configurações atuais
 
 ### Próximos Passos
 

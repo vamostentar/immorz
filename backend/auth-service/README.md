@@ -5,13 +5,15 @@ Enterprise-grade Authentication and Authorization microservice for the Ribeira A
 ## ✨ Features
 
 ### 🏗️ **Architecture**
+
 - **Clean Architecture** with separation of concerns
-- **Repository Pattern** for data access abstraction  
+- **Repository Pattern** for data access abstraction
 - **Service Layer** for business logic
 - **Controller Layer** for HTTP handling
 - **Dependency Injection** ready structure
 
 ### 🔒 **Security Features**
+
 - **JWT Authentication** with access and refresh tokens
 - **Role-Based Access Control (RBAC)** with fine-grained permissions
 - **Two-Factor Authentication (2FA)** with TOTP and backup codes
@@ -23,6 +25,7 @@ Enterprise-grade Authentication and Authorization microservice for the Ribeira A
 - **Audit Logging** for security events
 
 ### 🚀 **Performance & Scalability**
+
 - **Fastify** web framework (fastest Node.js framework)
 - **Redis** for session storage and caching
 - **Connection pooling** with Prisma
@@ -31,6 +34,7 @@ Enterprise-grade Authentication and Authorization microservice for the Ribeira A
 - **Graceful shutdown** handling
 
 ### 👤 **User Management**
+
 - **Complete user lifecycle** (create, read, update, delete)
 - **Email verification** workflow
 - **Password reset** functionality
@@ -39,12 +43,14 @@ Enterprise-grade Authentication and Authorization microservice for the Ribeira A
 - **Advanced search** and filtering
 
 ### 🎭 **Role Management**
+
 - **Dynamic role creation** and management
 - **Permission-based authorization**
 - **Role hierarchy** support
 - **Bulk permission updates**
 
 ### 📊 **Observability**
+
 - **Structured logging** with Pino
 - **Request tracing** with correlation IDs
 - **Performance monitoring** (memory, response times)
@@ -53,19 +59,19 @@ Enterprise-grade Authentication and Authorization microservice for the Ribeira A
 
 ## 🛠️ **Tech Stack**
 
-| Technology | Purpose | Version |
-|------------|---------|---------|
-| **Node.js** | Runtime Environment | ≥18.17.0 |
-| **TypeScript** | Type Safety | ^5.5.4 |
-| **Fastify** | Web Framework | ^4.28.1 |
-| **Prisma** | Database ORM | ^6.14.0 |
-| **PostgreSQL** | Database | ≥13 |
-| **Redis** | Session Store & Cache | ≥7 |
-| **Argon2** | Password Hashing | ^0.40.3 |
-| **jsonwebtoken** | JWT Handling | ^9.0.2 |
-| **Speakeasy** | 2FA/TOTP | ^2.0.0 |
-| **Zod** | Schema Validation | ^3.23.8 |
-| **Pino** | Logging | ^9.4.0 |
+| Technology       | Purpose               | Version  |
+| ---------------- | --------------------- | -------- |
+| **Node.js**      | Runtime Environment   | ≥18.17.0 |
+| **TypeScript**   | Type Safety           | ^5.5.4   |
+| **Fastify**      | Web Framework         | ^4.28.1  |
+| **Prisma**       | Database ORM          | ^6.14.0  |
+| **PostgreSQL**   | Database              | ≥13      |
+| **Redis**        | Session Store & Cache | ≥7       |
+| **Argon2**       | Password Hashing      | ^0.40.3  |
+| **jsonwebtoken** | JWT Handling          | ^9.0.2   |
+| **Speakeasy**    | 2FA/TOTP              | ^2.0.0   |
+| **Zod**          | Schema Validation     | ^3.23.8  |
+| **Pino**         | Logging               | ^9.4.0   |
 
 ## 🚀 **Quick Start**
 
@@ -122,6 +128,7 @@ yarn start
 ## 📋 **API Endpoints**
 
 ### Authentication
+
 ```
 POST   /api/v1/auth/login           # User login
 POST   /api/v1/auth/logout          # User logout
@@ -133,6 +140,7 @@ POST   /api/v1/auth/change-password # Change current password
 ```
 
 ### Two-Factor Authentication
+
 ```
 POST   /api/v1/auth/2fa/enable      # Enable 2FA
 POST   /api/v1/auth/2fa/verify      # Verify 2FA setup
@@ -141,6 +149,7 @@ POST   /api/v1/auth/2fa/complete    # Complete 2FA login
 ```
 
 ### User Management
+
 ```
 GET    /api/v1/users               # List users (paginated)
 POST   /api/v1/users               # Create user
@@ -152,6 +161,7 @@ PUT    /api/v1/users/me            # Update current user profile
 ```
 
 ### Role Management
+
 ```
 GET    /api/v1/roles               # List roles
 POST   /api/v1/roles               # Create role
@@ -161,6 +171,7 @@ DELETE /api/v1/roles/:id           # Delete role
 ```
 
 ### Session Management
+
 ```
 GET    /api/v1/sessions            # List user sessions
 DELETE /api/v1/sessions/:id        # Terminate session
@@ -168,6 +179,7 @@ DELETE /api/v1/sessions/all        # Terminate all sessions
 ```
 
 ### Health & Monitoring
+
 ```
 GET    /health                     # Health check
 GET    /                           # API information
@@ -266,15 +278,16 @@ SWAGGER_ENABLED=true
 API_TITLE="Ribeira Azul Auth Service"
 API_VERSION="1.0.0"
 
-# Default Admin (Development Only)
+# Default Admin (Development Only - Use .env.example for template)
 SEED_DEFAULT_ADMIN=true
-DEFAULT_ADMIN_EMAIL="admin@ribeirazul.com"
-DEFAULT_ADMIN_PASSWORD="Admin123!"
+DEFAULT_ADMIN_EMAIL="your-admin-email@example.com"
+DEFAULT_ADMIN_PASSWORD="your-secure-password-here"
 ```
 
 ## 🔐 **Security Best Practices**
 
 ### Password Policy
+
 - Minimum 8 characters
 - Must contain uppercase, lowercase, and numbers
 - Optional special characters requirement
@@ -282,18 +295,21 @@ DEFAULT_ADMIN_PASSWORD="Admin123!"
 - Secure Argon2id hashing
 
 ### Account Protection
+
 - Progressive delays for failed login attempts
 - Account lockout after configurable failed attempts
 - IP-based rate limiting
 - Session timeout and concurrent session limits
 
 ### Token Security
+
 - Short-lived access tokens (1 hour default)
 - Secure refresh token rotation
 - Token blacklisting for secure logout
 - JWT with strong secret keys
 
 ### Audit & Monitoring
+
 - Comprehensive audit logging
 - Security event tracking
 - Failed login attempt monitoring
@@ -351,18 +367,21 @@ yarn test:watch
 ## 🔍 **Monitoring & Observability**
 
 ### Health Checks
+
 - Database connectivity
-- Redis connectivity  
+- Redis connectivity
 - Memory usage
 - Active sessions count
 
 ### Logging
+
 - Structured JSON logging with Pino
 - Request correlation IDs
 - Security event logging
 - Performance monitoring
 
 ### Metrics
+
 - Authentication success/failure rates
 - Session statistics
 - User activity metrics
@@ -371,14 +390,18 @@ yarn test:watch
 ## 🤝 **Integration**
 
 ### API Gateway Integration
+
 The auth service integrates seamlessly with the API Gateway for:
+
 - Centralized authentication
 - Token validation
 - Permission checking
 - Session management
 
 ### Frontend Integration
+
 Provides secure authentication for:
+
 - Admin panel login
 - User session management
 - Role-based UI components
@@ -387,12 +410,14 @@ Provides secure authentication for:
 ## 📚 **API Documentation**
 
 When `SWAGGER_ENABLED=true`, comprehensive API documentation is available at:
+
 - **Development**: http://localhost:8084/docs
 - **Production**: https://your-domain.com/auth/docs
 
 ## 🛡️ **Security Considerations**
 
 ### Production Deployment
+
 - Use strong JWT secrets (64+ characters)
 - Enable HTTPS/TLS encryption
 - Configure proper CORS origins
@@ -401,6 +426,7 @@ When `SWAGGER_ENABLED=true`, comprehensive API documentation is available at:
 - Monitor for suspicious activities
 
 ### Data Protection
+
 - Sensitive data encryption at rest
 - Secure password hashing with Argon2id
 - PII data handling compliance
@@ -410,6 +436,7 @@ When `SWAGGER_ENABLED=true`, comprehensive API documentation is available at:
 ## 📞 **Support**
 
 For issues, questions, or contributions:
+
 - **Issues**: [GitHub Issues](https://github.com/ribeirazul/auth-service/issues)
 - **Documentation**: Available in `/docs` endpoint
 - **Team**: Ribeira Azul Development Team
