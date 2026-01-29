@@ -17,14 +17,14 @@ RUN apk add --no-cache \
 RUN corepack enable && corepack prepare yarn@4.9.2 --activate
 
 # Copy package files
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock* ./
 
 # Force node-modules linker for Docker compatibility
 RUN echo "nodeLinker: node-modules" > .yarnrc.yml && \
     echo "enableTelemetry: false" >> .yarnrc.yml
 
 # Install dependencies
-RUN yarn install --frozen-lockfile
+RUN yarn install
 
 # Copy source code
 COPY . .

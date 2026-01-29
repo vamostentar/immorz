@@ -17,7 +17,7 @@ RUN apk add --no-cache \
 RUN corepack enable && corepack prepare yarn@4.9.2 --activate
 
 # Copiar manifesto primeiro para melhor cache
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock* ./
 
 # Forçar nodeLinker node-modules para compat com Docker
 RUN echo "nodeLinker: node-modules" > .yarnrc.yml && \
@@ -27,7 +27,7 @@ RUN echo "nodeLinker: node-modules" > .yarnrc.yml && \
 ENV YARN_IGNORE_PATH=1
 
 # Verificar versão do Yarn e instalar deps
-RUN yarn --version && yarn install --frozen-lockfile
+RUN yarn --version && yarn install
 
 # Copiar código
 COPY . .

@@ -2,10 +2,10 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache vips-dev build-base python3 make g++
 RUN corepack enable && corepack prepare yarn@4.9.2 --activate
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock* ./
 RUN echo "nodeLinker: node-modules" > .yarnrc.yml && echo "enableTelemetry: false" >> .yarnrc.yml
 ENV YARN_IGNORE_PATH=1
-RUN yarn --version && yarn install --frozen-lockfile
+RUN yarn --version && yarn install
 COPY . .
 RUN yarn build
 
