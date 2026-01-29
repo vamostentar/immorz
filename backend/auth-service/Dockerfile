@@ -17,14 +17,14 @@ RUN apk add --no-cache \
 RUN corepack enable && corepack prepare yarn@4.9.2 --activate
 
 # Copy package files
-COPY package.json ./
+COPY package.json yarn.lock ./
 
 # Force node-modules linker for Docker compatibility
 RUN echo "nodeLinker: node-modules" > .yarnrc.yml && \
     echo "enableTelemetry: false" >> .yarnrc.yml
 
 # Install dependencies
-RUN yarn install
+RUN yarn install --frozen-lockfile
 
 # Copy source code
 COPY . .
@@ -76,7 +76,7 @@ EXPOSE 8084
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8084/health || exit 1
+    CMD curl -f http://localhost:8084/health || exit 1
 
 # Use entrypoint script to wait for dependencies and run migrations reliably
 ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
