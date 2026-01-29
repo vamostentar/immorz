@@ -21,6 +21,9 @@ RUN yarn --version && yarn install
 # Copy source code
 COPY . .
 
+# Increase Node.js memory limit for TypeScript compilation
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+
 # Build the application
 RUN yarn build
 
