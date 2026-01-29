@@ -19,9 +19,8 @@ RUN corepack enable && corepack prepare yarn@4.9.2 --activate
 # Copiar manifestos primeiro para melhor cache
 COPY package.json yarn.lock* ./
 
-# Forçar nodeLinker node-modules para compat com Docker
-RUN echo "nodeLinker: node-modules" > .yarnrc.yml && \
-    echo "enableTelemetry: false" >> .yarnrc.yml
+# Copy Yarn configuration to ensure node-modules linker is used
+COPY .yarnrc.yml ./
 
 # Evitar herdar workspaces da raiz
 ENV YARN_IGNORE_PATH=1
