@@ -246,43 +246,51 @@ export async function buildServer(): Promise<FastifyInstance> {
 
 // Start server if not in test mode
 if (process.env.NODE_ENV !== 'test') {
-  logger.info('Starting server initialization...');
+  console.log('STEP 1: Starting server initialization script...');
+  
+  try {
+    console.log('STEP 2: Calling buildServer()...');
+    buildServer()
+      .then(async (app) => {
+        console.log('STEP 3: Server built successfully, starting to listen...');
+        server = app;
 
-  buildServer()
-    .then(async (app) => {
-      logger.info('Server built successfully, starting to listen...');
-      server = app;
+        console.log(`STEP 4: Listening on ${config.HOST}:${config.PORT}...`);
+        const address = await app.listen({
+          host: config.HOST,
+          port: config.PORT
+        });
 
-      const address = await app.listen({
-        host: config.HOST,
-        port: config.PORT
+        console.log('STEP 5: Server listening!', address);
+        logger.info('🚀 Messages Service started successfully', {
+          address,
+          environment: config.NODE_ENV,
+          version: process.env.npm_package_version || '1.0.0',
+          features: {
+            metrics: config.METRICS_ENABLED,
+            tracing: config.TRACING_ENABLED,
+            redis: !!config.REDIS_URL,
+            queue: !!config.REDIS_URL,
+          },
+        });
+
+        return address;
+      })
+      .catch((err) => {
+        console.error('FATAL ERROR in buildServer promise:', err);
+        logger.fatal('Failed to start server', {
+          error: err.message,
+          stack: err.stack,
+          name: err.name,
+          code: err.code
+        });
+        console.error('Full error object:', err);
+        process.exit(1);
       });
-
-      logger.info('🚀 Messages Service started successfully', {
-        address,
-        environment: config.NODE_ENV,
-        version: process.env.npm_package_version || '1.0.0',
-        features: {
-          metrics: config.METRICS_ENABLED,
-          tracing: config.TRACING_ENABLED,
-          redis: !!config.REDIS_URL,
-          queue: !!config.REDIS_URL,
-        },
-      });
-
-      return address;
-    })
-    .catch((err) => {
-      logger.fatal('Failed to start server', {
-        error: err.message,
-        stack: err.stack,
-        name: err.name,
-        code: err.code
-      });
-      console.error('Full error object:', err);
-      console.error('Error stack:', err.stack);
-      process.exit(1);
-    });
+  } catch (err: any) {
+    console.error('FATAL ERROR in main execution block:', err);
+    process.exit(1);
+  }
 }
 
 // Extend Fastify interface to include our container
