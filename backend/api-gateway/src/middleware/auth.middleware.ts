@@ -46,21 +46,9 @@ export async function authenticateJWT(
       return;
     }
 
-    // Debug logging for uploads routes
-    if (request.url.startsWith('/uploads')) {
-      console.log(`🔍 Auth Debug: Checking uploads route: ${request.method} ${request.url}`);
-    }
-
     // Skip authentication for public routes
     if (isPublicRoute(request.url, request.method)) {
-      if (request.url.startsWith('/uploads')) {
-        console.log(`✅ Auth Debug: Uploads route is public, skipping auth`);
-      }
       return;
-    }
-
-    if (request.url.startsWith('/uploads')) {
-      console.log(`❌ Auth Debug: Uploads route NOT recognized as public!`);
     }
 
     // Extract token from Authorization header
@@ -160,8 +148,8 @@ function isPublicRoute(url: string, method: string): boolean {
     return true;
   }
 
-  // UPLOADS - Most important fix
-  if (method === 'GET' && (url === '/uploads' || url.startsWith('/uploads/'))) {
+  // UPLOADS - Public access to uploaded files
+  if (method === 'GET' && (url === '/api/v1/uploads' || url.startsWith('/api/v1/uploads/'))) {
     console.log(`✅ Auth: ${url} is a public upload route`);
     return true;
   }

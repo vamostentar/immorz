@@ -246,9 +246,10 @@ export async function setupProxy(app: FastifyInstance) {
   });
 
   // 17. UPLOADS PROXY (static files) - PUBLIC ROUTE, NO AUTH HEADERS NEEDED
+  // Changed to /api/v1/uploads to ensure proper routing through API Gateway ingress
   await app.register(import('@fastify/http-proxy'), {
     upstream: config.PROPERTIES_SERVICE_URL,
-    prefix: '/uploads',
+    prefix: '/api/v1/uploads',
     websocket: false,
     rewritePrefix: '/uploads',
     // No header processing for static files - keep it simple and public
