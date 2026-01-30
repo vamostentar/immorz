@@ -103,6 +103,8 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       JWT_SECRET: ${JWT_SECRET}
       SEED_DEFAULT_ADMIN: "true"
+      DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@immorz.pt}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD}
       CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       API_URL: ${API_URL:-https://www.immorz.pt}
