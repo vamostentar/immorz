@@ -76,7 +76,8 @@ export async function buildApp() {
 
     // Register static files for serving uploaded images
     // Use absolute path to match storage service configuration
-    const uploadsPath = path.resolve('/app/uploads');
+    // Use process.cwd() to match storage service configuration in both local and docker
+    const uploadsPath = path.join(process.cwd(), 'uploads');
     await app.register(import('@fastify/static'), {
       root: uploadsPath,
       prefix: '/uploads/',
