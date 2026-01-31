@@ -246,13 +246,14 @@ export async function setupProxy(app: FastifyInstance) {
   });
 
 
-  // 17.1. UPLOADS PROXY (Legacy support / Direct access) - Fixes 404 on image load
-  // The frontend Nginx proxies /uploads/ to api-gateway, so we must handle this prefix
+  // 17. UPLOADS PROXY (static files) - PUBLIC ROUTE, NO AUTH HEADERS NEEDED
+  // Changed to /api/v1/uploads to ensure proper routing through API Gateway ingress
   await app.register(import('@fastify/http-proxy'), {
     upstream: config.PROPERTIES_SERVICE_URL,
-    prefix: '/uploads',
+    prefix: '/api/v1/uploads',
     websocket: false,
-    rewritePrefix: '/uploads', // Keep path as-is 
+    rewritePrefix: '/uploads',
+    // No header processing for static files - keep it simple and public
   });
 
   // 19. MESSAGES SERVICE PROXY

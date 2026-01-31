@@ -42,6 +42,10 @@ if [ ! -f "dist/server.js" ]; then
   exit 1
 fi
 
+# Ensure upload directory permissions (for mounted volumes)
+echo "🔒 Fixing permissions for /app/uploads..."
+chown -R nodeuser:nodejs /app/uploads
+
 # Switch to nodeuser for security
 echo "🔄 Switching to nodeuser for runtime security..."
 exec su-exec nodeuser "$@"
