@@ -376,6 +376,8 @@ services:
       <<: *common-env
     networks:
       - frontend
+    volumes:
+      - properties_uploads:/usr/share/nginx/html/uploads:ro
     # REMOVER LABELS - Deixar Coolify gerir automaticamente
     # labels:
     #   - "traefik.enable=true"
