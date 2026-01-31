@@ -80,24 +80,22 @@ export async function uploadMediaImage(
 ) {
   const form = new FormData();
   form.append('file', file);
-  const params = {
-    transform: opts?.transform ?? 'resize',
-    width: opts?.width ?? 1920,
-    height: opts?.height ?? 1080,
-    quality: opts?.quality ?? 85,
-  };
-  const { data } = await api.post('/api/v1/media/upload', form, {
-    params,
+  // Note: properties-service unique upload endpoint does not currently support transform params, 
+  // but we keep the interface for compatibility.
+  
+  const { data } = await api.post('/api/v1/uploads', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
     onUploadProgress: (evt) => {
       if (!opts?.onProgress || !evt.total) return;
       opts.onProgress(Math.round((evt.loaded * 100) / evt.total));
     },
   });
+  
+  // uploads.routes.ts returns: { success: true, data: { url: "...", ... } }
   return data?.data?.url as string | undefined;
 }
 
-// Upload múltiplas imagens para o media service
+// Upload múltiplas imagens para o media service (legacy/fallback wrapper)
 export async function uploadMultipleMediaImages(
   files: File[],
   opts?: { transform?: 'original' | 'resize' | 'cover'; width?: number; height?: number; quality?: number; onProgress?: (p: number) => void }

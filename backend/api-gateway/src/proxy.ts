@@ -146,14 +146,21 @@ export async function setupProxy(app: FastifyInstance) {
     }
   });
 
-  // 8. MEDIA SERVICE PROXY
+  // 8. MEDIA SERVICE PROXY (Redirected to Properties Service for Uploads)
   await app.register(import('@fastify/http-proxy'), {
-    upstream: config.MEDIA_SERVICE_URL,
+    upstream: config.PROPERTIES_SERVICE_URL,
     prefix: '/api/v1/media',
     websocket: false,
-    rewritePrefix: '/api/v1/media',
+    rewritePrefix: '/api/v1', // Redirect /api/v1/media/upload -> /api/v1/uploads via specialized rewrite? No, simple prefix rewrite.
     replyOptions: {
       rewriteRequestHeaders: standardHeaderProcessor,
+      rewriteRequestLine: (req, path) => {
+        // Rewrite /api/v1/media/upload to /api/v1/uploads
+        if (path === '/api/v1/media/upload') {
+          return '/api/v1/uploads';
+        }
+        return path.replace('/api/v1/media', '/api/v1');
+      } 
     }
   });
 

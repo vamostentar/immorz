@@ -4,6 +4,7 @@ import { imageRoutes } from './images.routes';
 import { projectsRoutes } from './projects';
 import { propertiesRoutes } from './properties';
 import { settingsRoutes } from './settings';
+import { uploadsRoutes } from './uploads.routes';
 
 export async function registerRoutes(fastify: FastifyInstance) {
   // Health check routes
@@ -19,6 +20,8 @@ export async function registerRoutes(fastify: FastifyInstance) {
     await fastify.register(settingsRoutes);
     // Projects routes
     await fastify.register(projectsRoutes);
+    // Uploads routes (Generic)
+    await fastify.register(uploadsRoutes);
   });
   
   // Register a catch-all route for API documentation or 404

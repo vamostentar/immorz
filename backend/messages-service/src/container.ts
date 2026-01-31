@@ -62,7 +62,7 @@ container.register({
     });
 
     // Connection pool configuration
-    prisma.$connect().catch((error) => {
+    prisma.$connect().catch((error: any) => {
       logger.error('Failed to connect to database', { error: error.message });
       process.exit(1);
     });

@@ -86,6 +86,24 @@ export class MessageService {
         }
       }
 
+      // Fetch agent email if agentId is present
+      let agentEmail: string | undefined;
+      if (agentId) {
+        try {
+          // Fetch agent email from auth.users table
+          const user = await this.prisma.$queryRaw`
+            SELECT email FROM auth.users WHERE id = ${agentId} LIMIT 1
+          ` as any[];
+
+          if (user && user[0] && user[0].email) {
+            agentEmail = user[0].email;
+            messageLogger.info('Found agent email', { agentId, email: agentEmail });
+          }
+        } catch (error: any) {
+           messageLogger.warn('Failed to fetch agent email', { agentId, error: error.message });
+        }
+      }
+
       // Create message in database
       const message = await this.prisma.message.create({
         data: {
@@ -123,6 +141,7 @@ export class MessageService {
             fromEmail: data.fromEmail,
             phone: data.phone,
             body: data.body,
+            to: agentEmail, // Pass agent email to queue job
             correlationId,
           },
           {
@@ -137,11 +156,18 @@ export class MessageService {
       } else {
         // Fallback: send email synchronously
         try {
+          const { config } = await import('@/utils/config');
+          const recipients = [config.EMAIL_FROM];
+          if (agentEmail) {
+            recipients.push(agentEmail);
+          }
+
           await this.emailService.sendContactEmail({
             fromName: data.fromName,
             fromEmail: data.fromEmail,
             phone: data.phone,
             body: data.body,
+            to: recipients.join(','),
           });
 
           await this.updateMessageStatus(message.id, 'SENT', correlationId);
@@ -577,8 +603,9 @@ export class MessageService {
         }),
       ]);
 
-      const statusCounts = byStatus.reduce((acc, item) => {
-        acc[item.status] = item._count;
+      const statusCounts = byStatus.reduce((acc: Record<MessageStatus, number>, item: any) => {
+        const status = item.status as MessageStatus;
+        acc[status] = item._count;
         return acc;
       }, {} as Record<MessageStatus, number>);
 
