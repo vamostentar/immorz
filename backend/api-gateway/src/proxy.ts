@@ -154,15 +154,15 @@ export async function setupProxy(app: FastifyInstance) {
     rewritePrefix: '/api/v1', // Redirect /api/v1/media/upload -> /api/v1/uploads via specialized rewrite? No, simple prefix rewrite.
     replyOptions: {
       rewriteRequestHeaders: standardHeaderProcessor,
-      rewriteRequestLine: (req, path) => {
-        // Rewrite /api/v1/media/upload to /api/v1/uploads
-        if (path === '/api/v1/media/upload') {
-          return '/api/v1/uploads';
-        }
-        return path.replace('/api/v1/media', '/api/v1');
-      } 
+    },
+    rewriteRequestLine: (req: any, path: string) => {
+      // Rewrite /api/v1/media/upload to /api/v1/uploads
+      if (path === '/api/v1/media/upload') {
+        return '/api/v1/uploads';
+      }
+      return path.replace('/api/v1/media', '/api/v1');
     }
-  });
+  } as any);
 
   // 9. SETTINGS SERVICE PROXY
   await app.register(import('@fastify/http-proxy'), {

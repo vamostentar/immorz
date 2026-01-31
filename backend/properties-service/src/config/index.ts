@@ -11,6 +11,7 @@ const configSchema = z.object({
   
   // CORS
   CORS_ORIGIN: z.string().default(process.env.API_URL || 'http://localhost:3001'),
+  API_URL: z.string().optional(),
   
   // Base URL for serving static files and generating image URLs
   BASE_URL: z.string().optional(),
