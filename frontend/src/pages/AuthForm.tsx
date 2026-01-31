@@ -88,6 +88,7 @@ export default function AuthForm() {
     }
   };
 
+  /*
   const resetForms = () => {
     setLoginData({ email: '', password: '', rememberMe: false });
     setRegisterData({
@@ -103,11 +104,14 @@ export default function AuthForm() {
     setError(null);
     setSuccess(null);
   };
+  */
 
+  /*
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
     resetForms();
   };
+  */
 
   if (requiresTwoFactor) {
     return (
@@ -293,7 +297,7 @@ export default function AuthForm() {
             <Input
               label="Telefone"
               type="tel"
-              placeholder="+55 11 99999-9999"
+              placeholder="+351 912 345 678"
               value={registerData.phone}
               onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
               leftIcon={<Phone className="w-4 h-4" />}
@@ -356,6 +360,7 @@ export default function AuthForm() {
           </form>
         )}
 
+        {/* Registration temporarily disabled
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
             {mode === 'login' ? 'Não tem uma conta?' : 'Já tem uma conta?'}
@@ -368,6 +373,7 @@ export default function AuthForm() {
             </button>
           </p>
         </div>
+        */}
       </Card>
     </div>
   );
