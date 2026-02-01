@@ -3,15 +3,15 @@ import { useMessages } from '@/api/queries';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import {
-  BarChart3,
-  Bell,
-  Building,
-  LogOut,
-  Mail,
-  Moon,
-  Settings,
-  Sun,
-  Users
+    BarChart3,
+    Bell,
+    Building,
+    LogOut,
+    Mail,
+    Moon,
+    Settings,
+    Sun,
+    Users
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -118,6 +118,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <MenuItem icon={Building} label="Propriedades" path="/admin/properties" />
           <MenuItem icon={Mail} label="Mensagens" path="/admin/messages" count={unreadCount} />
           <MenuItem icon={Users} label="Utilizadores" path="/admin/users" />
+          <MenuItem icon={Users} label="Agentes" path="/admin/agents" />
           <MenuItem icon={BarChart3} label="Análises" path="/admin/analytics" />
           <MenuItem icon={Settings} label="Configurações" path="/admin/settings" />
           <MenuItem icon={Bell} label="Aprovações" path="/admin/approvals" count={pendingApprovals} />

@@ -7,6 +7,7 @@ import { ProjectItem } from '@/components/ProjectItem';
 import { PropertiesArea } from '@/components/PropertiesArea';
 import { ListSkeleton } from '@/components/Skeleton';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Home() {
   const { data: settings } = useSettings();
@@ -94,18 +95,66 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Partners Section */}
+      <section className="py-16 bg-gray-50 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Nossos Parceiros</h2>
+            <p className="text-gray-500">Trabalhamos com as melhores instituições para realizar o seu sonho</p>
+          </div>
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-75 grayscale hover:grayscale-0 transition-all duration-500">
+            {/* Caixa Geral de Depósitos */}
+            <div className="w-32 h-16 flex items-center justify-center p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+               <img 
+                 src="/partners/imocaixa.png" 
+                 alt="Imocaixa (CGD)" 
+                 className="max-w-full max-h-full object-contain"
+               />
+            </div>
+            {/* Novo Banco */}
+            <div className="w-32 h-16 flex items-center justify-center p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+               <img 
+                 src="/partners/novo_banco.png" 
+                 alt="Novo Banco" 
+                 className="max-w-full max-h-full object-contain"
+               />
+            </div>
+            {/* BPI */}
+            <div className="w-32 h-16 flex items-center justify-center p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+               <img 
+                 src="/partners/bpi.png" 
+                 alt="Banco BPI" 
+                 className="max-w-full max-h-full object-contain"
+               />
+            </div>
+             {/* Montepio */}
+             <div className="w-32 h-16 flex items-center justify-center p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+               <img 
+                 src="/partners/montepio.png" 
+                 alt="Montepio" 
+                 className="max-w-full max-h-full object-contain"
+               />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-3 gap-8 items-center">
             <div className="text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
+              <Link 
+                to="/" 
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="flex items-center justify-center md:justify-start gap-3 mb-4 hover:opacity-90 transition-opacity"
+              >
                 <img
                   src="/logo.svg"
                   alt="RibeiraZul"
                   className="h-12 w-auto"
                 />
-              </div>
+              </Link>
               <p className="text-gray-500 text-sm">Transformando sonhos em realidade</p>
             </div>
 

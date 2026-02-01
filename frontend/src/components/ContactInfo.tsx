@@ -18,9 +18,9 @@ export function ContactInfo() {
             </svg>
           }
           title="WhatsApp"
-          description="Fale conosco agora"
-          contact="+351 969 272 037"
-          href="https://wa.me/351969272037"
+          description="Fale connosco agora"
+          contact="+351 927 886 229"
+          href="https://wa.me/351927886229"
           bgColor="bg-green-500"
           textColor="text-green-500"
         />
@@ -64,7 +64,7 @@ export function ContactInfo() {
             <p className="text-blue-100">9h00 às 20h00</p>
           </div>
           <div>
-            <h4 className="font-semibold mb-2">Sábados</h4>
+            <h4 className="font-semibold mb-2">Sábado</h4>
             <p className="text-blue-100">9h00 às 19h00</p>
           </div>
         </div>

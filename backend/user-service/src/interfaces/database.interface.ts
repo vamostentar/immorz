@@ -1,20 +1,20 @@
 import {
-  ContactMethod,
-  DeliveryMethod,
-  Gender,
-  InterestType,
-  Notification,
-  NotificationType,
-  Priority,
-  ProfileVisibility,
-  PropertyInterest,
-  PropertyType,
-  SavedProperty,
-  SearchHistory,
-  SortBy,
-  UserPreferences,
-  UserProfile,
-  ViewMode
+    ContactMethod,
+    DeliveryMethod,
+    Gender,
+    InterestType,
+    Notification,
+    NotificationType,
+    Priority,
+    ProfileVisibility,
+    PropertyInterest,
+    PropertyType,
+    SavedProperty,
+    SearchHistory,
+    SortBy,
+    UserPreferences,
+    UserProfile,
+    ViewMode
 } from '@/types/user';
 
 /**
@@ -181,6 +181,12 @@ export interface CreateUserProfileData {
   profileVisibility?: ProfileVisibility;
   allowMarketing?: boolean;
   allowNotifications?: boolean;
+  // Agent fields
+  specialties?: string[];
+  experience?: number | null;
+  linkedin?: string | null;
+  facebook?: string | null;
+  instagram?: string | null;
 }
 
 export interface UpdateUserProfileData {
@@ -204,6 +210,12 @@ export interface UpdateUserProfileData {
   allowMarketing?: boolean;
   allowNotifications?: boolean;
   isActive?: boolean;
+  // Agent fields
+  specialties?: string[];
+  experience?: number | null;
+  linkedin?: string | null;
+  facebook?: string | null;
+  instagram?: string | null;
 }
 
 export interface CreateUserPreferencesData {

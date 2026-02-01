@@ -35,7 +35,7 @@ interface AggregatedUser {
     createdAt: string;
     updatedAt: string;
 
-    // Dados de perfil (user-service)
+    // Dados de perfil (user-service ou auth-service)
     profile?: {
         bio?: string;
         avatar?: string;
@@ -52,6 +52,17 @@ interface AggregatedUser {
         profileVisibility?: string;
         allowMarketing?: boolean;
         allowNotifications?: boolean;
+        
+        // Novos campos de agente (do auth-service)
+        specialties?: string[];
+        rating?: number;
+        reviewCount?: number;
+        experience?: number;
+        linkedin?: string;
+        facebook?: string;
+        instagram?: string;
+        isProfilePublic?: boolean;
+        isProfileApproved?: boolean;
     };
 }
 
@@ -134,7 +145,7 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
      * 
      * Agrega:
      * - Identidade do auth-service
-     * - Perfil do user-service
+     * - Perfil do user-service (opcional)
      */
     app.get('/api/v1/users/me', async (request: FastifyRequest, reply: FastifyReply) => {
         try {
@@ -149,11 +160,8 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
                 });
             }
 
-            // Buscar dados em paralelo de ambos os serviços
-            const [authUser, userProfile] = await Promise.all([
-                fetchAuthUser(userId, authHeader),
-                fetchUserProfile(userId, authHeader)
-            ]);
+            // 1. Buscar dados essenciais (Auth Service)
+            const authUser = await fetchAuthUser(userId, authHeader);
 
             if (!authUser) {
                 return reply.status(404).send({
@@ -163,7 +171,17 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
                 });
             }
 
+            // 2. Buscar perfil estendido (User Service) - Opcional, falha silenciosamente
+            let userProfile = null;
+            try {
+                userProfile = await fetchUserProfile(userId, authHeader);
+            } catch (error) {
+                console.warn(`⚠️ Não foi possível obter perfil do user-service para ${userId} (ignorando)`);
+            }
+
             // Agregar dados
+            // NOTA: O auth-service agora já pode conter campos de perfil como bio, avatar, etc.
+            // Usamos os do authUser como base e sobrepomos com userProfile se existir.
             const aggregatedUser: AggregatedUser = {
                 id: authUser.id,
                 email: authUser.email,
@@ -175,26 +193,31 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
                 isEmailVerified: authUser.isEmailVerified ?? false,
                 createdAt: authUser.createdAt,
                 updatedAt: authUser.updatedAt,
+                // Mapear campos de perfil que podem já vir do auth-service (nova migração)
+                profile: {
+                    bio: authUser.bio,
+                    avatar: authUser.avatar,
+                    specialties: authUser.specialties,
+                    rating: authUser.rating,
+                    reviewCount: authUser.reviewCount,
+                    experience: authUser.experience,
+                    linkedin: authUser.linkedin,
+                    facebook: authUser.facebook,
+                    instagram: authUser.instagram,
+                    isProfilePublic: authUser.isProfilePublic,
+                    isProfileApproved: authUser.isProfileApproved
+                }
             };
 
-            // Adicionar dados de perfil se existirem
+            // Se o user-service respondeu, misturar os dados (prioridade ao user-service para campos específicos)
             if (userProfile) {
                 aggregatedUser.profile = {
-                    bio: userProfile.bio,
-                    avatar: userProfile.avatar,
-                    dateOfBirth: userProfile.dateOfBirth,
-                    gender: userProfile.gender,
-                    address: userProfile.address,
-                    city: userProfile.city,
-                    state: userProfile.state,
-                    country: userProfile.country,
-                    postalCode: userProfile.postalCode,
-                    preferredContactMethod: userProfile.preferredContactMethod,
-                    language: userProfile.language,
-                    timezone: userProfile.timezone,
-                    profileVisibility: userProfile.profileVisibility,
-                    allowMarketing: userProfile.allowMarketing,
-                    allowNotifications: userProfile.allowNotifications,
+                    ...aggregatedUser.profile, // Manter o que veio do Auth
+                    ...userProfile,            // Sobrepor com o que veio do User Service
+                    
+                    // Garantir mapeamento correto de campos comuns
+                    bio: userProfile.bio || aggregatedUser.profile?.bio,
+                    avatar: userProfile.avatar || aggregatedUser.profile?.avatar,
                 };
             }
 
@@ -205,9 +228,10 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
             });
         } catch (error) {
             console.error('❌ Erro no handler /users/me:', error);
+            // Em vez de 500, tentar retornar erro mais específico ou degradar graciosamente
             return reply.status(500).send({
                 success: false,
-                error: 'Erro interno do servidor',
+                error: 'Erro interno ao processar dados do utilizador',
                 code: 'INTERNAL_ERROR'
             });
         }

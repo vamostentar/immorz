@@ -124,6 +124,21 @@ export function useUserProfile(userId?: string) {
   });
 }
 
+// Update other user's profile (Admin)
+export function useUpdateUserProfileById() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ userId, data }: { userId: string; data: Partial<UserProfile> }) => {
+      const response = await api.put(`/api/v1/user-profiles/${userId}`, data);
+      return response.data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['user-profile', variables.userId] });
+    },
+  });
+}
+
 export function useUpdateUserProfile() {
   const queryClient = useQueryClient();
   

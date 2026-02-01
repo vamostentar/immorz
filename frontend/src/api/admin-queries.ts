@@ -108,6 +108,9 @@ export function useUsers(params?: {
   query?: string;
   limit?: number;
   cursor?: string;
+  roleId?: string;
+  isActive?: boolean;
+  [key: string]: any;
 }) {
   return useQuery<{ data: User[]; pagination?: any }>({
     queryKey: ['users', params],
@@ -190,12 +193,12 @@ export function useAnalyticsData() {
 }
 
 import type {
-  CreateModuleSettingRequest,
-  ModuleSettingsList,
-  SettingsOperationResult,
-  SystemSettings,
-  UpdateModuleSettingRequest,
-  UpdateSystemSettingsRequest
+    CreateModuleSettingRequest,
+    ModuleSettingsList,
+    SettingsOperationResult,
+    SystemSettings,
+    UpdateModuleSettingRequest,
+    UpdateSystemSettingsRequest
 } from '@/types';
 
 // System Settings
@@ -670,7 +673,7 @@ export function useRoles() {
         console.log('📥 Raw API response:', response);
 
         // Handle different response structures
-        let roles = response.data?.data || response.data || [];
+        const roles = response.data?.data || response.data || [];
         console.log('📋 Extracted roles:', roles);
 
         // Validate each role has required fields

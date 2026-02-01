@@ -180,6 +180,7 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       API_URL: ${API_URL:-https://www.immorz.pt}
+      JWT_SECRET: ${JWT_SECRET}
     # networks:
     #   - backend
     labels:

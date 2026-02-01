@@ -74,7 +74,7 @@ export interface UsersTableProps {
     onDelete: (id: string) => void;
     onViewDetails: (user: User) => void;
     onSelectUser: (userId: string) => void;
-    onSelectAll: () => void;
+    onSelectAll: (e?: any) => void;
 }
 
 export interface UsersFiltersProps {

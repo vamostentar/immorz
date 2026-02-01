@@ -2,9 +2,9 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { ServiceFactory } from '../factories/service.factory';
 import { AppError } from '../types/common';
 import {
-  propertyCreateSchema,
-  propertyFiltersSchema,
-  propertyUpdateSchema
+    propertyCreateSchema,
+    propertyFiltersSchema,
+    propertyUpdateSchema
 } from '../types/property';
 import { httpLogger } from '../utils/logger';
 import { validateInput, validateUUID } from '../utils/validation';
@@ -21,6 +21,9 @@ export class PropertyController {
 
     try {
       httpLogger.info({ operation: 'createProperty' }, 'Creating new property');
+      console.log('📝 createProperty request body:', JSON.stringify(request.body));
+      console.log('📝 Headers x-user-role:', request.headers['x-user-role']);
+      console.log('📝 Headers x-user-id:', request.headers['x-user-id']);
 
       const validatedData = validateInput(propertyCreateSchema, request.body);
 

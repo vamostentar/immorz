@@ -38,6 +38,15 @@ model UserProfile {
   profileVisibility  ProfileVisibility @default(PUBLIC)
   allowMarketing     Boolean           @default(false)
   allowNotifications Boolean           @default(true)
+
+  // Agent Profile Data
+  specialties       String[]  @default([])
+  experience        Int?      // Years of experience
+  
+  // Social Media
+  linkedin          String?
+  facebook          String?
+  instagram         String?
   
   // Relacionamentos com outras entidades deste serviço
   propertyInterests PropertyInterest[]

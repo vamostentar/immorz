@@ -29,6 +29,9 @@ export class PropertyRepositoryImpl implements PropertyRepository {
           features: data.features,
           contactPhone: data.contactPhone,
           contactEmail: data.contactEmail,
+          
+          // Identity fields
+          agentId: data.agentId,
         } as any, // Type assertion due to extended fields
       });
 

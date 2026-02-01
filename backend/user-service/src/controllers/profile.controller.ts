@@ -62,8 +62,13 @@ export class UserProfileController {
                 language: profileData.language || 'pt',
                 timezone: profileData.timezone || 'Europe/Lisbon',
                 profileVisibility: profileData.profileVisibility || 'PUBLIC',
-                allowMarketing: profileData.allowMarketing ?? false,
                 allowNotifications: profileData.allowNotifications ?? true,
+                // Agent fields
+                specialties: profileData.specialties || [],
+                experience: profileData.experience || null,
+                linkedin: profileData.linkedin || null,
+                facebook: profileData.facebook || null,
+                instagram: profileData.instagram || null,
             });
 
             // Criar preferências padrão
@@ -238,6 +243,13 @@ export class UserProfileController {
             if (updateData.profileVisibility !== undefined) allowedFields.profileVisibility = updateData.profileVisibility;
             if (updateData.allowMarketing !== undefined) allowedFields.allowMarketing = updateData.allowMarketing;
             if (updateData.allowNotifications !== undefined) allowedFields.allowNotifications = updateData.allowNotifications;
+            
+            // Agent fields
+            if (updateData.specialties !== undefined) allowedFields.specialties = updateData.specialties;
+            if (updateData.experience !== undefined) allowedFields.experience = updateData.experience;
+            if (updateData.linkedin !== undefined) allowedFields.linkedin = updateData.linkedin;
+            if (updateData.facebook !== undefined) allowedFields.facebook = updateData.facebook;
+            if (updateData.instagram !== undefined) allowedFields.instagram = updateData.instagram;
 
             const updatedProfile = await dependencyConfig.database.userProfiles.update(userId, allowedFields);
 

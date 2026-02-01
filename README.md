@@ -132,8 +132,6 @@ Frontend (React + Vite)  ←→  API (Node.js + Express)  ←→  Database (Post
 
 ## 📈 **Status do Projeto**
 
-🎯 **MVP COMPLETO** - Pronto para demonstração ao cliente!
-
 - ✅ Frontend moderno e responsivo
 - ✅ Backend funcional com todas APIs
 - ✅ Database estruturada e populada

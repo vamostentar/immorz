@@ -25,6 +25,7 @@ const PropertiesManagement = lazy(() => import('@/pages/admin/PropertiesManageme
 const PropertyImages = lazy(() => import('@/pages/admin/PropertyImages'));
 const Settings = lazy(() => import('@/pages/admin/Settings'));
 const UsersManagement = lazy(() => import('@/pages/admin/users'));
+const AgentsManagement = lazy(() => import('@/pages/admin/users/Agents'));
 const AgentDashboard = lazy(() => import('@/pages/agent/Dashboard'));
 const AgentProperties = lazy(() => import('@/pages/agent/Properties'));
 const AgentInbox = lazy(() => import('@/pages/agent/Inbox'));
@@ -205,6 +206,16 @@ const router = createBrowserRouter([
       <AppWrapper>
         <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
           <UsersManagement />
+        </ProtectedRoute>
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/admin/agents',
+    element: (
+      <AppWrapper>
+        <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+          <AgentsManagement />
         </ProtectedRoute>
       </AppWrapper>
     )
