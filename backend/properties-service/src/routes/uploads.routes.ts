@@ -8,7 +8,7 @@ import { logger } from '../utils/logger.js';
 export async function uploadsRoutes(fastify: FastifyInstance) {
   
   // Generic File Upload
-  fastify.post('/api/v1/uploads', async (request, reply) => {
+  fastify.post('/uploads', async (request, reply) => {
     try {
       console.log('🆕 Received generic upload request');
 
