@@ -19,8 +19,8 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    networks:
-      - backend
+    # networks:
+    #   - backend
     labels:
       # Desabilitar Traefik para PostgreSQL (serviço interno)
       - "traefik.enable=false"
@@ -46,8 +46,8 @@ services:
     ]
     volumes:
       - redis_data:/data
-    networks:
-      - backend
+    # networks:
+    #   - backend
     labels:
       # Desabilitar Traefik para Redis (serviço interno)
       - "traefik.enable=false"
@@ -70,8 +70,8 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
-    networks:
-      - backend
+    # networks:
+    #   - backend
     labels:
       # Desabilitar Traefik para MinIO (serviço interno)
       - "traefik.enable=false"
@@ -108,8 +108,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       API_URL: ${API_URL:-https://www.immorz.pt}
-    networks:
-      - backend
+    # networks:
+    #   - backend
     labels:
       # Desabilitar Traefik para Auth Service (serviço interno)
       - "traefik.enable=false"
@@ -145,8 +145,8 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
     volumes:
       - properties_uploads:/app/uploads
-    networks:
-      - backend
+    # networks:
+    #   - backend
     labels:
       # Desabilitar Traefik para Properties Service (serviço interno)
       - "traefik.enable=false"
@@ -180,8 +180,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       API_URL: ${API_URL:-https://www.immorz.pt}
-    networks:
-      - backend
+    # networks:
+    #   - backend
     labels:
       # Desabilitar Traefik para Users Service (serviço interno)
       - "traefik.enable=false"
@@ -215,8 +215,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       API_URL: ${API_URL:-https://www.immorz.pt}
-    networks:
-      - backend
+    # networks:
+    #   - backend
     labels:
       # Desabilitar Traefik para Settings Service (serviço interno)
       - "traefik.enable=false"
@@ -252,8 +252,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       API_URL: ${API_URL:-https://www.immorz.pt}
-    networks:
-      - backend
+    # networks:
+    #   - backend
     labels:
       # Desabilitar Traefik para Media Service (serviço interno)
       - "traefik.enable=false"
@@ -304,9 +304,9 @@ services:
       SETTINGS_SERVICE_TIMEOUT: 10000
       USERS_SERVICE_TIMEOUT: 10000
       MESSAGES_SERVICE_TIMEOUT: 10000
-    networks:
-      - backend
-      - frontend
+    # networks:
+    #   - backend
+    #   - frontend
     labels:
       # Desabilitar Traefik para API Gateway (serviço interno)
       - "traefik.enable=false"
@@ -349,9 +349,9 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
-    networks:
-      - backend
-      - frontend
+    # networks:
+    #   - backend
+    #   - frontend
     # REMOVER LABELS - Deixar Coolify gerir automaticamente
     # labels:
     #   - "traefik.enable=true"
@@ -374,8 +374,8 @@ services:
         condition: service_healthy
     environment:
       <<: *common-env
-    networks:
-      - frontend
+    # networks:
+    #   - frontend
     volumes:
       - properties_uploads:/usr/share/nginx/html/uploads:ro
     # REMOVER LABELS - Deixar Coolify gerir automaticamente
@@ -401,8 +401,4 @@ volumes:
   properties_uploads:
     driver: local
 
-networks:
-  backend:
-    driver: bridge
-  frontend:
-    driver: bridge
+# Networks removed to use default stack network (fixes connection with Traefik)

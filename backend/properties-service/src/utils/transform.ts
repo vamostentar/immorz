@@ -66,6 +66,9 @@ export function transformPropertyFromDb(property: PropertyWithAdminStatus): Prop
     propertyAge: property.yearBuilt 
       ? currentYear - property.yearBuilt 
       : null,
+    
+    // Agent assignment
+    agentId: property.agentId || null,
   };
 }
 

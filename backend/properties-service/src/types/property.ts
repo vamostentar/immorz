@@ -199,6 +199,9 @@ export const propertyResponseSchema = z.object({
   // Computed fields
   pricePerSqm: z.number().nullable(),
   propertyAge: z.number().int().nullable(),
+
+  // Agent assignment
+  agentId: z.string().nullable(),
 });
 
 // TypeScript types
