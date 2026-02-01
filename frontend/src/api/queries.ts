@@ -1,4 +1,4 @@
-import type { Project, PropertiesListResponse, Property, SystemSettings } from '@/types';
+import type { Message, Project, PropertiesListResponse, Property, SystemSettings } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client';
 
@@ -496,7 +496,7 @@ export function useMessages(params?: Partial<{
   deleted: boolean;  // true = show trash, false/undefined = show active
   search: string;
 }>) {
-  return useQuery<{ data: import('@/types').Message[]; pagination: any }>({
+  return useQuery<{ data: Message[]; pagination: any }>({
     queryKey: ['messages', params],
     queryFn: async () => {
       const { data } = await api.get('/api/v1/messages', { params });
