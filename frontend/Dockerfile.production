@@ -44,7 +44,7 @@ ENV NODE_ENV=$NODE_ENV
 
 # Build the application
 # Split build steps to isolate failures in logs
-RUN NODE_OPTIONS=--max-old-space-size=2048 yarn tsc -b
+RUN NODE_OPTIONS=--max-old-space-size=2048 yarn tsc --noEmit --verbose
 RUN NODE_OPTIONS=--max-old-space-size=2048 yarn vite build
 
 # Remove source maps for production
