@@ -1,7 +1,8 @@
+import { AgentProfile, fetchAgentById } from '@/api/agent-queries';
 import { useProperty, usePropertyImages } from '@/api/queries';
 import { Footer } from '@/components/Footer';
-import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Eye, MapPin, X } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Eye, MapPin, User, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 export default function PropertyDetails() {
@@ -11,6 +12,18 @@ export default function PropertyDetails() {
 
   const { data: property, isLoading: propertyLoading, error: propertyError } = useProperty(id || '');
   const { data: images = [], isLoading: imagesLoading } = usePropertyImages(id || '');
+  const [agent, setAgent] = useState<AgentProfile | null>(null);
+  const [agentLoading, setAgentLoading] = useState(false);
+
+  useEffect(() => {
+    if (property?.agentId) {
+      setAgentLoading(true);
+      fetchAgentById(property.agentId)
+        .then(setAgent)
+        .catch(err => console.error('Erro ao carregar agente:', err))
+        .finally(() => setAgentLoading(false));
+    }
+  }, [property?.agentId]);
 
   const openImageModal = (index: number) => {
     setSelectedImageIndex(index);
@@ -194,17 +207,60 @@ export default function PropertyDetails() {
               </div>
             </div>
 
-            {/* Contacto */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Interessado?</h3>
-              <p className="text-gray-600 mb-4">
-                Entre em contacto connosco para mais informações sobre esta propriedade.
-              </p>
-              <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    // Cria string com detalhes da propriedade para pré-preencher o formulário
-                    const propertyDetails = `
+            {/* Contacto e Agente */}
+            <div className="bg-white rounded-xl shadow-sm p-6 space-y-8">
+              {/* Agent info */}
+              {agentLoading ? (
+                <div className="animate-pulse flex items-center gap-4 p-3 -m-3 rounded-xl">
+                  <div className="w-16 h-16 rounded-full bg-gray-200"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                  </div>
+                </div>
+              ) : agent && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Agente Responsável</h3>
+                  <Link 
+                    to={`/agent/${agent.id}`}
+                    className="flex items-center gap-4 group hover:bg-gray-50 p-3 -m-3 rounded-xl transition-colors"
+                  >
+                    {agent.avatar ? (
+                      <img 
+                        src={agent.avatar} 
+                        alt={`${agent.firstName} ${agent.lastName}`} 
+                        className="w-16 h-16 rounded-full object-cover border-2 border-gray-100 shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center border-2 border-gray-100 shadow-sm">
+                        <User size={24} className="text-blue-500" />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                        {agent.firstName} {agent.lastName}
+                      </div>
+                      <div className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
+                        <span>Ver Perfil Público</span>
+                        <svg className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              )}
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Interessado?</h3>
+                <p className="text-gray-600 mb-4">
+                  Entre em contacto connosco para mais informações sobre esta propriedade.
+                </p>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => {
+                      // Cria string com detalhes da propriedade para pré-preencher o formulário
+                      const propertyDetails = `
 Propriedade: ${property.title}
 Localização: ${property.location}
 Preço: €${Number(property.price).toLocaleString('pt-PT')}
@@ -216,29 +272,30 @@ Estado: ${property.status === 'for_sale' ? 'À venda' : property.status === 'for
 
 Gostaria de agendar uma visita para esta propriedade.`.trim();
 
-                    // Constrói URL com parâmetros para o formulário de contacto
-                    const searchParams = new URLSearchParams();
-                    searchParams.set('property', propertyDetails);
-                    searchParams.set('propertyId', property.id);
-                    if (property.agentId) {
-                      searchParams.set('agentId', property.agentId);
-                    }
-
-                    // Navega para a página inicial com parâmetros
-                    navigate(`/?${searchParams.toString()}`);
-
-                    // Aguarda a navegação e faz scroll para o formulário de contacto
-                    setTimeout(() => {
-                      const formElement = document.getElementById('lead-form') || document.getElementById('contato');
-                      if (formElement) {
-                        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      // Constrói URL com parâmetros para o formulário de contacto
+                      const searchParams = new URLSearchParams();
+                      searchParams.set('property', propertyDetails);
+                      searchParams.set('propertyId', property.id);
+                      if (property.agentId) {
+                        searchParams.set('agentId', property.agentId);
                       }
-                    }, 150);
-                  }}
-                  className="w-full bg-sky-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-sky-700 transition-colors"
-                >
-                  Agendar Visita
-                </button>
+
+                      // Navega para a página inicial com parâmetros
+                      navigate(`/?${searchParams.toString()}`);
+
+                      // Aguarda a navegação e faz scroll para o formulário de contacto
+                      setTimeout(() => {
+                        const formElement = document.getElementById('lead-form') || document.getElementById('contato');
+                        if (formElement) {
+                          formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }, 150);
+                    }}
+                    className="w-full bg-sky-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-sky-700 transition-colors"
+                  >
+                    Agendar Visita
+                  </button>
+                </div>
               </div>
             </div>
           </div>

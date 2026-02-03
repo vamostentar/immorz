@@ -2,9 +2,9 @@ import { UserController } from '@/controllers/user.controller';
 import { authenticate, requireRole } from '@/middlewares/auth.middleware';
 import { UserService } from '@/services/user.service';
 import {
-  type CreateUserRequest,
-  type UpdateUserRequest,
-  type UserListQuery,
+    type CreateUserRequest,
+    type UpdateUserRequest,
+    type UserListQuery,
 } from '@/types/auth';
 import { PrismaClient } from '@prisma/client';
 import type { FastifyInstance } from 'fastify';
@@ -27,6 +27,17 @@ const userResponseProperties = {
   },
   isActive: { type: 'boolean' },
   isEmailVerified: { type: 'boolean' },
+  avatar: { type: 'string', nullable: true },
+  bio: { type: 'string', nullable: true },
+  specialties: { type: 'array', items: { type: 'string' } },
+  experience: { type: 'number', nullable: true },
+  rating: { type: 'number', nullable: true },
+  reviewCount: { type: 'number' },
+  linkedin: { type: 'string', nullable: true },
+  facebook: { type: 'string', nullable: true },
+  instagram: { type: 'string', nullable: true },
+  isProfilePublic: { type: 'boolean' },
+  isProfileApproved: { type: 'boolean' },
   createdAt: { type: 'string', format: 'date-time' },
   updatedAt: { type: 'string', format: 'date-time' }
 };

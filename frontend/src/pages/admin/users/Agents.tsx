@@ -1,8 +1,10 @@
 import {
+    useAdminUser,
     useRoles,
+    useUpdateUser,
     useUsers
 } from '@/api/admin-queries';
-import { useUpdateUserProfileById, useUserProfile } from '@/api/user-service';
+import { useUpdateUserProfileById } from '@/api/user-service';
 import AdminLayout from '@/components/admin/AdminLayout';
 import UsersTable from '@/components/admin/users/UsersTable';
 import Modal from '@/components/Modal';
@@ -129,9 +131,12 @@ export default function AgentsManagementPage() {
 
 // Inner component for Agent specific editing
 function AgentEditForm({ user, onClose }: { user: User, onClose: () => void }) {
-    // Fetch extended profile
-    const { data: userProfile, isLoading } = useUserProfile(user.id);
-    const { mutateAsync: updateProfile, isPending: isSaving } = useUpdateUserProfileById();
+    // Fetch extended profile (aggregated)
+    const { data: userProfile, isLoading } = useAdminUser(user.id);
+    const { mutateAsync: updateIdentity, isPending: isSavingIdentity } = useUpdateUser();
+    const { mutateAsync: updateProfile, isPending: isSavingProfile } = useUpdateUserProfileById();
+    
+    const isSaving = isSavingIdentity || isSavingProfile;
     
     const [formData, setFormData] = useState({
         bio: '',
@@ -165,19 +170,36 @@ function AgentEditForm({ user, onClose }: { user: User, onClose: () => void }) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await updateProfile({
-                userId: user.id,
-                data: {
-                    bio: formData.bio,
-                    specialties: formData.specialties.split(',').map((s: string) => s.trim()).filter(Boolean),
-                    experience: formData.experience,
-                    linkedin: formData.linkedin,
-                    facebook: formData.facebook,
-                    instagram: formData.instagram,
-                    isProfilePublic: formData.isProfilePublic,
-                    isProfileApproved: formData.isProfileApproved
-                } as any
-            });
+            const specialties = formData.specialties.split(',').map((s: string) => s.trim()).filter(Boolean);
+            
+            // 1. Update Auth Service fields (Identity + Approval)
+            const identityData = {
+                bio: formData.bio,
+                specialties,
+                experience: formData.experience,
+                linkedin: formData.linkedin,
+                facebook: formData.facebook,
+                instagram: formData.instagram,
+                isProfilePublic: formData.isProfilePublic,
+                isProfileApproved: formData.isProfileApproved
+            };
+            
+            // 2. Update User Service fields (Extended Profile)
+            const profileData = {
+                bio: formData.bio,
+                specialties,
+                experience: formData.experience,
+                linkedin: formData.linkedin,
+                facebook: formData.facebook,
+                instagram: formData.instagram,
+                profileVisibility: formData.isProfilePublic ? 'PUBLIC' : 'PRIVATE'
+            };
+
+            await Promise.all([
+                updateIdentity({ id: user.id, userData: identityData as any }),
+                updateProfile({ userId: user.id, data: profileData as any })
+            ]);
+            
             onClose();
         } catch (error) {
             console.error('Failed to update agent profile', error);

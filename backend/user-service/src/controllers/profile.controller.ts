@@ -299,6 +299,95 @@ export class UserProfileController {
     }
 
     /**
+     * Actualiza o perfil de um utilizador específico (admin)
+     */
+    async updateProfileById(request: FastifyRequest, reply: FastifyReply) {
+        try {
+            const userId = (request as any).params?.userId;
+            const updateData = (request as any).body;
+
+            if (!userId) {
+                return reply.status(400).send({
+                    success: false,
+                    error: 'ID do utilizador é obrigatório',
+                    code: 'MISSING_USER_ID'
+                });
+            }
+
+            // Filtrar apenas campos permitidos
+            const allowedFields: Record<string, any> = {};
+
+            if (updateData.bio !== undefined) allowedFields.bio = updateData.bio;
+            if (updateData.avatar !== undefined) allowedFields.avatar = updateData.avatar;
+            if (updateData.dateOfBirth !== undefined) allowedFields.dateOfBirth = updateData.dateOfBirth ? new Date(updateData.dateOfBirth) : null;
+            if (updateData.gender !== undefined) allowedFields.gender = updateData.gender;
+            if (updateData.address !== undefined) allowedFields.address = updateData.address;
+            if (updateData.city !== undefined) allowedFields.city = updateData.city;
+            if (updateData.state !== undefined) allowedFields.state = updateData.state;
+            if (updateData.country !== undefined) allowedFields.country = updateData.country;
+            if (updateData.postalCode !== undefined) allowedFields.postalCode = updateData.postalCode;
+            if (updateData.preferredContactMethod !== undefined) allowedFields.preferredContactMethod = updateData.preferredContactMethod;
+            if (updateData.language !== undefined) allowedFields.language = updateData.language;
+            if (updateData.timezone !== undefined) allowedFields.timezone = updateData.timezone;
+            if (updateData.profileVisibility !== undefined) allowedFields.profileVisibility = updateData.profileVisibility;
+            if (updateData.allowMarketing !== undefined) allowedFields.allowMarketing = updateData.allowMarketing;
+            if (updateData.allowNotifications !== undefined) allowedFields.allowNotifications = updateData.allowNotifications;
+            
+            // Agent fields
+            if (updateData.specialties !== undefined) allowedFields.specialties = updateData.specialties;
+            if (updateData.experience !== undefined) allowedFields.experience = updateData.experience;
+            if (updateData.linkedin !== undefined) allowedFields.linkedin = updateData.linkedin;
+            if (updateData.facebook !== undefined) allowedFields.facebook = updateData.facebook;
+            if (updateData.instagram !== undefined) allowedFields.instagram = updateData.instagram;
+
+            // Verificar se perfil existe, senão criar (Upsert logic)
+            const existingProfile = await dependencyConfig.database.userProfiles.findById(userId);
+            let updatedProfile;
+
+            if (!existingProfile) {
+                console.log(`🔧 Criando perfil (admin) para utilizador ${userId}`);
+                updatedProfile = await dependencyConfig.database.userProfiles.create({
+                    id: userId,
+                    ...allowedFields
+                });
+                
+                // Criar preferências padrão
+                try {
+                    await dependencyConfig.database.userPreferences.create({
+                        userId: updatedProfile.id,
+                        emailNotifications: true,
+                        smsNotifications: false,
+                        pushNotifications: true,
+                        priceDropAlerts: true,
+                        newPropertyAlerts: true,
+                        marketUpdateAlerts: false,
+                        searchRadius: 10,
+                        sortBy: 'RELEVANCE',
+                        viewMode: 'LIST'
+                    });
+                } catch (prefError) {
+                    console.warn('⚠️ Erro ao criar preferências:', prefError);
+                }
+            } else {
+                updatedProfile = await dependencyConfig.database.userProfiles.update(userId, allowedFields);
+            }
+
+            return reply.send({
+                success: true,
+                data: updatedProfile,
+                message: 'Perfil actualizado com sucesso (Admin)'
+            });
+        } catch (error) {
+            console.error('❌ Erro ao actualizar perfil por ID:', error);
+            return reply.status(500).send({
+                success: false,
+                error: 'Erro interno do servidor',
+                code: 'INTERNAL_ERROR'
+            });
+        }
+    }
+
+    /**
      * Elimina o perfil (cascade para preferências, favoritos, etc.)
      * NOTA: Não elimina o utilizador no auth-service
      */

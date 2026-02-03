@@ -128,6 +128,18 @@ export function useUsers(params?: {
   });
 }
 
+export function useAdminUser(userId: string) {
+  return useQuery<User & { profile?: any }>({
+    queryKey: ['admin-user', userId],
+    queryFn: async () => {
+      const { data } = await api.get(`/api/v1/admin/users/${userId}`);
+      return data.data || data;
+    },
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({

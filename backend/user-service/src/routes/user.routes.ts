@@ -11,11 +11,11 @@
 
 import { FastifyInstance } from 'fastify';
 import {
-  notificationController,
-  savedPropertyController,
-  searchHistoryController,
-  userPreferencesController,
-  userProfileController
+    notificationController,
+    savedPropertyController,
+    searchHistoryController,
+    userPreferencesController,
+    userProfileController
 } from '../controllers/profile.controller.js';
 
 export async function userRoutes(fastify: FastifyInstance) {
@@ -49,7 +49,7 @@ export async function userRoutes(fastify: FastifyInstance) {
 
   // Actualizar perfil por ID (admin)
   fastify.put('/api/v1/user-profiles/:userId', async (req, rep) => {
-    return userProfileController.updateMyProfile(req, rep);
+    return userProfileController.updateProfileById(req, rep);
   });
 
   // Eliminar perfil (admin)

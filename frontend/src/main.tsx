@@ -18,6 +18,7 @@ const NotFound = lazy(() => import('@/pages/NotFound'));
 const Privacy = lazy(() => import('@/pages/Privacy'));
 const Terms = lazy(() => import('@/pages/Terms'));
 const Legal = lazy(() => import('@/pages/Legal'));
+const Team = lazy(() => import('@/pages/Team'));
 
 // Lazy load all admin pages
 const Analytics = lazy(() => import('@/pages/admin/Analytics'));
@@ -101,6 +102,14 @@ const router = createBrowserRouter([
     element: (
       <AppWrapper>
         <AgentProfile />
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/equipa',
+    element: (
+      <AppWrapper>
+        <Team />
       </AppWrapper>
     )
   },

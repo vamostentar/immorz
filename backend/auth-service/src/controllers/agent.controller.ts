@@ -61,15 +61,15 @@ export class AgentController {
         const context = getRequestContext(request)!;
 
         const agent = await this.userService.findById(userId);
-
-        // Verificar se o perfil é público
-        if (!(agent as any).isProfilePublic || !(agent as any).isProfileApproved) {
-            return reply.code(404).send({
+ 
+        // Decoupled: only requires approval to be visible via ID (e.g. from property page)
+        if (!(agent as any).isProfileApproved) {
+             return reply.code(404).send({
                 success: false,
-                error: 'Perfil de agente não encontrado ou não está público',
+                error: 'Perfil de agente não encontrado ou não está aprovado',
                 code: 'AGENT_NOT_FOUND'
             });
-        }
+         }
 
         return reply.send(createSuccessResponse(agent, context.requestId));
     }

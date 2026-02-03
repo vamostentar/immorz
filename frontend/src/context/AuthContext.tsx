@@ -1,3 +1,4 @@
+import { flattenProfile } from '@/api/agent-queries';
 import { api, clearTokens, complete2FA, getAccessToken, loginRequest, registerRequest, setTokens } from '@/api/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -8,7 +9,7 @@ interface AuthUser {
   email: string;
   firstName?: string;
   lastName?: string;
-  phone?: string;
+  phone?: string | null;
   role?: string | { id: string; name: string; displayName: string };
   isActive?: boolean;
   isVerified?: boolean;
@@ -92,11 +93,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setState(s => ({ ...s, loading: true }));
 
         const { data } = await api.get('/api/v1/users/me');
-        const userData = data?.data ?? data ?? null;
+        const userDataRaw = data?.data ?? data ?? null;
+        const userData = userDataRaw ? flattenProfile(userDataRaw) : null;
 
         console.log('🔐 AuthContext: User verified successfully:', userData?.email);
         setState({
-          user: userData,
+          user: userData as any,
           loading: false,
           initialized: true
         });
@@ -150,10 +152,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setTokens(accessToken, refreshToken || null);
         // Fetch complete user data from API
         const { data: userData } = await api.get('/api/v1/users/me');
-        const user = userData?.data ?? userData ?? null;
+        const userRaw = userData?.data ?? userData ?? null;
+        const user = userRaw ? flattenProfile(userRaw) : null;
         console.log('🔐 AuthContext: Login successful, user data:', user);
 
-        setState({ user, loading: false, initialized: true });
+        setState({ user: user as any, loading: false, initialized: true });
 
         // Redirect based on role
         if (user) {

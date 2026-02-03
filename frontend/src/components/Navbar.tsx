@@ -1,8 +1,19 @@
-import { useState } from 'react';
+import { fetchPublicAgents } from '@/api/agent-queries';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [hasAgents, setHasAgents] = useState(false);
+
+  useEffect(() => {
+    fetchPublicAgents({ limit: 1 })
+      .then(resp => {
+        const agents = Array.isArray(resp) ? resp : (resp.data ?? []);
+        setHasAgents(agents.length > 0);
+      })
+      .catch(() => setHasAgents(false));
+  }, []);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/90 border-b border-gray-200/50 shadow-sm">
@@ -30,6 +41,15 @@ export function Navbar() {
               Imóveis
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full" />
             </a>
+            {hasAgents && (
+              <Link 
+                to="/equipa" 
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors relative group"
+              >
+                Equipa
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full" />
+              </Link>
+            )}
             <a 
               href="#contato" 
               className="text-gray-700 hover:text-blue-600 font-medium transition-colors relative group"
@@ -73,6 +93,15 @@ export function Navbar() {
             >
               Imóveis
             </a>
+            {hasAgents && (
+              <Link 
+                to="/equipa" 
+                className="block text-gray-700 hover:text-blue-600 font-medium transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Equipa
+              </Link>
+            )}
             <a 
               href="#contato" 
               className="block text-gray-700 hover:text-blue-600 font-medium transition-colors py-2"

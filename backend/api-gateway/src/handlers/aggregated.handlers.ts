@@ -652,6 +652,11 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
                     ...aggregatedUser.profile,
                     bio: userProfile.bio || aggregatedUser.profile.bio,
                     avatar: userProfile.avatar || aggregatedUser.profile.avatar,
+                    specialties: userProfile.specialties || aggregatedUser.profile.specialties,
+                    experience: userProfile.experience || aggregatedUser.profile.experience,
+                    linkedin: userProfile.linkedin || aggregatedUser.profile.linkedin,
+                    facebook: userProfile.facebook || aggregatedUser.profile.facebook,
+                    instagram: userProfile.instagram || aggregatedUser.profile.instagram,
                 };
             }
 
