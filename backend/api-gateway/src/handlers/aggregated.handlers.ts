@@ -37,7 +37,6 @@ interface AggregatedUser {
 
     // Dados de perfil (user-service ou auth-service)
     profile?: {
-        bio?: string;
         avatar?: string;
         dateOfBirth?: string;
         gender?: string;
@@ -63,6 +62,7 @@ interface AggregatedUser {
         instagram?: string;
         isProfilePublic?: boolean;
         isProfileApproved?: boolean;
+        bio?: string; // Bio também pode vir do auth
     };
 }
 
@@ -616,25 +616,42 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
                 isEmailVerified: authUser.isEmailVerified ?? false,
                 createdAt: authUser.createdAt,
                 updatedAt: authUser.updatedAt,
+                profile: {
+                    bio: authUser.bio,
+                    avatar: authUser.avatar,
+                    dateOfBirth: userProfile?.dateOfBirth,
+                    gender: userProfile?.gender,
+                    address: userProfile?.address,
+                    city: userProfile?.city,
+                    state: userProfile?.state,
+                    country: userProfile?.country,
+                    postalCode: userProfile?.postalCode,
+                    preferredContactMethod: userProfile?.preferredContactMethod,
+                    language: userProfile?.language,
+                    timezone: userProfile?.timezone,
+                    profileVisibility: userProfile?.profileVisibility,
+                    allowMarketing: userProfile?.allowMarketing,
+                    allowNotifications: userProfile?.allowNotifications,
+                    
+                    // Novos campos de agente (do auth-service)
+                    specialties: authUser.specialties,
+                    rating: authUser.rating,
+                    reviewCount: authUser.reviewCount,
+                    experience: authUser.experience,
+                    linkedin: authUser.linkedin,
+                    facebook: authUser.facebook,
+                    instagram: authUser.instagram,
+                    isProfilePublic: authUser.isProfilePublic,
+                    isProfileApproved: authUser.isProfileApproved
+                }
             };
 
-            if (userProfile) {
+            // Se o user-service respondeu, misturar os dados (prioridade ao user-service para campos específicos)
+            if (userProfile && aggregatedUser.profile) {
                 aggregatedUser.profile = {
-                    bio: userProfile.bio,
-                    avatar: userProfile.avatar,
-                    dateOfBirth: userProfile.dateOfBirth,
-                    gender: userProfile.gender,
-                    address: userProfile.address,
-                    city: userProfile.city,
-                    state: userProfile.state,
-                    country: userProfile.country,
-                    postalCode: userProfile.postalCode,
-                    preferredContactMethod: userProfile.preferredContactMethod,
-                    language: userProfile.language,
-                    timezone: userProfile.timezone,
-                    profileVisibility: userProfile.profileVisibility,
-                    allowMarketing: userProfile.allowMarketing,
-                    allowNotifications: userProfile.allowNotifications,
+                    ...aggregatedUser.profile,
+                    bio: userProfile.bio || aggregatedUser.profile.bio,
+                    avatar: userProfile.avatar || aggregatedUser.profile.avatar,
                 };
             }
 
@@ -723,11 +740,28 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
         '/api/v1/users/:userId',
         async (request: FastifyRequest<{ Params: { userId: string }; Body: Record<string, unknown> }>, reply: FastifyReply) => {
             try {
-                const { userId } = request.params;
+                let { userId } = request.params;
                 const updateData = request.body;
                 const authHeader = request.headers.authorization;
 
-                console.log(`📝 PUT /api/v1/users/${userId}:`, { updateData });
+                // Handle 'me' keyword - if userId is 'me', use the authenticated user's ID
+                if (userId === 'me') {
+                    const authenticatedUserId = (request as any).user?.id;
+                    if (!authenticatedUserId) {
+                        return reply.status(401).send({
+                            success: false,
+                            error: 'Utilizador não autenticado',
+                            code: 'UNAUTHORIZED'
+                        });
+                    }
+                    userId = authenticatedUserId;
+                }
+
+                console.log(`📝 AGGREGATED: PUT /api/v1/users/${userId}:`, { 
+                    updateData, 
+                    hasAuthHeader: !!authHeader,
+                    authenticatedUser: (request as any).user
+                });
 
                 // Actualizar utilizador no auth-service
                 const response = await fetch(
@@ -746,18 +780,67 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
                 const data = await response.json().catch(() => ({}));
 
                 if (!response.ok) {
-                    console.error(`❌ Erro ao actualizar utilizador ${userId}:`, data);
+                    console.error(`❌ AGGREGATED: Erro ao actualizar utilizador ${userId} no auth-service:`, {
+                        status: response.status,
+                        data
+                    });
                     return reply.status(response.status).send(data);
                 }
 
                 // Invalidar cache do utilizador
                 invalidateUserCache(userId);
 
-                console.log(`✅ Utilizador ${userId} actualizado com sucesso`);
+                console.log(`✅ AGGREGATED: Utilizador ${userId} actualizado com sucesso no auth-service`);
 
                 return reply.send(data);
             } catch (error) {
-                console.error('❌ Erro no handler PUT /users/:userId:', error);
+                console.error('❌ AGGREGATED: Erro no handler PUT /users/:userId:', error);
+                return reply.status(500).send({
+                    success: false,
+                    error: 'Erro interno do servidor',
+                    code: 'INTERNAL_ERROR'
+                });
+            }
+        }
+    );
+    
+    /**
+     * GET /api/v1/users/:userId/audit - Obtém logs de auditoria do utilizador
+     * Encaminha para o auth-service
+     */
+    app.get<{ Params: { userId: string }; Querystring: { period?: string; limit?: number } }>(
+        '/api/v1/users/:userId/audit',
+        async (request: FastifyRequest<{ Params: { userId: string }; Querystring: { period?: string; limit?: number } }>, reply: FastifyReply) => {
+            try {
+                const { userId } = request.params;
+                const query = request.query;
+                const authHeader = request.headers.authorization;
+
+                const queryParams = new URLSearchParams();
+                if (query.period) queryParams.append('period', query.period);
+                if (query.limit) queryParams.append('limit', query.limit.toString());
+
+                const response = await fetch(
+                    `${config.AUTH_SERVICE_URL}/api/v1/users/${userId}/audit?${queryParams.toString()}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': authHeader || '',
+                            'X-Internal-Request': 'true',
+                        }
+                    }
+                );
+
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    return reply.status(response.status).send(data);
+                }
+
+                return reply.send(data);
+            } catch (error) {
+                console.error('❌ AGGREGATED: Erro no handler GET /users/:userId/audit:', error);
                 return reply.status(500).send({
                     success: false,
                     error: 'Erro interno do servidor',

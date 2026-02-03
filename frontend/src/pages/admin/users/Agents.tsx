@@ -136,17 +136,28 @@ function AgentEditForm({ user, onClose }: { user: User, onClose: () => void }) {
     const [formData, setFormData] = useState({
         bio: '',
         specialties: '',
-        licenseNumber: ''
+        experience: 0,
+        linkedin: '',
+        facebook: '',
+        instagram: '',
+        isProfilePublic: false,
+        isProfileApproved: false
     });
 
     // Load data when profile loads
     React.useEffect(() => {
         if (userProfile) {
             const profile = userProfile as any;
+            const profileData = profile.profile || profile;
             setFormData({
-                bio: profile.bio || '',
-                specialties: Array.isArray(profile.specialties) ? profile.specialties.join(', ') : '',
-                licenseNumber: profile.licenseNumber || ''
+                bio: profileData.bio || '',
+                specialties: Array.isArray(profileData.specialties) ? profileData.specialties.join(', ') : '',
+                experience: profileData.experience || 0,
+                linkedin: profileData.linkedin || '',
+                facebook: profileData.facebook || '',
+                instagram: profileData.instagram || '',
+                isProfilePublic: !!profileData.isProfilePublic,
+                isProfileApproved: !!profileData.isProfileApproved
             });
         }
     }, [userProfile]);
@@ -158,9 +169,13 @@ function AgentEditForm({ user, onClose }: { user: User, onClose: () => void }) {
                 userId: user.id,
                 data: {
                     bio: formData.bio,
-                    // Convert comma separated string to array
-                    specialties: formData.specialties.split(',').map((s: string) => s.trim()).filter(Boolean) as any, 
-                    licenseNumber: formData.licenseNumber
+                    specialties: formData.specialties.split(',').map((s: string) => s.trim()).filter(Boolean),
+                    experience: formData.experience,
+                    linkedin: formData.linkedin,
+                    facebook: formData.facebook,
+                    instagram: formData.instagram,
+                    isProfilePublic: formData.isProfilePublic,
+                    isProfileApproved: formData.isProfileApproved
                 } as any
             });
             onClose();
@@ -196,13 +211,68 @@ function AgentEditForm({ user, onClose }: { user: User, onClose: () => void }) {
              </div>
              
              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Número de Licença</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Anos de Experiência</label>
                 <input
-                    type="text"
+                    type="number"
+                    min="0"
                     className="mt-1 w-full p-2 border rounded-md dark:bg-dark-card dark:border-dark-border"
-                    value={formData.licenseNumber}
-                    onChange={e => setFormData({...formData, licenseNumber: e.target.value})}
+                    value={formData.experience}
+                    onChange={e => setFormData({...formData, experience: parseInt(e.target.value) || 0})}
                 />
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">LinkedIn</label>
+                    <input
+                        type="url"
+                        className="mt-1 w-full p-2 border rounded-md dark:bg-dark-card dark:border-dark-border"
+                        value={formData.linkedin}
+                        onChange={e => setFormData({...formData, linkedin: e.target.value})}
+                        placeholder="URL do LinkedIn"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Facebook</label>
+                    <input
+                        type="url"
+                        className="mt-1 w-full p-2 border rounded-md dark:bg-dark-card dark:border-dark-border"
+                        value={formData.facebook}
+                        onChange={e => setFormData({...formData, facebook: e.target.value})}
+                        placeholder="URL do Facebook"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Instagram</label>
+                    <input
+                        type="url"
+                        className="mt-1 w-full p-2 border rounded-md dark:bg-dark-card dark:border-dark-border"
+                        value={formData.instagram}
+                        onChange={e => setFormData({...formData, instagram: e.target.value})}
+                        placeholder="URL do Instagram"
+                    />
+                </div>
+             </div>
+
+             <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={formData.isProfilePublic}
+                        onChange={e => setFormData({...formData, isProfilePublic: e.target.checked})}
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Perfil Público</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={formData.isProfileApproved}
+                        onChange={e => setFormData({...formData, isProfileApproved: e.target.checked})}
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Perfil Aprovado</span>
+                </label>
              </div>
 
              <div className="flex justify-end pt-4 gap-2">

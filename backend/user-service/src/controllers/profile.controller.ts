@@ -251,7 +251,37 @@ export class UserProfileController {
             if (updateData.facebook !== undefined) allowedFields.facebook = updateData.facebook;
             if (updateData.instagram !== undefined) allowedFields.instagram = updateData.instagram;
 
-            const updatedProfile = await dependencyConfig.database.userProfiles.update(userId, allowedFields);
+            // Verificar se perfil existe, senão criar (Upsert logic)
+            const existingProfile = await dependencyConfig.database.userProfiles.findById(userId);
+            let updatedProfile;
+
+            if (!existingProfile) {
+                console.log(`🔧 Auto-criando perfil durante actualização para utilizador ${userId}`);
+                updatedProfile = await dependencyConfig.database.userProfiles.create({
+                    id: userId,
+                    ...allowedFields
+                });
+                
+                // Criar preferências padrão também
+                try {
+                    await dependencyConfig.database.userPreferences.create({
+                        userId: updatedProfile.id,
+                        emailNotifications: true,
+                        smsNotifications: false,
+                        pushNotifications: true,
+                        priceDropAlerts: true,
+                        newPropertyAlerts: true,
+                        marketUpdateAlerts: false,
+                        searchRadius: 10,
+                        sortBy: 'RELEVANCE',
+                        viewMode: 'LIST'
+                    });
+                } catch (prefError) {
+                    console.warn('⚠️ Erro ao criar preferências:', prefError);
+                }
+            } else {
+                updatedProfile = await dependencyConfig.database.userProfiles.update(userId, allowedFields);
+            }
 
             return reply.send({
                 success: true,

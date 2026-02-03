@@ -17,6 +17,7 @@ export function createRequestContext(request: FastifyRequest): RequestContext {
     userAgent,
     timestamp: new Date(),
     correlationId,
+    userId: (request as any).user?.id || (request.headers['x-user-id'] as string),
   };
 }
 
@@ -53,8 +54,17 @@ export function requestContextMiddleware(request: FastifyRequest, reply: any, do
  */
 export function extractUserIdFromRequest(request: FastifyRequest): string | undefined {
   try {
-    // Em uma implementação real, isso seria extraído do JWT
-    // Por enquanto, retornamos undefined
+    // 1. Check if it's already on the request object (populated by middleware)
+    if ((request as any).user?.id) {
+      return (request as any).user.id;
+    }
+
+    // 2. Check the gateway header
+    const gatewayUserId = request.headers['x-user-id'];
+    if (gatewayUserId && typeof gatewayUserId === 'string') {
+      return gatewayUserId;
+    }
+
     return undefined;
   } catch {
     return undefined;

@@ -78,7 +78,18 @@ export async function updateMyProfile(data: Partial<{
     instagram: string;
     isProfilePublic: boolean;
 }>): Promise<AgentProfile> {
-    const identityFields = ['firstName', 'lastName', 'phone'];
+    const identityFields = [
+        'firstName', 
+        'lastName', 
+        'phone', 
+        'bio', 
+        'specialties', 
+        'experience', 
+        'linkedin', 
+        'facebook', 
+        'instagram', 
+        'isProfilePublic'
+    ];
     const identityData: Record<string, any> = {};
     const profileData: Record<string, any> = {};
 
@@ -95,27 +106,44 @@ export async function updateMyProfile(data: Partial<{
 
     // Update identity (Auth Service) if needed
     if (Object.keys(identityData).length > 0) {
+        console.log('📝 Updating identity data:', identityData);
         // Auth service users route is /api/v1/users/me
         promises.push(
             api.put('/api/v1/users/me', identityData)
                 .then(res => {
+                    console.log('✅ Identity update success:', res.data);
                     Object.assign(responseData, res.data.data || res.data);
+                })
+                .catch(err => {
+                    console.error('❌ Identity update failed:', err.response?.data || err.message);
+                    throw err;
                 })
         );
     }
 
     // Update profile (User Service) if needed
     if (Object.keys(profileData).length > 0) {
+        console.log('📝 Updating profile data:', profileData);
         // User service profile route is /api/v1/user-profiles/me
         promises.push(
             api.put('/api/v1/user-profiles/me', profileData)
                 .then(res => {
+                    console.log('✅ Profile update success:', res.data);
                     Object.assign(responseData, res.data.data || res.data);
+                })
+                .catch(err => {
+                    console.error('❌ Profile update failed:', err.response?.data || err.message);
+                    throw err;
                 })
         );
     }
 
-    await Promise.all(promises);
+    try {
+        await Promise.all(promises);
+        console.log('🎉 All update promises completed successfully');
+    } catch (error) {
+        console.error('⚠️ One or more update promises failed, but proceeding to fetch fresh profile');
+    }
     
     // If we have mixed data, we might be missing some fields if we just rely on the update response
     // (e.g. auth update returns user fields, profile update returns profile fields)
@@ -125,8 +153,10 @@ export async function updateMyProfile(data: Partial<{
     // However, to be 100% sure and robust as requested, let's fetch the fresh full profile
     // This ensures that any server-side logic (triggers, default values) is reflected.
     // Use authenticated endpoint for my profile
+    console.log('🔄 Fetching fresh profile data...');
     const response = await api.get('/api/v1/user-profiles/me');
     const freshProfile = response.data.data || response.data;
+    console.log('✅ Fresh profile obtained:', freshProfile);
     return freshProfile as AgentProfile;
 }
 

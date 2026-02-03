@@ -1,4 +1,5 @@
 import { useProperty, usePropertyImages } from '@/api/queries';
+import { Footer } from '@/components/Footer';
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Eye, MapPin, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -287,6 +288,7 @@ Gostaria de agendar uma visita para esta propriedade.`.trim();
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 }

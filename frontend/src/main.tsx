@@ -15,6 +15,9 @@ import './index.css';
 // Lazy load non-critical pages
 const PropertyDetails = lazy(() => import('@/pages/PropertyDetails'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
+const Privacy = lazy(() => import('@/pages/Privacy'));
+const Terms = lazy(() => import('@/pages/Terms'));
+const Legal = lazy(() => import('@/pages/Legal'));
 
 // Lazy load all admin pages
 const Analytics = lazy(() => import('@/pages/admin/Analytics'));
@@ -271,6 +274,30 @@ const router = createBrowserRouter([
         <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
           <Approvals />
         </ProtectedRoute>
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/privacidade',
+    element: (
+      <AppWrapper>
+        <Privacy />
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/termos',
+    element: (
+      <AppWrapper>
+        <Terms />
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/legal',
+    element: (
+      <AppWrapper>
+        <Legal />
       </AppWrapper>
     )
   },

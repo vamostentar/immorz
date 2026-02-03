@@ -1,4 +1,5 @@
 import { Navigate, useParams } from 'react-router-dom';
+import { Footer } from '../../components/Footer';
 import { AgentBio } from '../../components/agent/AgentBio';
 import { AgentHeader } from '../../components/agent/AgentHeader';
 import { AgentProperties } from '../../components/agent/AgentProperties';
@@ -45,6 +46,7 @@ export function AgentProfile() {
 
                 <ContactAgentButton agent={agent} />
             </div>
+            <Footer />
         </div>
     );
 }

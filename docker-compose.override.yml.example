@@ -1,0 +1,148 @@
+# Docker Compose - Auto Override Template para Desenvolvimento Local
+# Ribeira Azul - Real Estate Platform
+# 
+# INSTRUÇÕES:
+# 1. Copie este arquivo para: docker-compose.override.yml
+# 2. O arquivo docker-compose.override.yml será carregado AUTOMATICAMENTE quando você roda: docker-compose up
+# 3. Ajuste as configurações conforme necessário
+# 
+# Para usar configuração de produção, renomeie docker-compose.override.yml ou use:
+# docker-compose -f docker-compose.yaml up
+
+x-dev-environment: &dev-env
+  NODE_ENV: development
+  LOG_LEVEL: debug
+
+services:
+  # ====================================
+  # Database - Expor porta localmente
+  # ====================================
+  db:
+    ports:
+      - "5432:5432"
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+
+  # ====================================
+  # Redis - Expor porta localmente
+  # ====================================
+  redis:
+    ports:
+      - "6379:6379"
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+
+  # ====================================
+  # MinIO - Expor portas localmente
+  # ====================================
+  minio:
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+
+  # ====================================
+  # Auth Service
+  # ====================================
+  auth:
+    environment:
+      <<: *dev-env
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:5173,http://localhost:5174
+      CORS_ORIGIN: http://localhost:3000
+      API_URL: http://localhost:3000
+    healthcheck:
+      interval: 10s
+      start_period: 30s
+
+  # ====================================
+  # Properties Service
+  # ====================================
+  properties:
+    environment:
+      <<: *dev-env
+      BASE_URL: http://localhost:3000
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:5173,http://localhost:5174
+      CORS_ORIGIN: http://localhost:3000
+    healthcheck:
+      interval: 10s
+      start_period: 30s
+
+  # ====================================
+  # Users Service
+  # ====================================
+  users:
+    environment:
+      <<: *dev-env
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:5173,http://localhost:5174
+      CORS_ORIGIN: http://localhost:3000
+      API_URL: http://localhost:3000
+    healthcheck:
+      interval: 10s
+      start_period: 30s
+
+  # ====================================
+  # Settings Service
+  # ====================================
+  settings:
+    environment:
+      <<: *dev-env
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:5173,http://localhost:5174
+      CORS_ORIGIN: http://localhost:3000
+      API_URL: http://localhost:3000
+    healthcheck:
+      interval: 10s
+      start_period: 30s
+
+  # ====================================
+  # Media Service
+  # ====================================
+  media:
+    environment:
+      <<: *dev-env
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:5173,http://localhost:5174
+      CORS_ORIGIN: http://localhost:3000
+      API_URL: http://localhost:3000
+    healthcheck:
+      interval: 10s
+      start_period: 30s
+
+  # ====================================
+  # Messages Service
+  # ====================================
+  messages:
+    environment:
+      <<: *dev-env
+    healthcheck:
+      interval: 10s
+      start_period: 30s
+
+  # ====================================
+  # API Gateway - Expor porta
+  # ====================================
+  api-gateway:
+    ports:
+      - "8081:8081"
+    environment:
+      <<: *dev-env
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:5173,http://localhost:5174
+      CORS_ORIGIN: http://localhost:3000
+    healthcheck:
+      interval: 10s
+      start_period: 30s
+
+  # ====================================
+  # Frontend - Expor porta
+  # ====================================
+  web:
+    ports:
+      - "3000:80"
+    environment:
+      NODE_ENV: development
+    healthcheck:
+      interval: 10s
+      start_period: 20s

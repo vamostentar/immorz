@@ -233,7 +233,12 @@ export async function createApp() {
 
   // Add request context hook globally
   app.addHook('onRequest', async (request, reply) => {
+    // 1. Context setup
     request.requestContext = createRequestContext(request);
+    
+    // 2. Internal Auth Extract (from Gateway headers)
+    const { authenticateInternal } = await import('./middlewares/auth.middleware');
+    await authenticateInternal(request, reply);
   });
 
   // Graceful shutdown
