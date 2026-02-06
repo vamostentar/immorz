@@ -253,6 +253,10 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       API_URL: ${API_URL:-https://www.immorz.pt}
+      MEDIA_STORAGE_PROVIDER: local
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - properties_uploads:/app/uploads
     # networks:
     #   - backend
     labels:
@@ -284,6 +288,10 @@ services:
         condition: service_healthy
       users:
         condition: service_healthy
+      notifications:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
     environment:
       <<: *common-env
       PORT: 8081
@@ -298,6 +306,7 @@ services:
       SETTINGS_SERVICE_URL: http://settings:8085
       USERS_SERVICE_URL: http://users:8086
       MESSAGES_SERVICE_URL: http://messages:8090
+      NOTIFICATIONS_SERVICE_URL: http://notifications:8087
       # Timeouts
       AUTH_SERVICE_TIMEOUT: 15000
       PROPERTIES_SERVICE_TIMEOUT: 15000
@@ -305,6 +314,7 @@ services:
       SETTINGS_SERVICE_TIMEOUT: 10000
       USERS_SERVICE_TIMEOUT: 10000
       MESSAGES_SERVICE_TIMEOUT: 10000
+      NOTIFICATIONS_SERVICE_TIMEOUT: 10000
     # networks:
     #   - backend
     #   - frontend
@@ -344,6 +354,9 @@ services:
       IMAP_SECURE: ${IMAP_SECURE:-true}
       IMAP_USER: ${IMAP_USER}
       IMAP_PASS: ${IMAP_PASS}
+      IMAP_ENABLED: "true"
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/5
+      MEDIA_SERVICE_URL: http://media:8083
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
       interval: 15s
@@ -356,6 +369,53 @@ services:
     # REMOVER LABELS - Deixar Coolify gerir automaticamente
     # labels:
     #   - "traefik.enable=true"
+
+  # ====================================
+  # Notification Service
+  # ====================================
+  notifications:
+    build:
+      context: ./backend/notification-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      PORT: 8087
+      HOST: "0.0.0.0"
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=notifications
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      # SMTP - reutiliza mesmas config do messages-service
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${EMAIL_FROM}
+      SMTP_FROM_NAME: "Immorz Imobiliária"
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
+      API_URL: ${API_URL:-https://www.immorz.pt}
+      # Internal service URLs
+      AUTH_SERVICE_URL: http://auth:8084
+      PROPERTIES_SERVICE_URL: http://properties:8082
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8087/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # ====================================
   # Frontend (Nginx)
@@ -400,6 +460,8 @@ volumes:
   minio_data:
     driver: local
   properties_uploads:
+    driver: local
+  media_uploads:
     driver: local
 
 # Networks removed to use default stack network (fixes connection with Traefik)

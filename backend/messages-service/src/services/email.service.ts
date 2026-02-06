@@ -228,11 +228,11 @@ export class EmailService {
     const html = this.generateEmailTemplate(data);
 
     const mailOptions = {
-      from: config.EMAIL_FROM,
+      from: `"${data.fromName || 'RibeirAzul'}" <${config.SMTP_USER}>`,
       to,
       subject,
       html,
-      replyTo: data.fromEmail,
+      replyTo: data.fromEmail || config.EMAIL_FROM,
       headers: {
         'X-Message-Source': 'ribeirazul-messages-service',
         'X-Priority': '3',
@@ -370,7 +370,7 @@ export class EmailService {
         </div>
         
         <div class="footer">
-          <p>Esta mensagem foi enviada através do formulário de contacto do website Ribeira Azul.</p>
+          <p>Esta mensagem foi enviada através do formulário de contacto do website RibeirAzul.</p>
           <p>Data: ${new Date().toLocaleString('pt-PT')}</p>
           <p>Para responder, utilize o botão "Responder" do seu cliente de email ou responda directamente para: ${fromEmail}</p>
         </div>
@@ -401,7 +401,8 @@ export class EmailService {
     to: string,
     subject: string,
     htmlContent: string,
-    textContent?: string
+    textContent?: string,
+    attachments?: { filename: string; content?: Buffer | string; path?: string; contentType?: string }[]
   ): Promise<EmailResult> {
     const startTime = Date.now();
     const emailLogger = this.logger.child({ 
@@ -411,17 +412,31 @@ export class EmailService {
     });
 
     try {
-      const mailOptions = {
-        from: config.EMAIL_FROM,
+      const mailOptions: any = {
+        from: `"RibeirAzul Support" <${config.SMTP_USER}>`,
         to,
         subject,
         html: htmlContent,
         text: textContent,
+        replyTo: config.EMAIL_FROM,
         headers: {
           'X-Message-Source': 'ribeirazul-messages-service',
           'X-Priority': '3',
         },
       };
+
+      if (attachments && attachments.length > 0) {
+        mailOptions.attachments = attachments.map(att => ({
+          ...att,
+          path: this.getInternalUrl(att.path)
+        }));
+      }
+
+      this.logger.debug('Sending custom email', { 
+        to, 
+        subject, 
+        attachmentsCount: attachments?.length || 0 
+      });
 
       const info = await this.transporter.sendMail(mailOptions);
       
@@ -450,6 +465,8 @@ export class EmailService {
       emailLogger.external('smtp', 'sendCustomEmail', duration, false, {
         error: error.message,
         to,
+        response: error.response,
+        command: error.command
       });
 
       this.metricsService.incrementCounter('custom_emails_failed_total');
@@ -550,5 +567,42 @@ export class EmailService {
         error: error.message,
       });
     }
+  }
+
+  /**
+   * Translates a public URL to a Docker-internal URL if necessary.
+   */
+  private getInternalUrl(url: string | undefined): string | undefined {
+    if (!url) return url;
+    
+    try {
+      // If it's a media service URL (contains /uploads/), translate to internal service name
+      if (url.includes('/uploads/')) {
+        const urlObj = new URL(url);
+        // Standardize the path to /uploads/...
+        let uploadPath = urlObj.pathname;
+        
+        if (uploadPath.includes('/api/v1/uploads/')) {
+           uploadPath = uploadPath.replace('/api/v1/uploads/', '/uploads/');
+        } else if (uploadPath.includes('/api/v1/media/')) {
+           // Some routes might use media/ bucket/ file
+           uploadPath = uploadPath.replace('/api/v1/media/', '/uploads/');
+        }
+        
+        // Final internal path using http://media:8083
+        const internalUrl = `${config.MEDIA_SERVICE_URL}${uploadPath}`;
+        
+        this.logger.debug('Translated attachment URL for internal use', { 
+            original: url, 
+            internal: internalUrl 
+        });
+        
+        return internalUrl;
+      }
+    } catch (e: any) {
+      this.logger.error('Failed to translate attachment URL', { url, error: e.message });
+    }
+    
+    return url;
   }
 }

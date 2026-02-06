@@ -1,5 +1,5 @@
 import AgentLayout from '@/components/layouts/AgentLayout';
-import SharedInbox from '@/components/shared/SharedInbox';
+import { SharedInbox } from '@/components/shared/inbox/SharedInbox';
 
 export default function AgentInbox() {
     return (

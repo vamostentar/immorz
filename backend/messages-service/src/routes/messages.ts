@@ -14,6 +14,18 @@ const createMessageSchema = z.object({
   agentId: z.string().optional(),
 });
 
+const sendOutboundMessageSchema = z.object({
+  toEmail: z.string().email(),
+  subject: z.string().min(1).max(200),
+  body: z.string().min(1).max(10000),
+  attachments: z.array(z.object({
+    name: z.string(),
+    url: z.string(),
+    type: z.string(),
+    size: z.number()
+  })).optional()
+});
+
 // JSON Schema for Fastify
 const createMessageJsonSchema = {
   type: 'object',
@@ -166,6 +178,32 @@ export async function registerMessageRoutes(app: FastifyInstance) {
     }
   });
 
+  // Get conversation thread for a message
+  app.get<{
+    Params: { id: string };
+  }>('/api/v1/messages/:id/conversation', async (request, reply) => {
+    const { id } = request.params;
+
+    try {
+      const messages = await messageService.getConversation(id);
+
+      request.log.info(`Conversation retrieved for message: ${id}, count: ${messages.length}`);
+
+      return reply.send({
+        success: true,
+        data: messages,
+      });
+    } catch (error: any) {
+      request.log.error(`Failed to get conversation for ${id}: ${error.message}`);
+
+      return reply.code(500).send({
+        success: false,
+        error: 'FETCH_FAILED',
+        message: 'Failed to fetch conversation',
+      });
+    }
+  });
+
   // Get messages with pagination
   app.get('/api/v1/messages', async (request, reply) => {
     const query = request.query as any;
@@ -260,7 +298,12 @@ export async function registerMessageRoutes(app: FastifyInstance) {
   // Reply to a message
   app.post<{
     Params: { id: string };
-    Body: { body: string; subject?: string };
+    Body: { 
+      body: string; 
+      subject?: string; 
+      toEmail?: string;
+      attachments?: { name: string; url: string; type: string; size: number }[];
+    };
   }>('/api/v1/messages/:id/reply', {
     schema: {
       body: {
@@ -269,16 +312,30 @@ export async function registerMessageRoutes(app: FastifyInstance) {
         properties: {
           body: { type: 'string', minLength: 5, maxLength: 10000 },
           subject: { type: 'string', minLength: 1, maxLength: 200 },
+          toEmail: { type: 'string', format: 'email' },
+          attachments: { 
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['name', 'url', 'type', 'size'],
+              properties: {
+                name: { type: 'string' },
+                url: { type: 'string' },
+                type: { type: 'string' },
+                size: { type: 'number' }
+              }
+            }
+          }
         },
       },
     },
   }, async (request, reply) => {
     const { id } = request.params;
-    const { body: replyBody, subject } = request.body;
+    const { body, subject, toEmail, attachments } = request.body;
 
     try {
       // Use service method which handles email sending and persistence
-      const replyMessage = await messageService.replyToMessage(id, replyBody, subject);
+      const replyMessage = await messageService.replyToMessage(id, body, subject, toEmail, attachments);
 
       // Mark original message as read
       await messageService.markAsRead(id);
@@ -305,6 +362,78 @@ export async function registerMessageRoutes(app: FastifyInstance) {
         success: false,
         error: 'REPLY_FAILED',
         message: 'Failed to send reply',
+      });
+    }
+  });
+
+  // Send outbound message
+  app.post<{
+    Body: z.infer<typeof sendOutboundMessageSchema>;
+  }>('/api/v1/messages/send', {
+     schema: {
+      body: {
+        type: 'object',
+        required: ['toEmail', 'subject', 'body'],
+        properties: {
+          toEmail: { type: 'string', format: 'email' },
+          subject: { type: 'string', minLength: 1, maxLength: 200 },
+          body: { type: 'string', minLength: 1, maxLength: 10000 },
+          attachments: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['name', 'url', 'type', 'size'],
+              properties: {
+                name: { type: 'string' },
+                url: { type: 'string' },
+                type: { type: 'string' },
+                size: { type: 'number' }
+              }
+            }
+          }
+        }
+      }
+     }
+  }, async (request, reply) => {
+    const correlationId = request.correlationId!;
+    const { toEmail, subject, body, attachments } = request.body;
+    
+    // Get sender info from auth
+    const agentId = request.headers['x-user-id'] as string;
+
+    if (!agentId) {
+        return reply.code(401).send({
+            success: false,
+            error: 'UNAUTHORIZED',
+            message: 'Authentication required'
+        });
+    }
+
+    try {
+      const message = await messageService.sendOutboundMessage({
+        toEmail,
+        subject,
+        body,
+        attachments,
+        agentId
+      });
+
+      request.log.info({
+        messageId: message.id,
+        to: toEmail
+      }, `Outbound message sent to ${toEmail}`);
+
+      return reply.code(201).send({
+        success: true,
+        data: message
+      });
+
+    } catch (error: any) {
+      request.log.error(`Failed to send outbound message: ${error.message}`);
+      return reply.code(500).send({
+        success: false,
+        error: 'SEND_FAILED',
+        message: 'Failed to send message'
       });
     }
   });
@@ -405,6 +534,32 @@ export async function registerMessageRoutes(app: FastifyInstance) {
         success: false,
         error: 'RESTORE_FAILED',
         message: 'Failed to restore message',
+      });
+    }
+  });
+
+  // Permanently delete message
+  app.delete<{
+    Params: { id: string };
+  }>('/api/v1/messages/:id/permanent', async (request, reply) => {
+    const { id } = request.params;
+
+    try {
+      await messageService.permanentlyDeleteMessage(id);
+
+      request.log.info(`Message permanently deleted: ${id}`);
+
+      return reply.send({
+        success: true,
+        data: { id, permanentlyDeleted: true },
+      });
+    } catch (error: any) {
+      request.log.error(`Failed to permanently delete message ${id}: ${error.message}`);
+
+      return reply.code(500).send({
+        success: false,
+        error: 'DELETE_FAILED',
+        message: 'Failed to delete message',
       });
     }
   });

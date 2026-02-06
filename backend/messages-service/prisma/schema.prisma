@@ -16,9 +16,16 @@ model Message {
   context       Json?
   status        MessageStatus @default(RECEIVED)
   type          MessageType   @default(INBOUND)  // INBOUND = received from client, OUTBOUND = sent reply
-  conversationId String? @unique
+  conversationId String?      // Groups messages in the same conversation thread
+  emailMessageId String?      // Email Message-ID header for IMAP tracking
   retries       Int      @default(0)
   error         String?
+  attachments   Json?        // List of attached files {name, url, type, size}
+  
+  // Threading - parent/child relationship
+  parentMessageId String?
+  parent          Message?  @relation("MessageThread", fields: [parentMessageId], references: [id], onDelete: SetNull)
+  replies         Message[] @relation("MessageThread")
   
   // New fields for Lead Management
   propertyId    String?
@@ -29,7 +36,13 @@ model Message {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   events        MessageEvent[]
+
+  @@index([conversationId])
+  @@index([parentMessageId])
+  @@index([emailMessageId])
+  @@index([fromEmail])
 }
+
 
 model MessageEvent {
   id        String   @id @default(cuid())

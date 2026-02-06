@@ -143,7 +143,7 @@ function isPublicRoute(url: string, method: string): boolean {
   }
 
   // Public contact form endpoint (messages service)
-  if (url.startsWith('/api/v1/messages') && method === 'POST') {
+  if (url === '/api/v1/messages' && method === 'POST') {
     // Allow public contact form submissions
     return true;
   }

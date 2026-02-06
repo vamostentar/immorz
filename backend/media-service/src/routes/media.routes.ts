@@ -12,6 +12,10 @@ const uploadQuerySchema = z.object({
   quality: z.coerce.number().int().min(1).max(100).default(85),
 });
 
+const documentQuerySchema = z.object({
+  bucket: z.string().default('documents'),
+});
+
 export async function mediaRoutes(fastify: FastifyInstance) {
   // declare multipart types on instance
   
@@ -53,6 +57,45 @@ export async function mediaRoutes(fastify: FastifyInstance) {
       bucket: query.bucket,
       contentType: 'image/jpeg',
       body: stream,
+    });
+
+    return reply.code(201).send({
+      success: true,
+      data: uploaded,
+    });
+  });
+
+  // Document Upload
+  fastify.post('/upload/document', {
+    schema: {
+      consumes: ['multipart/form-data'],
+      querystring: {
+        type: 'object',
+        properties: {
+          bucket: { type: 'string' }
+        }
+      }
+    }
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const query = documentQuerySchema.parse(request.query);
+    const file = await getFile(request as any);
+    if (!file) return reply.code(400).send({ error: 'No file' });
+
+    // Validate mimetype (Allow images, docs, pdfs, zips, txt)
+    const allowedTypes = [
+      /^image\/(jpeg|png|webp|avif)$/,
+      /^application\/(pdf|msword|vnd\.openxmlformats-officedocument\.wordprocessingml\.document|zip)$/,
+      /^text\/plain$/
+    ];
+
+    if (!allowedTypes.some(regex => regex.test(file.mimetype))) {
+      return reply.code(400).send({ error: 'Unsupported file type' });
+    }
+
+    const uploaded = await storage.uploadStream({
+      bucket: query.bucket,
+      contentType: file.mimetype,
+      body: file.file,
     });
 
     return reply.code(201).send({

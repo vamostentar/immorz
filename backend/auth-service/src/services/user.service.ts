@@ -1,5 +1,6 @@
 import { RoleRepository } from '@/repositories/role.repository';
 import { UserRepository } from '@/repositories/user.repository';
+import { getNotificationClient } from '@/services/notification-client';
 import type { CreateUserRequest, UpdateUserRequest } from '@/types/auth';
 import type { PaginatedResponse, Pagination, RequestContext } from '@/types/common';
 import { ConflictError, NotFoundError, ValidationError } from '@/types/common';
@@ -118,7 +119,33 @@ export class UserService {
     // Log criação de utilizador
     logHelpers.userCreated(user.id, createdBy, context);
 
+    // Se o utilizador é um agente, criar pedido de aprovação no notification-service
+    console.log('🔍 User created with role:', role.name, 'userId:', user.id);
+    if (role.name === 'agent') {
+      console.log('📤 Creating approval request for agent:', user.id);
+      this.createAgentApprovalRequest(user, createdBy).catch((err) => {
+        console.error('Failed to create agent approval request:', err, 'userId:', user.id);
+      });
+    }
+
     return this.sanitizeUser(user);
+  }
+
+  /**
+   * Create an approval request for a new agent
+   */
+  private async createAgentApprovalRequest(user: any, requestedBy: string) {
+    const notificationClient = getNotificationClient();
+    await notificationClient.createApprovalRequest(
+      'AGENT',
+      user.id,
+      requestedBy,
+      {
+        name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+        email: user.email,
+        priority: 'high',
+      }
+    );
   }
 
   /**
@@ -138,12 +165,30 @@ export class UserService {
     // Normalize roleId from role or roleId
     const targetRoleId = data.roleId || (typeof (data as any).role === 'string' ? (data as any).role : (data as any).role?.id);
 
+    // Track if role is changing to agent
+    let isBecomingAgent = false;
+    let newRole: any = null;
+
     // Validate role if updating
     if (targetRoleId) {
       const role = await this.roleRepository.findById(targetRoleId);
       if (!role) {
         throw new ValidationError('Invalid role ID');
       }
+      newRole = role;
+
+      // Check if user is becoming an agent (role changing from non-agent to agent)
+      const wasAgent = existingUser.role?.name === 'agent';
+      const willBeAgent = role.name === 'agent';
+      isBecomingAgent = !wasAgent && willBeAgent;
+      
+      console.log('🔍 Role change check:', {
+        previousRole: existingUser.role?.name,
+        newRole: role.name,
+        wasAgent,
+        willBeAgent,
+        isBecomingAgent
+      });
 
       // SECURITY: Prevent last super_admin from demoting themselves
       const currentUserRole = existingUser.role;
@@ -197,6 +242,14 @@ export class UserService {
     // Log update if updatedBy is provided
     if (updatedBy) {
       logHelpers.userUpdated(user.id, updatedBy, updateData, context);
+    }
+
+    // If user is becoming an agent, create approval request
+    if (isBecomingAgent) {
+      console.log('📤 Creating approval request for new agent:', user.id);
+      this.createAgentApprovalRequest(user, updatedBy || 'system').catch((err) => {
+        console.error('Failed to create agent approval request:', err, 'userId:', user.id);
+      });
     }
 
     return this.sanitizeUser(user);

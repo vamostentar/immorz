@@ -1,4 +1,4 @@
-import { useDashboardStats } from '@/api/admin-queries';
+import { useApprovalStats } from '@/api/notifications';
 import { useMessages } from '@/api/queries';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { NotificationDropdown } from './NotificationDropdown';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -55,8 +56,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { resolvedTheme, toggleTheme } = useTheme();
-  const { data: dashboardData } = useDashboardStats();
-  const pendingApprovals = dashboardData?.pendingApprovals || 0;
+  
+  // Fetch approval stats from notification-service
+  const { data: approvalStats } = useApprovalStats();
+  const pendingApprovals = approvalStats?.pendingCount || 0;
 
   // Fetch unread messages count for admin (all unread)
   const { data: unreadMessages } = useMessages({
@@ -147,14 +150,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </button>
 
               {/* Notifications */}
-              <button className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg relative">
-                <Bell size={20} />
-                {pendingApprovals > 0 && (
-                  <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {pendingApprovals}
-                  </span>
-                )}
-              </button>
+              <NotificationDropdown />
 
               {/* User Info */}
               <div className="flex items-center space-x-3">

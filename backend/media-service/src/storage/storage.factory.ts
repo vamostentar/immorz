@@ -1,4 +1,5 @@
 import { GCSStorage } from './storage.gcs';
+import { LocalStorage } from './storage.local';
 import { S3Storage } from './storage.s3';
 
 export interface UploadResult {
@@ -20,9 +21,12 @@ export interface StorageAdapter {
 }
 
 function createStorage(): StorageAdapter {
-  const provider = (process.env.MEDIA_STORAGE_PROVIDER || 's3').toLowerCase();
+  const provider = (process.env.MEDIA_STORAGE_PROVIDER || 'local').toLowerCase();
+  
   if (provider === 'gcs') return new GCSStorage();
-  return new S3Storage();
+  if (provider === 's3') return new S3Storage();
+  
+  return new LocalStorage();
 }
 
 export const storage: StorageAdapter = createStorage();

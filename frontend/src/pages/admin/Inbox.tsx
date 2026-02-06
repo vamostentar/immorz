@@ -1,5 +1,5 @@
 import AdminLayout from '@/components/admin/AdminLayout';
-import SharedInbox from '@/components/shared/SharedInbox';
+import { SharedInbox } from '@/components/shared/inbox/SharedInbox';
 
 export default function AdminInbox() {
     return (

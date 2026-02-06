@@ -3,6 +3,7 @@ import { CircuitBreakerService } from '@/services/circuit-breaker.service';
 import { EmailService } from '@/services/email.service';
 import { HealthService } from '@/services/health.service';
 import { ImapService } from '@/services/imap.service';
+import { ConversationService, EmailReplyService, MessageCoreService, MessageStatsService } from '@/services/message';
 import { MessageService } from '@/services/message.service';
 import { MetricsService } from '@/services/metrics.service';
 import { config, configService } from '@/utils/config';
@@ -21,6 +22,12 @@ export class SimpleContainer {
   private _cacheService?: CacheService;
   private _circuitBreakerService?: CircuitBreakerService;
   private _imapService?: ImapService;
+  
+  // Message Sub-services
+  private _messageCore?: MessageCoreService;
+  private _conversation?: ConversationService;
+  private _emailReply?: EmailReplyService;
+  private _stats?: MessageStatsService;
 
   get prisma(): PrismaClient {
     if (!this._prisma) {
@@ -114,9 +121,10 @@ export class SimpleContainer {
         this._imapService = new ImapService(
           this.prisma,
           this.metricsService,
-          this.circuitBreakerService
+          this.circuitBreakerService,
+          this.messageService // Injected to enable advanced processing (threading + auto-delete)
         );
-        logger.info('ImapService initialized successfully');
+        logger.info('ImapService initialized successfully with MessageService');
       } catch (error: any) {
         logger.error('Failed to initialize ImapService', { error: error.message });
         throw error;
@@ -125,13 +133,56 @@ export class SimpleContainer {
     return this._imapService;
   }
 
-  get messageService(): MessageService {
-    if (!this._messageService) {
-      this._messageService = new MessageService(
+  get messageCore(): MessageCoreService {
+    if (!this._messageCore) {
+      this._messageCore = new MessageCoreService(
         this.prisma,
         this.metricsService,
         this.cacheService,
         this.emailService
+      );
+    }
+    return this._messageCore;
+  }
+
+  get conversation(): ConversationService {
+    if (!this._conversation) {
+      this._conversation = new ConversationService(this.prisma);
+    }
+    return this._conversation;
+  }
+
+  get emailReply(): EmailReplyService {
+    if (!this._emailReply) {
+      this._emailReply = new EmailReplyService(
+        this.prisma,
+        this.emailService,
+        this.metricsService,
+        this.messageCore
+      );
+    }
+    return this._emailReply;
+  }
+
+  get stats(): MessageStatsService {
+    if (!this._stats) {
+      this._stats = new MessageStatsService(
+        this.prisma,
+        this.cacheService,
+        this.metricsService,
+        this.messageCore
+      );
+    }
+    return this._stats;
+  }
+
+  get messageService(): MessageService {
+    if (!this._messageService) {
+      this._messageService = new MessageService(
+        this.messageCore,
+        this.conversation,
+        this.emailReply,
+        this.stats
       );
     }
     return this._messageService;

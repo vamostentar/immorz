@@ -1,0 +1,126 @@
+// Prisma schema for notification-service
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ================================
+// NOTIFICATIONS
+// ================================
+
+model Notification {
+  id          String              @id @default(cuid())
+  userId      String              @map("user_id")
+  type        NotificationType
+  channel     NotificationChannel @default(IN_APP)
+  title       String
+  message     String
+  metadata    Json?
+  isRead      Boolean             @default(false) @map("is_read")
+  readAt      DateTime?           @map("read_at")
+  sentAt      DateTime?           @map("sent_at")
+  failedAt    DateTime?           @map("failed_at")
+  errorReason String?             @map("error_reason")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  @@index([userId, isRead])
+  @@index([type])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  AGENT_APPROVED
+  AGENT_REJECTED
+  PROPERTY_APPROVED
+  PROPERTY_REJECTED
+  PROPERTY_PENDING
+  NEW_MESSAGE
+  SYSTEM_ALERT
+  MARKETING
+
+  @@map("notification_type")
+}
+
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+  SMS
+  PUSH
+
+  @@map("notification_channel")
+}
+
+// ================================
+// APPROVALS
+// ================================
+
+model Approval {
+  id          String         @id @default(cuid())
+  entityType  ApprovalEntity @map("entity_type")
+  entityId    String         @map("entity_id")
+  status      ApprovalStatus @default(PENDING)
+  requestedBy String?        @map("requested_by")
+  reviewedBy  String?        @map("reviewed_by")
+  reviewedAt  DateTime?      @map("reviewed_at")
+  notes       String?
+  metadata    Json?
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  auditLogs   AuditLog[]
+
+  @@unique([entityType, entityId])
+  @@index([status])
+  @@index([entityType])
+  @@index([createdAt])
+  @@map("approvals")
+}
+
+enum ApprovalEntity {
+  AGENT
+  PROPERTY
+  DOCUMENT
+
+  @@map("approval_entity")
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+
+  @@map("approval_status")
+}
+
+// ================================
+// AUDIT LOGS
+// ================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  changes    Json?
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  approval   Approval? @relation(fields: [approvalId], references: [id])
+  approvalId String?   @map("approval_id")
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

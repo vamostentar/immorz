@@ -2,7 +2,9 @@ import { config } from '@/utils/config';
 import { createLogger } from '@/utils/logger';
 import { PrismaClient } from '@prisma/client';
 import { ImapFlow } from 'imapflow';
+import { simpleParser } from 'mailparser';
 import { CircuitBreakerService } from './circuit-breaker.service';
+import { MessageService } from './message.service';
 import { MetricsService } from './metrics.service';
 
 export class ImapService {
@@ -17,7 +19,8 @@ export class ImapService {
   constructor(
     private prisma: PrismaClient,
     private metricsService: MetricsService,
-    private circuitBreakerService: CircuitBreakerService
+    private circuitBreakerService: CircuitBreakerService,
+    private messageService?: MessageService
   ) {
     this.initializeCircuitBreaker();
   }
@@ -268,21 +271,21 @@ export class ImapService {
     const startTime = Date.now();
 
     try {
-      // Fetch message details
-      const message = await this.client.fetchOne(uid, {
-        envelope: true,
-        bodyParts: ['text'],
-        flags: true,
-      });
+      // Fetch full RFC822 source for robust parsing
+      const result = await this.client.fetchOne(uid, { source: true });
 
-      if (!message || typeof message !== 'object' || !('envelope' in message)) {
-        throw new Error('Invalid message format');
+      if (!result || !result.source) {
+        throw new Error('Failed to fetch message source');
       }
 
-      const envelope = message.envelope;
-      const from = envelope?.from?.[0];
-      const subject = envelope?.subject || 'No Subject';
-      const body = message.bodyParts?.get('text') || '';
+      // Parse full email using mailparser
+      const parsed = await simpleParser(result.source);
+      
+      const from = parsed.from?.value[0];
+      const subject = parsed.subject || 'Sem Assunto';
+      const body = parsed.text || ''; // Prefer text version
+      const messageId = parsed.messageId;
+      const inReplyTo = parsed.inReplyTo;
 
       if (!from?.address) {
         throw new Error('Message has no sender address');
@@ -302,53 +305,174 @@ export class ImapService {
         return;
       }
 
-      // Store message in database
-      const savedMessage = await this.prisma.message.create({
-        data: {
-          fromName: from.name || 'Unknown',
+      // Try to find existing conversation using MessageService
+      let conversationId: string | null = null;
+      
+      if (this.messageService) {
+        // 1. Try In-Reply-To header first
+        if (inReplyTo) {
+          conversationId = await this.messageService.findConversationByEmailMessageId(inReplyTo);
+          if (conversationId) {
+            this.logger.debug('Found conversation via In-Reply-To', { inReplyTo, conversationId });
+          }
+        }
+
+        // 2. Fallback: find latest conversation with this email
+        if (!conversationId) {
+          conversationId = await this.messageService.findLatestConversationByEmail(from.address);
+          if (conversationId) {
+            this.logger.debug('Found conversation via email fallback', { fromEmail: from.address, conversationId });
+          }
+        }
+      }
+
+      // Handle Attachments (Phase 11) - Available to both standard and legacy paths
+      const attachmentsData: any[] = [];
+      if (parsed.attachments && parsed.attachments.length > 0) {
+        this.logger.info(`Extracting ${parsed.attachments.length} attachments`, { uid });
+        
+        for (const attachment of parsed.attachments) {
+          try {
+            // Upload to media-service
+            const formData = new FormData();
+            const blob = new Blob([attachment.content], { type: attachment.contentType });
+            formData.append('file', blob, attachment.filename || 'unnamed_attachment');
+
+            const mediaServiceUrl = config.MEDIA_SERVICE_URL;
+            this.logger.debug(`Uploading attachment to ${mediaServiceUrl}`, { 
+              filename: attachment.filename,
+              mediaServiceUrl 
+            });
+
+            // Added /api/v1/media prefix because media-service registers routes with this prefix
+            const response = await fetch(`${mediaServiceUrl}/api/v1/media/upload/document?bucket=email-attachments`, {
+              method: 'POST',
+              body: formData,
+            });
+
+            if (response.ok) {
+              const result = await response.json() as any;
+              if (result.success) {
+                attachmentsData.push({
+                  name: attachment.filename || 'unnamed_attachment',
+                  url: result.data.url,
+                  type: attachment.contentType,
+                  size: attachment.size
+                });
+                this.logger.info('Attachment uploaded successfully', { 
+                  filename: attachment.filename,
+                  url: result.data.url 
+                });
+              }
+            } else {
+              const errorText = await response.text();
+              this.logger.error('Failed to upload attachment to media-service', {
+                status: response.status,
+                filename: attachment.filename,
+                response: errorText
+              });
+            }
+          } catch (uploadError: any) {
+            this.logger.error('Error uploading email attachment', {
+              error: uploadError.message,
+              filename: attachment.filename,
+              stack: uploadError.stack
+            });
+          }
+        }
+      }
+
+      if (this.messageService) {
+        // Use MessageService.createFromEmail for proper threading
+        const savedMessage = await this.messageService.createFromEmail({
+          fromName: from.name || from.address.split('@')[0] || 'Unknown',
           fromEmail: from.address,
-          body: String(body).trim(),
-          status: 'RECEIVED',
-          type: 'INBOUND',
-          context: {
-            subject,
-            uid,
-            messageId: envelope?.messageId,
-            date: envelope?.date?.toISOString(),
-            source: 'imap',
-          },
-          events: {
-            create: {
-              type: 'INBOUND_RECEIVED',
-              details: {
-                uid,
-                subject,
-                messageId: envelope?.messageId,
+          body: this.cleanEmailBody(String(body).trim()),
+          subject,
+          messageId,
+          inReplyTo,
+          conversationId,
+          attachments: attachmentsData.length > 0 ? attachmentsData : undefined,
+        });
+
+        // Mark message as seen
+        await this.client.messageFlagsAdd(uid, ['\\Seen']);
+
+        // Cleanup: Delete from IMAP server to save space (Phase 11)
+        try {
+          await this.client.messageDelete(uid);
+          this.logger.info('Deleted email from IMAP server after ingestion', { uid, messageId });
+        } catch (deleteError: any) {
+          this.logger.warn('Failed to delete email from IMAP server', { uid, error: deleteError.message });
+        }
+
+        const duration = Date.now() - startTime;
+        this.logger.info('Message processed successfully with threading', {
+          messageId: savedMessage.id,
+          fromEmail: from.address,
+          subject,
+          uid,
+          conversationId,
+          duration,
+        });
+
+        // Business event
+        this.logger.business('inbound_message_received', {
+          messageId: savedMessage.id,
+          fromEmail: from.address,
+          subject,
+          source: 'imap',
+          conversationId,
+        });
+      } else {
+        // Fallback: direct Prisma create without threading (legacy behavior)
+        const savedMessage = await this.prisma.message.create({
+          data: {
+            fromName: from.name || 'Unknown',
+            fromEmail: from.address,
+            body: String(body).trim(),
+            status: 'RECEIVED',
+            type: 'INBOUND',
+            context: {
+              subject,
+              uid,
+              messageId,
+              date: parsed.date?.toISOString(),
+              source: 'imap',
+            },
+            attachments: attachmentsData.length > 0 ? attachmentsData : undefined,
+            events: {
+              create: {
+                type: 'INBOUND_RECEIVED',
+                details: {
+                  uid,
+                  subject,
+                  messageId,
+                  attachmentsCount: attachmentsData.length,
+                },
               },
             },
           },
-        },
-      });
+        });
 
-      // Mark message as seen
-      await this.client.messageFlagsAdd(uid, ['\\Seen']);
+        await this.client.messageFlagsAdd(uid, ['\\Seen']);
 
-      const duration = Date.now() - startTime;
-      this.logger.info('Message processed successfully', {
-        messageId: savedMessage.id,
-        fromEmail: from.address,
-        subject,
-        uid,
-        duration,
-      });
+        const duration = Date.now() - startTime;
+        this.logger.info('Message processed successfully (legacy mode)', {
+          messageId: savedMessage.id,
+          fromEmail: from.address,
+          subject,
+          uid,
+          duration,
+        });
 
-      // Business event
-      this.logger.business('inbound_message_received', {
-        messageId: savedMessage.id,
-        fromEmail: from.address,
-        subject,
-        source: 'imap',
-      });
+        this.logger.business('inbound_message_received', {
+          messageId: savedMessage.id,
+          fromEmail: from.address,
+          subject,
+          source: 'imap',
+        });
+      }
     } catch (error: any) {
       const duration = Date.now() - startTime;
       this.logger.error('Failed to process IMAP message', {
@@ -358,6 +482,41 @@ export class ImapService {
       });
       throw error;
     }
+  }
+
+  /**
+   * Clean email body - remove signatures and quoted text
+   */
+  private cleanEmailBody(body: string): string {
+    let cleaned = body;
+
+    // 1. Remove common reply headers/patterns
+    // Gmail: "Hugo Menezes <...> escreveu (quinta, ...):"
+    cleaned = cleaned.replace(/^.* <.*> escreveu \(.*\):$/gm, '');
+    
+    // Outlook: "From: ... Date: ... To: ... Subject: ..."
+    cleaned = cleaned.replace(/^From: [\s\S]*?Subject: .*$/mi, '');
+
+    // 2. Remove quoted lines (start with >)
+    cleaned = cleaned.replace(/^[ ]{0,3}>.*$/gm, '');
+
+    // 3. Remove "On ... wrote:" patterns
+    cleaned = cleaned.replace(/On .* wrote:[\s\S]*$/mi, '');
+    cleaned = cleaned.replace(/Em .* escreveu:[\s\S]*$/mi, '');
+    cleaned = cleaned.replace(/No dia .* escreveu:[\s\S]*$/mi, '');
+
+    // 4. Remove email signatures
+    // Standard signature delimiter
+    cleaned = cleaned.replace(/\n--\s*\nc?[\s\S]*$/m, '');
+    // Common line separators used as signatures
+    cleaned = cleaned.replace(/\n_{5,}[\s\S]*$/m, '');
+    cleaned = cleaned.replace(/\n-{5,}[\s\S]*$/m, '');
+
+    // 5. Clean up extra whitespace
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+    cleaned = cleaned.trim();
+
+    return cleaned || body; // Fallback to original if cleaning removes everything
   }
 
   async stop(): Promise<void> {

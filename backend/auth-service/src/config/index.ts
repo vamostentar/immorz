@@ -87,6 +87,7 @@ const configSchema = z.object({
   // External Services
   PROPERTIES_SERVICE_URL: z.string().url().optional(),
   MEDIA_SERVICE_URL: z.string().url().optional(),
+  NOTIFICATIONS_SERVICE_URL: z.string().url().optional(),
 
   // Development/Debug
   DEBUG_ENABLED: z.coerce.boolean().default(false),
@@ -281,6 +282,9 @@ export const config = {
   argon2Config: configService.argon2Config,
   securityConfig: configService.securityConfig,
   emailConfig: configService.emailConfig,
+
+  // Service URLs
+  notificationsServiceUrl: configService.config.NOTIFICATIONS_SERVICE_URL || 'http://notifications:8087',
 
   // Additional properties for compatibility
   TRUST_PROXY: true,

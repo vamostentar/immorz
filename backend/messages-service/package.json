@@ -22,8 +22,10 @@
     "bullmq": "^5.12.0",
     "dotenv": "^17.2.1",
     "fastify": "^4.28.1",
+    "imap-simple": "^5.1.0",
     "imapflow": "^1.0.164",
     "ioredis": "^5.4.1",
+    "mailparser": "^3.9.3",
     "node-cache": "^5.1.2",
     "nodemailer": "^6.9.14",
     "opossum": "^8.0.0",
@@ -34,6 +36,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/mailparser": "^3",
     "@types/node": "^20.16.5",
     "@types/nodemailer": "^6.4.15",
     "@types/opossum": "^8.1.9",

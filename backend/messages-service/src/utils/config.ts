@@ -44,6 +44,7 @@ const schema = z.object({
   IMAP_PASS: z.string().min(1),
   IMAP_POLL_INTERVAL: z.coerce.number().default(30000),
   IMAP_ENABLED: z.coerce.boolean().default(false),
+  MEDIA_SERVICE_URL: z.string().default('http://media:8083'),
 
   // Queue Configuration
   QUEUE_CONCURRENCY: z.coerce.number().default(5),

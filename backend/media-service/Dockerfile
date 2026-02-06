@@ -21,6 +21,7 @@ RUN addgroup -S nodejs && adduser -S nodeuser -G nodejs
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
+RUN mkdir -p /app/uploads && chown -R nodeuser:nodejs /app
 USER nodeuser
 EXPOSE 8083
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 CMD curl -f http://localhost:8083/health || exit 1

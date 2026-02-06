@@ -3,17 +3,17 @@
 
 -- 1. Criar o Enum MessageType se não existir
 DO $$ BEGIN
-    CREATE TYPE "MessageType" AS ENUM ('INBOUND', 'OUTBOUND');
+    CREATE TYPE "messages"."MessageType" AS ENUM ('INBOUND', 'OUTBOUND');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
 -- 2. Adicionar 'DELETED' ao Enum MessageStatus se não existir
-ALTER TYPE "MessageStatus" ADD VALUE IF NOT EXISTS 'DELETED';
+ALTER TYPE "messages"."MessageStatus" ADD VALUE IF NOT EXISTS 'DELETED';
 
 -- 3. Alterar a tabela Message para adicionar as colunas em falta
-ALTER TABLE "Message" 
-ADD COLUMN IF NOT EXISTS "type" "MessageType" NOT NULL DEFAULT 'INBOUND',
+ALTER TABLE "messages"."Message" 
+ADD COLUMN IF NOT EXISTS "type" "messages"."MessageType" NOT NULL DEFAULT 'INBOUND',
 ADD COLUMN IF NOT EXISTS "read" BOOLEAN NOT NULL DEFAULT false,
 ADD COLUMN IF NOT EXISTS "deleted" BOOLEAN NOT NULL DEFAULT false,
 ADD COLUMN IF NOT EXISTS "propertyId" TEXT,
@@ -26,4 +26,4 @@ ADD COLUMN IF NOT EXISTS "agentId" TEXT;
 -- Confirmação
 SELECT column_name, data_type 
 FROM information_schema.columns 
-WHERE table_name = 'Message';
+WHERE table_name = 'Message' AND table_schema = 'messages';

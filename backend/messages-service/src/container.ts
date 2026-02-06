@@ -3,6 +3,7 @@ import { CircuitBreakerService } from '@/services/circuit-breaker.service';
 import { EmailService } from '@/services/email.service';
 import { HealthService } from '@/services/health.service';
 import { ImapService } from '@/services/imap.service';
+import { ConversationService, EmailReplyService, MessageCoreService, MessageStatsService } from '@/services/message';
 import { MessageService } from '@/services/message.service';
 import { MetricsService } from '@/services/metrics.service';
 import { config, configService } from '@/utils/config';
@@ -29,6 +30,10 @@ export interface Container {
 
   // Services
   messageService: MessageService;
+  messageCore: MessageCoreService;
+  conversation: ConversationService;
+  emailReply: EmailReplyService;
+  stats: MessageStatsService;
   emailService: EmailService;
   imapService: ImapService;
   metricsService: MetricsService;
@@ -151,11 +156,14 @@ if (config.REDIS_URL) {
     }).singleton(),
   });
 }
-
 // Register services
 container.register({
   // Core services
   messageService: asClass(MessageService).singleton(),
+  messageCore: asClass(MessageCoreService).singleton(),
+  conversation: asClass(ConversationService).singleton(),
+  emailReply: asClass(EmailReplyService).singleton(),
+  stats: asClass(MessageStatsService).singleton(),
   emailService: asClass(EmailService).singleton(),
   imapService: asClass(ImapService).singleton(),
   

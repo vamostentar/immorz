@@ -158,6 +158,7 @@ export type Message = {
   retries: number;
   type?: 'INBOUND' | 'OUTBOUND';
   deleted?: boolean;
+  attachments?: any[];
 };
 
 export type PaginatedMessages = {

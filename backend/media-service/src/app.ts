@@ -1,6 +1,8 @@
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
+import staticFiles from '@fastify/static';
 import Fastify from 'fastify';
+import path from 'path';
 import { registerRoutes } from './routes/index';
 
 export async function buildApp() {
@@ -41,6 +43,12 @@ export async function buildApp() {
       fileSize: 20 * 1024 * 1024,
       files: 5,
     }
+  });
+
+  // Serve static files from uploads directory
+  await app.register(staticFiles, {
+    root: process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads'),
+    prefix: '/uploads/',
   });
 
   await registerRoutes(app);

@@ -214,12 +214,34 @@ export async function setupProxy(app: FastifyInstance) {
     }
   });
 
-  // 15. NOTIFICATIONS PROXY
+  // 15. NOTIFICATIONS PROXY - Routes to new notification-service
   await app.register(import('@fastify/http-proxy'), {
-    upstream: config.USERS_SERVICE_URL,
+    upstream: config.NOTIFICATIONS_SERVICE_URL,
     prefix: '/api/v1/notifications',
     websocket: false,
     rewritePrefix: '/api/v1/notifications',
+    replyOptions: {
+      rewriteRequestHeaders: standardHeaderProcessor,
+    }
+  });
+
+  // 15.1 APPROVALS PROXY - Notification service handles approval workflow
+  await app.register(import('@fastify/http-proxy'), {
+    upstream: config.NOTIFICATIONS_SERVICE_URL,
+    prefix: '/api/v1/approvals',
+    websocket: false,
+    rewritePrefix: '/api/v1/approvals',
+    replyOptions: {
+      rewriteRequestHeaders: standardHeaderProcessor,
+    }
+  });
+
+  // 15.2 AUDIT LOGS PROXY - Notification service handles audit logging
+  await app.register(import('@fastify/http-proxy'), {
+    upstream: config.NOTIFICATIONS_SERVICE_URL,
+    prefix: '/api/v1/audit-logs',
+    websocket: false,
+    rewritePrefix: '/api/v1/audit-logs',
     replyOptions: {
       rewriteRequestHeaders: standardHeaderProcessor,
     }
@@ -256,16 +278,7 @@ export async function setupProxy(app: FastifyInstance) {
     rewritePrefix: '/uploads', // Keep path as-is 
   });
 
-  // 19. MESSAGES SERVICE PROXY
-  await app.register(import('@fastify/http-proxy'), {
-    upstream: (config as any).MESSAGES_SERVICE_URL || 'http://messages:8090',
-    prefix: '/api/v1/messages',
-    websocket: false,
-    rewritePrefix: '/api/v1/messages',
-    replyOptions: {
-      rewriteRequestHeaders: standardHeaderProcessor,
-    }
-  });
+
 
   // 18. PROJECTS PROXY
   await app.register(import('@fastify/http-proxy'), {
@@ -278,13 +291,37 @@ export async function setupProxy(app: FastifyInstance) {
     }
   });
 
+  // 19. MESSAGES SERVICE PROXY
+  await app.register(import('@fastify/http-proxy'), {
+    upstream: (config as any).MESSAGES_SERVICE_URL || 'http://messages:8090',
+    prefix: '/api/v1/messages',
+    websocket: false,
+    rewritePrefix: '/api/v1/messages',
+    replyOptions: {
+      rewriteRequestHeaders: standardHeaderProcessor,
+    }
+  });
+
+  // 20. MEDIA SERVICE PROXY
+  await app.register(import('@fastify/http-proxy'), {
+    upstream: config.MEDIA_SERVICE_URL,
+    prefix: '/api/v1/media',
+    websocket: false,
+    rewritePrefix: '/api/v1/media', // Keep prefix for media-service routes
+    replyOptions: {
+      rewriteRequestHeaders: standardHeaderProcessor,
+    }
+  });
+
   if (config.ENABLE_DETAILED_LOGGING) {
     console.log('✅ PRODUCTION-READY proxy configured for ALL services');
-    console.log('📍 Total Proxies Configured: 20');
+    console.log('📍 Total Proxies Configured: 23');
     console.log(`📍 Auth Service: ${config.AUTH_SERVICE_URL}`);
     console.log(`📍 Users Service: ${config.USERS_SERVICE_URL}`);
     console.log(`📍 Properties Service: ${config.PROPERTIES_SERVICE_URL}`);
     console.log(`📍 Media Service: ${config.MEDIA_SERVICE_URL}`);
     console.log(`📍 Settings Service: ${config.SETTINGS_SERVICE_URL}`);
+    console.log(`📍 Messages Service: ${config.MESSAGES_SERVICE_URL}`);
+    console.log(`📍 Notifications Service: ${config.NOTIFICATIONS_SERVICE_URL}`);
   }
 }
