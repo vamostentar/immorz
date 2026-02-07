@@ -149,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Helper to handle successful login
       const handleSuccess = async (accessToken: string, refreshToken?: string) => {
-        setTokens(accessToken, refreshToken || null);
+        setTokens(accessToken, refreshToken || null, rememberMe);
         // Fetch complete user data from API
         const { data: userData } = await api.get('/api/v1/users/me');
         const userRaw = userData?.data ?? userData ?? null;

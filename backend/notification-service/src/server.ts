@@ -60,6 +60,11 @@ async function main() {
     registerAuditRoutes(app, container.resolve('auditController'));
   }, { prefix: '/api/v1' });
 
+  // Initialize email worker
+  const { createEmailWorker } = await import('@/jobs/email.worker');
+  const emailWorker = createEmailWorker(container.resolve('emailService'));
+  logger.info('📧 Email worker initialized');
+
   // Global error handler
   fastify.setErrorHandler((error, request, reply) => {
     logger.error({ err: error, url: request.url }, 'Request error');

@@ -767,4 +767,109 @@ export class AuthService {
     const { password, twoFactorSecret, twoFactorBackupCodes, ...safeUser } = user;
     return safeUser;
   }
+
+  /**
+   * Initiate password recovery
+   */
+  async forgotPassword(email: string, context: RequestContext): Promise<void> {
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) {
+      // Don't reveal that user doesn't exist
+      logger.info({ email }, 'Forgot password requested for non-existent email');
+      return;
+    }
+
+    // Generate reset token
+    const token = generateSecureToken(32);
+    const expiresAt = new Date(Date.now() + 3600 * 1000); // 1 hour
+
+    // Store in PasswordReset table
+    await this.prisma.passwordReset.create({
+      data: {
+        email: user.email,
+        token,
+        expiresAt,
+        ipAddress: context.ipAddress,
+        userAgent: context.userAgent,
+      },
+    });
+
+    // Send email
+    const { getNotificationClient } = await import('./notification-client');
+    const notificationClient = getNotificationClient();
+    
+    await notificationClient.sendPasswordResetEmail(
+      user.email,
+      token,
+      user.firstName || undefined
+    );
+
+    logger.info({
+      requestId: context.requestId,
+      userId: user.id,
+      email: user.email,
+    }, 'Password reset email sent');
+  }
+
+  /**
+   * Reset password with token
+   */
+  async resetPassword(token: string, newPassword: string, context: RequestContext): Promise<void> {
+    // Find reset token
+    const resetRecord = await this.prisma.passwordReset.findUnique({
+      where: { token },
+    });
+
+    if (!resetRecord || resetRecord.isUsed || resetRecord.expiresAt < new Date()) {
+      throw new ValidationError('Invalid or expired reset token');
+    }
+
+    // Find associated user
+    const user = await this.userRepository.findByEmail(resetRecord.email);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    // Verify that the new password is not the same as the current one
+    const currentHashedPassword = (user as any).password;
+    if (currentHashedPassword) {
+      const isSamePassword = await verifyPassword(currentHashedPassword, newPassword);
+      if (isSamePassword) {
+        throw new ValidationError('Esta senha já foi utilizada recentemente!');
+      }
+    }
+
+    // Hash new password
+    const hashedPassword = await hashPassword(newPassword);
+
+    // Update password
+    await this.userRepository.updatePassword(user.id, hashedPassword);
+
+    // Mark token as used
+    await this.prisma.passwordReset.update({
+      where: { id: resetRecord.id },
+      data: {
+        isUsed: true,
+        usedAt: new Date(),
+      },
+    });
+
+    // Revoke all sessions
+    await this.sessionRepository.deactivateAllForUser(user.id);
+    await this.refreshTokenRepository.revokeAllForUser(user.id);
+
+    logger.info({
+      requestId: context.requestId,
+      userId: user.id,
+    }, 'Password reset successfully');
+
+    // Send confirmation email
+    const { getNotificationClient } = await import('./notification-client');
+    const notificationClient = getNotificationClient();
+    
+    await notificationClient.sendPasswordResetSuccessEmail(
+      user.email,
+      user.firstName || undefined
+    );
+  }
 }

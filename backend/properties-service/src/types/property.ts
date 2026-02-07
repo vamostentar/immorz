@@ -56,6 +56,11 @@ export const propertyCreateSchema = z.object({
   // Features
   features: z.array(z.string()).max(20).optional(),
 
+  // New features
+  garage: z.boolean().optional(),
+  pool: z.boolean().optional(),
+  energyRating: z.string().max(5).optional(),
+
   // Contact info
   contactPhone: z.string().optional(),
   contactEmail: z.string().email().optional(),
@@ -114,6 +119,11 @@ export const propertyUpdateSchema = z.object({
 
   // Features
   features: z.array(z.string()).max(20).optional(),
+
+  // New features
+  garage: z.boolean().optional(),
+  pool: z.boolean().optional(),
+  energyRating: z.string().max(5).optional(),
 
   // Contact info
   contactPhone: z.string().optional(),
@@ -191,6 +201,9 @@ export const propertyResponseSchema = z.object({
     longitude: z.number()
   }).nullable(),
   features: z.array(z.string()).nullable(),
+  garage: z.boolean().nullable(),
+  pool: z.boolean().nullable(),
+  energyRating: z.string().nullable(),
   contactPhone: z.string().nullable(),
   contactEmail: z.string().nullable(),
   createdAt: z.date(),

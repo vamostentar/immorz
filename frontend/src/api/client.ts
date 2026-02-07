@@ -21,26 +21,61 @@ const STORAGE_KEY = 'rz_auth_tokens';
 
 function loadTokens(): TokenBundle {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { accessToken: null, refreshToken: null };
-    const parsed = JSON.parse(raw);
-    return {
-      accessToken: parsed?.accessToken ?? null,
-      refreshToken: parsed?.refreshToken ?? null,
-    };
+    // Try localStorage first (persistent)
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        accessToken: parsed?.accessToken ?? null,
+        refreshToken: parsed?.refreshToken ?? null,
+      };
+    }
+
+    // Try sessionStorage (session only)
+    raw = sessionStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        accessToken: parsed?.accessToken ?? null,
+        refreshToken: parsed?.refreshToken ?? null,
+      };
+    }
+
+    return { accessToken: null, refreshToken: null };
   } catch {
     return { accessToken: null, refreshToken: null };
   }
 }
 
-function saveTokens(tokens: TokenBundle | null) {
+function saveTokens(tokens: TokenBundle | null, rememberMe?: boolean) {
   if (!tokens || (!tokens.accessToken && !tokens.refreshToken)) {
     localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
     inMemoryTokens = { accessToken: null, refreshToken: null };
     return;
   }
+  
   inMemoryTokens = tokens;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
+  
+  // If rememberMe is explicitly provided
+  if (rememberMe !== undefined) {
+    if (rememberMe) {
+      sessionStorage.removeItem(STORAGE_KEY); // Clean up other storage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
+    } else {
+      localStorage.removeItem(STORAGE_KEY); // Clean up other storage
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
+    }
+    return;
+  }
+  
+  // If rememberMe is NOT provided (e.g. refresh token), try to detect where it was stored
+  if (localStorage.getItem(STORAGE_KEY)) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
+  } else {
+    // Default to sessionStorage if not found in local, or if it was in session
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
+  }
 }
 
 // initialize tokens from storage
@@ -51,13 +86,14 @@ console.log('🔐 Initial tokens loaded:', {
   hasAccessToken: !!inMemoryTokens.accessToken,
   hasRefreshToken: !!inMemoryTokens.refreshToken,
   accessTokenLength: inMemoryTokens.accessToken?.length,
-  refreshTokenLength: inMemoryTokens.refreshToken?.length
+  refreshTokenLength: inMemoryTokens.refreshToken?.length,
+  storage: localStorage.getItem(STORAGE_KEY) ? 'local' : (sessionStorage.getItem(STORAGE_KEY) ? 'session' : 'none')
 });
 
 export const getAccessToken = () => inMemoryTokens.accessToken;
 export const getRefreshToken = () => inMemoryTokens.refreshToken;
-export const setTokens = (accessToken: string, refreshToken: string | null) => {
-  saveTokens({ accessToken, refreshToken: refreshToken ?? inMemoryTokens.refreshToken });
+export const setTokens = (accessToken: string, refreshToken: string | null, rememberMe?: boolean) => {
+  saveTokens({ accessToken, refreshToken: refreshToken ?? inMemoryTokens.refreshToken }, rememberMe);
 };
 export const clearTokens = () => saveTokens(null);
 

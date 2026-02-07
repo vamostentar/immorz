@@ -2,10 +2,10 @@ import { AuthController } from '@/controllers/auth.controller';
 import { authenticate } from '@/middlewares/auth.middleware';
 import { AuthService } from '@/services/auth.service';
 import {
-  type ChangePasswordRequest,
-  type LoginRequest,
-  type RefreshTokenRequest,
-  type RegisterRequest
+    type ChangePasswordRequest,
+    type LoginRequest,
+    type RefreshTokenRequest,
+    type RegisterRequest
 } from '@/types/auth';
 import { PrismaClient } from '@prisma/client';
 import type { FastifyInstance } from 'fastify';
@@ -174,6 +174,68 @@ export async function authRoutes(fastify: FastifyInstance) {
       },
     },
   }, authController.refreshToken.bind(authController));
+
+  fastify.post('/forgot-password', {
+    schema: {
+      tags: ['Authentication'],
+      summary: 'Request password reset',
+      body: {
+        type: 'object',
+        required: ['email'],
+        properties: {
+          email: { type: 'string', format: 'email' },
+        },
+      },
+      response: {
+        200: {
+          description: 'Request processed',
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: {
+              type: 'object',
+              properties: {
+                message: { type: 'string' },
+              },
+            },
+            meta: { type: 'object' },
+          },
+        },
+      },
+    },
+  }, authController.forgotPassword.bind(authController));
+
+  fastify.post('/reset-password', {
+    schema: {
+      tags: ['Authentication'],
+      summary: 'Reset password',
+      body: {
+        type: 'object',
+        required: ['token', 'password', 'confirmPassword'],
+        properties: {
+          token: { type: 'string' },
+          password: { type: 'string', minLength: 8 },
+          confirmPassword: { type: 'string' },
+        },
+      },
+      response: {
+        200: {
+          description: 'Password reset successful',
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: {
+              type: 'object',
+              properties: {
+                message: { type: 'string' },
+              },
+            },
+            meta: { type: 'object' },
+          },
+        },
+      },
+    },
+  }, authController.resetPassword.bind(authController));
 
   // Protected routes
   fastify.register(async function authenticatedRoutes(fastify) {

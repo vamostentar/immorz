@@ -11,6 +11,10 @@ export type Property = {
   bedrooms?: number | null;
   bathrooms?: number | null;
   area?: number | null;
+  garage?: boolean | null;
+  pool?: boolean | null;
+  energyRating?: string | null;
+  features?: string[] | null;
   createdAt: string;
   updatedAt: string;
   agentId?: string | null;

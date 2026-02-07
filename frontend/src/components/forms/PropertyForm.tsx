@@ -11,13 +11,17 @@ const schema = z.object({
   location: z.string().min(3),
   price: z.number().min(0),
   status: z.enum(['for_sale', 'for_rent', 'sold']),
-  adminStatus: z.enum(['ACTIVE', 'PENDING', 'INACTIVE']).optional(),
+  adminStatus: z.enum(['ACTIVE', 'PENDING', 'INACTIVE']).default('ACTIVE'),
   type: z.enum(['apartamento', 'moradia', 'loft', 'penthouse', 'estudio', 'escritorio', 'terreno']).optional().nullable(),
   imageUrl: z.string().optional().nullable(),
   description: z.string().max(2000).optional().nullable(),
   bedrooms: z.number().min(0).optional().nullable(),
   bathrooms: z.number().min(0).optional().nullable(),
   area: z.number().min(0).optional().nullable(),
+  garage: z.boolean().default(false),
+  pool: z.boolean().default(false),
+  energyRating: z.string().max(5).optional().nullable(),
+  features: z.array(z.string()).default([]),
 });
 
 interface UploadedImage {
@@ -46,7 +50,7 @@ const PropertyForm = forwardRef<PropertyFormRef, {
   onImagesUpdate?: (images: UploadedImage[]) => void;
 }>(({ initial, onSubmit, submitting, onImagesUpdate }, ref) => {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<PropertyFormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       title: initial?.title ?? '',
       location: initial?.location ?? '',
@@ -59,6 +63,10 @@ const PropertyForm = forwardRef<PropertyFormRef, {
       bedrooms: initial?.bedrooms ?? undefined,
       bathrooms: initial?.bathrooms ?? undefined,
       area: initial?.area ?? undefined,
+      garage: initial?.garage ?? false,
+      pool: initial?.pool ?? false,
+      energyRating: initial?.energyRating ?? undefined,
+      features: initial?.features ?? [],
     },
   });
 
@@ -112,22 +120,34 @@ const PropertyForm = forwardRef<PropertyFormRef, {
   };
 
   return (
-    <form onSubmit={handleSubmit((values) => onSubmit(values, images))} className="grid gap-3">
-      <input className="input" placeholder="Título" {...register('title')} />
-      {errors.title && <span className="text-red-600 text-sm">{errors.title.message}</span>}
+    <form onSubmit={handleSubmit(((values: any) => onSubmit(values, images)) as any)} className="grid gap-4">
+      <div className="flex flex-col gap-1">
+        <label className="text-sm font-medium text-gray-700">Título</label>
+        <input className="input" placeholder="Título" {...register('title')} />
+        {errors.title?.message && <span className="text-red-600 text-sm">{errors.title.message}</span>}
+      </div>
 
-      <input className="input" placeholder="Localização" {...register('location')} />
-      {errors.location && <span className="text-red-600 text-sm">{errors.location.message}</span>}
+      <div className="flex flex-col gap-1">
+        <label className="text-sm font-medium text-gray-700">Localização</label>
+        <input className="input" placeholder="Localização" {...register('location')} />
+        {errors.location?.message && <span className="text-red-600 text-sm">{errors.location.message}</span>}
+      </div>
 
-      <input className="input" placeholder="Preço" type="number" step="0.01" {...register('price', { valueAsNumber: true })} />
-      {errors.price && <span className="text-red-600 text-sm">{errors.price.message}</span>}
+      <div className="flex flex-col gap-1">
+        <label className="text-sm font-medium text-gray-700">Preço (€)</label>
+        <input className="input" placeholder="Preço" type="number" step="0.01" {...register('price', { valueAsNumber: true })} />
+        {errors.price?.message && <span className="text-red-600 text-sm">{errors.price.message}</span>}
+      </div>
 
-      <div className="grid md:grid-cols-2 gap-3">
-        <select className="input" {...register('status')}>
-          <option value="for_sale">Para venda</option>
-          <option value="for_rent">Para arrendar</option>
-          <option value="sold">Vendido</option>
-        </select>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">Estado da Oferta</label>
+          <select className="input" {...register('status')}>
+            <option value="for_sale">Para venda</option>
+            <option value="for_rent">Para arrendar</option>
+            <option value="sold">Vendido</option>
+          </select>
+        </div>
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-gray-700">Estado Administrativo</label>
           <StatusDropdown
@@ -138,22 +158,39 @@ const PropertyForm = forwardRef<PropertyFormRef, {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-3">
-        <select className="input" {...register('type')}>
-          <option value="">Tipo (opcional)</option>
-          <option value="apartamento">Apartamento</option>
-          <option value="moradia">Moradia</option>
-          <option value="loft">Loft</option>
-          <option value="penthouse">Penthouse</option>
-          <option value="estudio">Estúdio</option>
-          <option value="escritorio">Escritório</option>
-          <option value="terreno">Terreno</option>
-        </select>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">Tipo de Imóvel</label>
+          <select className="input" {...register('type')}>
+            <option value="">Tipo (opcional)</option>
+            <option value="apartamento">Apartamento</option>
+            <option value="moradia">Moradia</option>
+            <option value="loft">Loft</option>
+            <option value="penthouse">Penthouse</option>
+            <option value="estudio">Estúdio</option>
+            <option value="escritorio">Escritório</option>
+            <option value="terreno">Terreno</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">Certificado Energético</label>
+          <select className="input" {...register('energyRating')}>
+            <option value="">Nenhum</option>
+            <option value="A+">A+</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+            <option value="F">F</option>
+          </select>
+        </div>
       </div>
 
       {/* Características da propriedade */}
-      <div className="grid md:grid-cols-3 gap-3">
-        <div>
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">Nº de quartos</label>
           <input
             className="input"
             placeholder="Nº de quartos"
@@ -161,9 +198,10 @@ const PropertyForm = forwardRef<PropertyFormRef, {
             min="0"
             {...register('bedrooms', { valueAsNumber: true })}
           />
-          {errors.bedrooms && <span className="text-red-600 text-sm">{errors.bedrooms.message}</span>}
+          {errors.bedrooms?.message && <span className="text-red-600 text-sm">{errors.bedrooms.message}</span>}
         </div>
-        <div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">Nº de casas de banho</label>
           <input
             className="input"
             placeholder="Nº de casas de banho"
@@ -172,9 +210,10 @@ const PropertyForm = forwardRef<PropertyFormRef, {
             step="0.5"
             {...register('bathrooms', { valueAsNumber: true })}
           />
-          {errors.bathrooms && <span className="text-red-600 text-sm">{errors.bathrooms.message}</span>}
+          {errors.bathrooms?.message && <span className="text-red-600 text-sm">{errors.bathrooms.message}</span>}
         </div>
-        <div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">Área (m²)</label>
           <input
             className="input"
             placeholder="Área (m²)"
@@ -182,7 +221,49 @@ const PropertyForm = forwardRef<PropertyFormRef, {
             min="0"
             {...register('area', { valueAsNumber: true })}
           />
-          {errors.area && <span className="text-red-600 text-sm">{errors.area.message}</span>}
+          {errors.area?.message && <span className="text-red-600 text-sm">{errors.area.message}</span>}
+        </div>
+      </div>
+
+      {/* Garagem e Piscina */}
+      <div className="flex gap-6 p-1">
+        <label className="flex items-center gap-2 cursor-pointer group">
+          <input
+            type="checkbox"
+            className="w-5 h-5 rounded border-gray-300 text-sky-600 focus:ring-sky-500 transition-colors"
+            {...register('garage')}
+          />
+          <span className="text-sm font-medium text-gray-700 group-hover:text-sky-600 transition-colors">Garagem</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer group">
+          <input
+            type="checkbox"
+            className="w-5 h-5 rounded border-gray-300 text-sky-600 focus:ring-sky-500 transition-colors"
+            {...register('pool')}
+          />
+          <span className="text-sm font-medium text-gray-700 group-hover:text-sky-600 transition-colors">Piscina</span>
+        </label>
+      </div>
+
+      {/* Features checkboxes */}
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-gray-700">Características Adicionais</label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+          {[
+            'Jardim', 'Ar Condicionado', 'Aquecimento Central', 'Cozinha Equipada', 
+            'Mobilado', 'Varanda', 'Terraço', 'Elevador', 'Painéis Solares',
+            'Sistemas de Segurança', 'Vista de Mar', 'Vista de Rio', 'Vista de Cidade'
+          ].map(feature => (
+            <label key={feature} className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                value={feature}
+                className="w-4 h-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500 transition-colors"
+                {...register('features')}
+              />
+              <span className="text-xs text-gray-600 group-hover:text-sky-600 transition-colors">{feature}</span>
+            </label>
+          ))}
         </div>
       </div>
 
@@ -201,7 +282,10 @@ const PropertyForm = forwardRef<PropertyFormRef, {
         />
       </div>
 
-      <textarea className="input" rows={4} placeholder="Descrição (opcional)" {...register('description')} />
+      <div className="flex flex-col gap-1">
+        <label className="text-sm font-medium text-gray-700">Descrição</label>
+        <textarea className="input" rows={4} placeholder="Descrição (opcional)" {...register('description')} />
+      </div>
 
       <div className="flex justify-end gap-2 mt-2">
         <button className="btn btn-primary" disabled={submitting}>

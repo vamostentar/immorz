@@ -246,14 +246,14 @@ export class ApprovalController {
 
     await this.approvalService.delete(request.params.id);
 
-    // Log the deletion
+    // Log the deletion (without linking to the deleted approval ID to avoid FK error)
     await this.auditService.log({
       userId,
       action: 'APPROVAL_DELETED',
       entityType: approval.entityType,
       entityId: approval.entityId,
-      approvalId: approval.id,
-      changes: { deleted: true },
+      approvalId: undefined, // Don't link to the deleted approval
+      changes: { deleted: true, originalApprovalId: approval.id },
       ipAddress: request.ip,
     });
 

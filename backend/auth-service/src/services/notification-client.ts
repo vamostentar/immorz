@@ -76,6 +76,95 @@ export class NotificationClient {
     logger.info({ entityType, entityId }, 'Approval cancellation requested (not implemented)');
     return { success: true };
   }
+
+  /**
+   * Send password reset email via notification service.
+   */
+  async sendPasswordResetEmail(
+    email: string,
+    resetToken: string,
+    firstName?: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const url = `${this.baseUrl}/api/v1/notifications/email`;
+
+    try {
+      logger.info({ email, url }, 'Sending password reset email');
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: email,
+          template: 'PASSWORD_RESET',
+          data: {
+            name: firstName || 'Utilizador',
+            action_url: `${config.frontendUrl}/reset-password?token=${resetToken}`,
+            token: resetToken
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(
+          { email, status: response.status, error: errorText },
+          'Failed to send password reset email'
+        );
+        return { success: false, error: `Notification service returned ${response.status}: ${errorText}` };
+      }
+
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error({ email, error: errorMessage }, 'Exception sending password reset email');
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  /**
+   * Send password reset success confirmation email via notification service.
+   */
+  async sendPasswordResetSuccessEmail(
+    email: string,
+    firstName?: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const url = `${this.baseUrl}/api/v1/notifications/email`;
+
+    try {
+      logger.info({ email, url }, 'Sending password reset success email');
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: email,
+          template: 'PASSWORD_RESET_SUCCESS',
+          data: {
+            name: firstName || 'Utilizador'
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(
+          { email, status: response.status, error: errorText },
+          'Failed to send password reset success email'
+        );
+        return { success: false, error: `Notification service returned ${response.status}: ${errorText}` };
+      }
+
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error({ email, error: errorMessage }, 'Exception sending password reset success email');
+      return { success: false, error: errorMessage };
+    }
+  }
 }
 
 // Singleton instance

@@ -19,6 +19,8 @@ const Privacy = lazy(() => import('@/pages/Privacy'));
 const Terms = lazy(() => import('@/pages/Terms'));
 const Legal = lazy(() => import('@/pages/Legal'));
 const Team = lazy(() => import('@/pages/Team'));
+const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
 
 // Lazy load all admin pages
 const Analytics = lazy(() => import('@/pages/admin/Analytics'));
@@ -85,6 +87,22 @@ const router = createBrowserRouter([
     element: (
       <AppWrapper>
         <Login />
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/forgot-password',
+    element: (
+      <AppWrapper>
+        <ForgotPassword />
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/reset-password',
+    element: (
+      <AppWrapper>
+        <ResetPassword />
       </AppWrapper>
     )
   },
@@ -207,6 +225,17 @@ const router = createBrowserRouter([
     element: (
       <AppWrapper>
         <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+          <PropertyImages />
+        </ProtectedRoute>
+      </AppWrapper>
+    )
+  },
+  // Agent Image Management Route
+  {
+    path: '/agent/properties/:id/images',
+    element: (
+      <AppWrapper>
+        <ProtectedRoute allowedRoles={['agent']}>
           <PropertyImages />
         </ProtectedRoute>
       </AppWrapper>

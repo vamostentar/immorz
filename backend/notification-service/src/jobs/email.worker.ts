@@ -10,6 +10,7 @@ export const emailQueue = new Queue(QUEUE_NAME, {
   connection: {
     host: config.redis.host,
     port: config.redis.port,
+    password: config.redis.password,
   },
   defaultJobOptions: {
     attempts: 3,
@@ -65,6 +66,7 @@ export function createEmailWorker(emailService: EmailService) {
       connection: {
         host: config.redis.host,
         port: config.redis.port,
+        password: config.redis.password,
       },
       concurrency: 5,
     }

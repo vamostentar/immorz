@@ -88,6 +88,7 @@ const configSchema = z.object({
   PROPERTIES_SERVICE_URL: z.string().url().optional(),
   MEDIA_SERVICE_URL: z.string().url().optional(),
   NOTIFICATIONS_SERVICE_URL: z.string().url().optional(),
+  FRONTEND_URL: z.string().url().default('http://localhost:3000'),
 
   // Development/Debug
   DEBUG_ENABLED: z.coerce.boolean().default(false),
@@ -285,6 +286,7 @@ export const config = {
 
   // Service URLs
   notificationsServiceUrl: configService.config.NOTIFICATIONS_SERVICE_URL || 'http://notifications:8087',
+  frontendUrl: configService.config.FRONTEND_URL,
 
   // Additional properties for compatibility
   TRUST_PROXY: true,

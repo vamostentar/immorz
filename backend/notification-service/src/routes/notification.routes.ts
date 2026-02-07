@@ -20,6 +20,9 @@ export function registerNotificationRoutes(
   // Mark all notifications as read
   fastify.patch('/notifications/read-all', controller.markAllAsRead.bind(controller));
 
+  // Send template-based email (Internal use)
+  fastify.post('/notifications/email', controller.sendEmail.bind(controller));
+
   // Delete notification
   fastify.delete('/notifications/:id', controller.delete.bind(controller));
 }

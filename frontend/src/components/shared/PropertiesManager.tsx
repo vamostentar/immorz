@@ -75,7 +75,7 @@ const PropertyRow: React.FC<PropertyRowProps> = ({
                     {/* O link de detalhes depende do contexto? Por agora usa a rota de admin, mas devia ser adaptada se houver rota de detalhes de agente */}
                     {/* Assumindo que o agente pode ver a página de detalhes existente ou uma nova */}
                     <Link
-                        to={mode === 'admin' ? `/admin/properties/${property.id}/images` : `/agent/properties/${property.id}`}
+                        to={mode === 'admin' ? `/admin/properties/${property.id}/images` : `/agent/properties/${property.id}/images`}
                         className={`p-2 rounded-lg transition-colors ${hasValidId
                             ? 'text-blue-600 hover:bg-blue-50 cursor-pointer'
                             : 'text-gray-400 cursor-not-allowed opacity-50'

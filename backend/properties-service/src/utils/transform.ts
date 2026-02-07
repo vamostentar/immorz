@@ -1,11 +1,21 @@
-import { Property } from '@prisma/client';
 import { PropertyResponse } from '../types/property';
 
-// Extended Property type that includes adminStatus
-type PropertyWithAdminStatus = Property;
+
+// Extended Property type that includes new fields not yet in generated client
+// Using a more flexible base type to avoid lint errors if local client is stale
+export type ExtendedProperty = any & {
+  id: string;
+  adminStatus?: string;
+  garage?: boolean | null;
+  pool?: boolean | null;
+  energyRating?: string | null;
+  features?: string[];
+  price?: any;
+  area?: any;
+};
 
 // Helper to convert Prisma Decimal to number and add computed fields
-export function transformPropertyFromDb(property: PropertyWithAdminStatus): PropertyResponse {
+export function transformPropertyFromDb(property: ExtendedProperty): PropertyResponse {
   const currentYear = new Date().getFullYear();
   
   // Debug log para verificar o adminStatus
@@ -54,6 +64,9 @@ export function transformPropertyFromDb(property: PropertyWithAdminStatus): Prop
     yearBuilt: property.yearBuilt || null,
     coordinates,
     features: property.features || null,
+    garage: property.garage ?? null,
+    pool: property.pool ?? null,
+    energyRating: property.energyRating || null,
     contactPhone: property.contactPhone || null,
     contactEmail: property.contactEmail || null,
     createdAt: property.createdAt,

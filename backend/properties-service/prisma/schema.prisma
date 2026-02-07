@@ -88,6 +88,11 @@ model Property {
   
   // Dados de localização
   coordinates Json? // { latitude: number, longitude: number }
+
+  // Características adicionais
+  garage       Boolean? @default(false)
+  pool         Boolean? @default(false)
+  energyRating String?  @db.VarChar(5) // A+, A, B, C, D, E, F
   
   // Características e comodidades
   features    String[] @default([])

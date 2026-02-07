@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client';
 import { IPropertyRepository } from '../../interfaces';
 import { PropertyCreateInput, PropertyFilters, PropertyResponse, PropertyUpdateInput } from '../../types/property';
 import { repositoryLogger } from '../../utils/logger';
-import { calculateDistance, transformPropertyFromDb } from '../../utils/transform';
+import { calculateDistance, ExtendedProperty, transformPropertyFromDb } from '../../utils/transform';
 
 export class PrismaPropertyRepository implements IPropertyRepository {
   constructor(private prisma: any) { }
@@ -30,6 +30,9 @@ export class PrismaPropertyRepository implements IPropertyRepository {
           features: data.features,
           contactPhone: data.contactPhone,
           contactEmail: data.contactEmail,
+          garage: data.garage,
+          pool: data.pool,
+          energyRating: data.energyRating,
           agentId: data.agentId, // Atribuir agente responsável
         } as any,
       });
@@ -37,7 +40,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
       const duration = Date.now() - startTime;
       repositoryLogger.debug({ operation: 'create', table: 'property', duration }, 'Property created');
 
-      return transformPropertyFromDb(property);
+      return transformPropertyFromDb(property as ExtendedProperty);
     } catch (error) {
       repositoryLogger.error({ error, operation: 'create', data }, 'Failed to create property');
       throw error;
@@ -55,7 +58,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
       const duration = Date.now() - startTime;
       repositoryLogger.debug({ operation: 'findById', table: 'property', duration, id }, 'Property lookup completed');
 
-      return property ? transformPropertyFromDb(property) : null;
+      return property ? transformPropertyFromDb(property as ExtendedProperty) : null;
     } catch (error) {
       repositoryLogger.error({ error, operation: 'findById', id }, 'Failed to find property by ID');
       throw error;
@@ -91,7 +94,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
         filters
       }, 'Properties search completed');
 
-      return properties.map(transformPropertyFromDb);
+      return properties.map((p: any) => transformPropertyFromDb(p as ExtendedProperty));
     } catch (error) {
       repositoryLogger.error({ error, operation: 'findMany', filters }, 'Failed to find properties');
       throw error;
@@ -124,6 +127,9 @@ export class PrismaPropertyRepository implements IPropertyRepository {
       if (data.features !== undefined) updateData.features = data.features;
       if (data.contactPhone !== undefined) updateData.contactPhone = data.contactPhone;
       if (data.contactEmail !== undefined) updateData.contactEmail = data.contactEmail;
+      if (data.garage !== undefined) updateData.garage = data.garage;
+      if (data.pool !== undefined) updateData.pool = data.pool;
+      if (data.energyRating !== undefined) updateData.energyRating = data.energyRating;
 
       console.log('🔧 PrismaPropertyRepository.update updateData:', updateData);
 
@@ -137,7 +143,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
       const duration = Date.now() - startTime;
       repositoryLogger.debug({ operation: 'update', table: 'property', duration, id }, 'Property updated');
 
-      return transformPropertyFromDb(property);
+      return transformPropertyFromDb(property as ExtendedProperty);
     } catch (error) {
       console.error('❌ PrismaPropertyRepository.update error:', error);
       repositoryLogger.error({ error, operation: 'update', id, data }, 'Failed to update property');
@@ -201,7 +207,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
       .sort((a: any, b: any) => a.distance - b.distance)
       .slice(0, filters.limit);
 
-    return nearbyProperties.map(transformPropertyFromDb);
+    return nearbyProperties.map((p: any) => transformPropertyFromDb(p as ExtendedProperty));
   }
 
   private buildWhereClause(filters: Partial<PropertyFilters>) {

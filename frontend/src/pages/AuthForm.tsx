@@ -5,6 +5,7 @@ import { PasswordStrength } from '@/components/ui/PasswordStrength';
 import { useAuth } from '@/context/AuthContext';
 import { Eye, EyeOff, Lock, Mail, Phone, User, UserCheck } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 type AuthMode = 'login' | 'register';
 
@@ -233,12 +234,12 @@ export default function AuthForm() {
                 />
                 Lembrar sessão
               </label>
-              <button
-                type="button"
+              <Link
+                to="/forgot-password"
                 className="text-sm text-blue-600 hover:text-blue-700"
               >
                 Esqueceu a senha?
-              </button>
+              </Link>
             </div>
 
             <Button

@@ -1,7 +1,7 @@
 import { AgentProfile, fetchAgentById } from '@/api/agent-queries';
 import { useProperty, usePropertyImages } from '@/api/queries';
 import { Footer } from '@/components/Footer';
-import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Eye, MapPin, User, X } from 'lucide-react';
+import { ArrowLeft, Calendar, Check, ChevronLeft, ChevronRight, Eye, MapPin, User, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
@@ -187,6 +187,43 @@ export default function PropertyDetails() {
                   <div className="text-sm text-gray-600">Área</div>
                 </div>
               </div>
+              
+              {/* Características Adicionais */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                {(property as any).garage && (
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <div className="text-lg font-semibold text-gray-900">Sim</div>
+                    <div className="text-sm text-gray-600">Garagem</div>
+                  </div>
+                )}
+                {(property as any).pool && (
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <div className="text-lg font-semibold text-gray-900">Sim</div>
+                    <div className="text-sm text-gray-600">Piscina</div>
+                  </div>
+                )}
+                {(property as any).energyRating && (
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <div className="text-lg font-semibold text-green-600">{(property as any).energyRating}</div>
+                    <div className="text-sm text-gray-600">Cert. Energético</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Lista de Features */}
+              {((property as any).features && (property as any).features.length > 0) && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Outras características</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {(property as any).features.map((feature: string, idx: number) => (
+                      <div key={idx} className="flex items-center text-gray-700">
+                        <Check className="w-5 h-5 text-yellow-500 mr-2" />
+                        <span>{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Descrição */}
               <div className="mb-6">

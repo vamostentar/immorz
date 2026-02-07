@@ -1,16 +1,16 @@
 import { createSuccessResponse } from '@/middlewares/error-handler';
 import { AuthService } from '@/services/auth.service';
 import type {
-  ChangePasswordRequest,
-  LoginRequest,
-  RefreshTokenRequest,
-  RegisterRequest
+    ChangePasswordRequest,
+    LoginRequest,
+    RefreshTokenRequest,
+    RegisterRequest
 } from '@/types/auth';
 import {
-  changePasswordSchema,
-  loginSchema,
-  refreshTokenSchema,
-  RegisterSchema
+    changePasswordSchema,
+    loginSchema,
+    refreshTokenSchema,
+    RegisterSchema
 } from '@/types/auth';
 import { getRequestContext } from '@/utils/request-context';
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -198,6 +198,59 @@ export class AuthController {
     return reply.code(200).send(
       createSuccessResponse(
         { message: 'Two-factor authentication disabled successfully' }, 
+        context.requestId
+      )
+    );
+  }
+  /**
+   * Request password reset
+   * POST /api/v1/auth/forgot-password
+   */
+  async forgotPassword(
+    request: FastifyRequest<{ Body: { email: string } }>,
+    reply: FastifyReply
+  ) {
+    const context = getRequestContext(request)!;
+    const { email } = request.body;
+    
+    // Validate email format
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new Error('Invalid email format');
+    }
+    
+    await this.authService.forgotPassword(email, context);
+    
+    // Always return success to prevent email enumeration
+    return reply.code(200).send(
+      createSuccessResponse(
+        { message: 'If your email is registered, you will receive password reset instructions.' },
+        context.requestId
+      )
+    );
+  }
+
+  /**
+   * Reset password
+   * POST /api/v1/auth/reset-password
+   */
+  async resetPassword(
+    request: FastifyRequest<{ 
+      Body: { token: string; password: string; confirmPassword: string } 
+    }>,
+    reply: FastifyReply
+  ) {
+    const context = getRequestContext(request)!;
+    const { token, password, confirmPassword } = request.body;
+    
+    if (password !== confirmPassword) {
+      throw new Error("Passwords don't match");
+    }
+    
+    await this.authService.resetPassword(token, password, context);
+    
+    return reply.code(200).send(
+      createSuccessResponse(
+        { message: 'Password has been reset successfully. You can now login with your new password.' },
         context.requestId
       )
     );

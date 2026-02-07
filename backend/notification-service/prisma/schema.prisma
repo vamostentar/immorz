@@ -115,7 +115,7 @@ model AuditLog {
   userAgent  String?  @map("user_agent")
   createdAt  DateTime @default(now()) @map("created_at")
 
-  approval   Approval? @relation(fields: [approvalId], references: [id])
+  approval   Approval? @relation(fields: [approvalId], references: [id], onDelete: SetNull)
   approvalId String?   @map("approval_id")
 
   @@index([userId])
