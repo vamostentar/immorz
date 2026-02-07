@@ -429,11 +429,16 @@ export async function registerMessageRoutes(app: FastifyInstance) {
       });
 
     } catch (error: any) {
-      request.log.error(`Failed to send outbound message: ${error.message}`);
+      request.log.error({
+        stack: error.stack,
+        toEmail,
+        hasAttachments: !!attachments?.length
+      }, `Failed to send outbound message for agent ${agentId}: ${error.message}`);
+      
       return reply.code(500).send({
         success: false,
         error: 'SEND_FAILED',
-        message: 'Failed to send message'
+        message: 'Failed to send message: ' + error.message // Include error detail in response for debugging
       });
     }
   });

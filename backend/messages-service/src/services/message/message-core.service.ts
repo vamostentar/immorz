@@ -434,7 +434,15 @@ export class MessageCoreService {
       }
 
       if (filters.propertyId) where.propertyId = filters.propertyId;
-      if (filters.agentId) where.agentId = filters.agentId;
+      
+      // Allow agents to see their own messages AND unassigned messages (inbound)
+      if (filters.agentId) {
+        where.OR = [
+          { agentId: filters.agentId },
+          { agentId: null }
+        ];
+      }
+      
       if (filters.read !== undefined) where.read = filters.read;
 
       if (filters.search) {
