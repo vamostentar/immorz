@@ -108,6 +108,7 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       API_URL: ${API_URL:-https://www.immorz.pt}
+      EMAIL_FROM: ${AUTH_EMAIL_FROM}
     # networks:
     #   - backend
     labels:
@@ -400,7 +401,7 @@ services:
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
-      SMTP_FROM: ${AUTH_EMAIL_FROM:-${EMAIL_FROM}}
+      SMTP_FROM: ${AUTH_EMAIL_FROM}
       SMTP_FROM_NAME: "Immorz Imobiliária"
       CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
