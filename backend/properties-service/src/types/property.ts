@@ -204,6 +204,7 @@ export const propertyResponseSchema = z.object({
   garage: z.boolean().nullable(),
   pool: z.boolean().nullable(),
   energyRating: z.string().nullable(),
+  views: z.number().int().default(0),
   contactPhone: z.string().nullable(),
   contactEmail: z.string().nullable(),
   createdAt: z.date(),
@@ -231,6 +232,7 @@ export interface PropertyRepository {
   update(id: string, data: PropertyUpdateInput): Promise<PropertyResponse>;
   delete(id: string): Promise<void>;
   count(filters?: Partial<PropertyFilters>): Promise<number>;
+  incrementViews(id: string): Promise<void>;
 }
 
 // Service types
@@ -241,4 +243,5 @@ export interface PropertyService {
   updateProperty(id: string, data: PropertyUpdateInput): Promise<PropertyResponse>;
   deleteProperty(id: string): Promise<void>;
   getPropertiesStats(): Promise<any>;
+  incrementPropertyViews(id: string): Promise<void>;
 }

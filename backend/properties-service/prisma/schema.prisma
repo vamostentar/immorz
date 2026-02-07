@@ -93,6 +93,7 @@ model Property {
   garage       Boolean? @default(false)
   pool         Boolean? @default(false)
   energyRating String?  @db.VarChar(5) // A+, A, B, C, D, E, F
+  views        Int      @default(0)
   
   // Características e comodidades
   features    String[] @default([])

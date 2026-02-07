@@ -9,6 +9,7 @@ export interface IPropertyService {
   getPropertiesStats(): Promise<any>;
   searchProperties(query: string, limit?: number): Promise<any>;
   getNearbyProperties(lat: number, lng: number, radius?: number, limit?: number): Promise<any>;
+  incrementPropertyViews(id: string): Promise<void>;
 }
 
 export interface IMediaService {

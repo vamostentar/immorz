@@ -3,6 +3,7 @@ import PropertyForm from '@/components/forms/PropertyForm';
 import Modal from '@/components/Modal';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Toast } from '@/components/Toast';
+import { Eye } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -54,6 +55,7 @@ export default function PropertiesList() {
                 <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">Título</th>
                 <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">Localização</th>
                 <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">Preço</th>
+                <th className="px-4 py-2 text-center text-sm font-semibold text-slate-700">Visualizações</th>
                 <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">Ações</th>
               </tr>
             </thead>
@@ -62,7 +64,13 @@ export default function PropertiesList() {
                 <tr key={p.id}>
                   <td className="px-4 py-2">{p.title}</td>
                   <td className="px-4 py-2">{p.location}</td>
-                  <td className="px-4 py-2">R$ {Number(p.price ?? 0).toLocaleString('pt-PT')}</td>
+                  <td className="px-4 py-2">€ {Number(p.price ?? 0).toLocaleString('pt-PT')}</td>
+                  <td className="px-4 py-2 text-center text-sm text-slate-600">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <Eye size={14} className="text-slate-400" />
+                      {p.views || 0}
+                    </div>
+                  </td>
                   <td className="px-4 py-2">
                     <Link to={`/admin/properties/${p.id}/images`} className="btn btn-outline">
                       Gerir Imagens

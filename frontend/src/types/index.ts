@@ -15,6 +15,7 @@ export type Property = {
   pool?: boolean | null;
   energyRating?: string | null;
   features?: string[] | null;
+  views?: number;
   createdAt: string;
   updatedAt: string;
   agentId?: string | null;

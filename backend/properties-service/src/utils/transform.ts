@@ -10,6 +10,7 @@ export type ExtendedProperty = any & {
   pool?: boolean | null;
   energyRating?: string | null;
   features?: string[];
+  views?: number;
   price?: any;
   area?: any;
 };
@@ -67,6 +68,7 @@ export function transformPropertyFromDb(property: ExtendedProperty): PropertyRes
     garage: property.garage ?? null,
     pool: property.pool ?? null,
     energyRating: property.energyRating || null,
+    views: property.views || 0,
     contactPhone: property.contactPhone || null,
     contactEmail: property.contactEmail || null,
     createdAt: property.createdAt,

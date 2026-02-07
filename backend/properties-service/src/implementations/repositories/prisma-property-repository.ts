@@ -210,6 +210,23 @@ export class PrismaPropertyRepository implements IPropertyRepository {
     return nearbyProperties.map((p: any) => transformPropertyFromDb(p as ExtendedProperty));
   }
 
+  async incrementViews(id: string): Promise<void> {
+    try {
+      await this.prisma.property.update({
+        where: { id },
+        data: {
+          views: {
+            increment: 1,
+          },
+        },
+      });
+      repositoryLogger.debug({ operation: 'incrementViews', table: 'property', id }, 'Property views incremented');
+    } catch (error) {
+      repositoryLogger.error({ error, operation: 'incrementViews', id }, 'Failed to increment property views');
+      throw error;
+    }
+  }
+
   private buildWhereClause(filters: Partial<PropertyFilters>) {
     const where: any = {};
 

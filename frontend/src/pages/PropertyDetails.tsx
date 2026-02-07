@@ -1,5 +1,5 @@
 import { AgentProfile, fetchAgentById } from '@/api/agent-queries';
-import { useProperty, usePropertyImages } from '@/api/queries';
+import { useIncrementPropertyViews, useProperty, usePropertyImages } from '@/api/properties';
 import { Footer } from '@/components/Footer';
 import { ArrowLeft, Calendar, Check, ChevronLeft, ChevronRight, Eye, MapPin, User, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -12,8 +12,15 @@ export default function PropertyDetails() {
 
   const { data: property, isLoading: propertyLoading, error: propertyError } = useProperty(id || '');
   const { data: images = [], isLoading: imagesLoading } = usePropertyImages(id || '');
+  const { mutate: incrementViews } = useIncrementPropertyViews();
   const [agent, setAgent] = useState<AgentProfile | null>(null);
   const [agentLoading, setAgentLoading] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      incrementViews(id);
+    }
+  }, [id, incrementViews]);
 
   useEffect(() => {
     if (property?.agentId) {

@@ -121,3 +121,15 @@ export function useUpdatePropertyAdminStatus() {
     },
   });
 }
+
+/**
+ * Increment property views count
+ */
+export function useIncrementPropertyViews() {
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.post(`/api/v1/properties/${id}/views`);
+      return true;
+    },
+  });
+}

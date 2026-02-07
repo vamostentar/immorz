@@ -209,6 +209,23 @@ export class PropertyRepositoryImpl implements PropertyRepository {
     }
   }
 
+  async incrementViews(id: string): Promise<void> {
+    try {
+      await prisma.property.update({
+        where: { id },
+        data: {
+          views: {
+            increment: 1,
+          },
+        },
+      });
+      repositoryLogger.debug({ operation: 'incrementViews', table: 'property', id }, 'Property views incremented');
+    } catch (error) {
+      repositoryLogger.error({ error, operation: 'incrementViews', id }, 'Failed to increment property views');
+      throw error;
+    }
+  }
+
   private buildWhereClause(filters: PropertyFilters): Prisma.PropertyWhereInput {
     const where: Prisma.PropertyWhereInput = {};
 
@@ -297,7 +314,7 @@ export class PropertyRepositoryImpl implements PropertyRepository {
     }
 
     // Features filter
-    if (filters.features && filters.features.length > 0) {
+    if (filters.features && (filters.features as string[]).length > 0) {
       (where as any).features = {
         hasEvery: filters.features,
       };
@@ -343,7 +360,7 @@ export class PropertyRepositoryImpl implements PropertyRepository {
   private async findNearby(filters: PropertyFilters): Promise<any[]> {
     if (!filters.nearbySearch) return [];
 
-    const { latitude, longitude, radiusKm } = filters.nearbySearch;
+    const { latitude, longitude, radiusKm } = filters.nearbySearch as any;
 
     // Note: This is a simplified implementation. For production, you'd want to use PostGIS
     // or similar geospatial database extensions for better performance.

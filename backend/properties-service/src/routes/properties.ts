@@ -398,6 +398,34 @@ export async function propertiesRoutes(fastify: FastifyInstance) {
     }
   }, propertyController.updateAdminStatus.bind(propertyController));
 
+  // Increment property views
+  fastify.post('/api/v1/properties/:id/views', {
+    schema: {
+      description: 'Increment property views count',
+      tags: ['Properties'],
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' }
+        },
+        required: ['id']
+      },
+      response: {
+        204: {
+          type: 'null'
+        },
+        404: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            code: { type: 'string' },
+            timestamp: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, propertyController.incrementViews.bind(propertyController));
+
   console.log('✅ Properties routes registered successfully');
 }
 

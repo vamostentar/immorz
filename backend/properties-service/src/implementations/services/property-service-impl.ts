@@ -1,17 +1,17 @@
-import { IEventBus, IMediaService, IPropertyRepository } from '../../interfaces';
+import { IEventBus, IMediaService, IPropertyRepository, IPropertyService } from '../../interfaces';
 import { NotFoundError, PaginatedResponse, ValidationError } from '../../types/common';
 import { PropertyCreateInput, PropertyFilters, PropertyResponse, PropertyUpdateInput } from '../../types/property';
 import { serviceLogger } from '../../utils/logger';
 import {
-    validateAreaRange,
-    validateBathroomRange,
-    validateBedroomRange,
-    validateCoordinates,
-    validatePriceRange,
-    validateYearRange
+  validateAreaRange,
+  validateBathroomRange,
+  validateBedroomRange,
+  validateCoordinates,
+  validatePriceRange,
+  validateYearRange
 } from '../../utils/validation';
 
-export class PropertyServiceImpl {
+export class PropertyServiceImpl implements IPropertyService {
   constructor(
     private propertyRepository: IPropertyRepository,
     private mediaService: IMediaService,
@@ -206,10 +206,10 @@ export class PropertyServiceImpl {
         total,
         byStatus: { forSale, forRent, sold },
         pricing: {
-          average: prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0,
-          median: prices.length > 0 ? prices[Math.floor(prices.length / 2)] : 0,
-          min: prices.length > 0 ? Math.min(...prices) : 0,
-          max: prices.length > 0 ? Math.max(...prices) : 0,
+          average: prices.length > 0 ? (prices as number[]).reduce((a, b) => a + Number(b), 0) / prices.length : 0,
+          median: prices.length > 0 ? Number(prices[Math.floor(prices.length / 2)]) : 0,
+          min: prices.length > 0 ? Math.min(...(prices as number[])) : 0,
+          max: prices.length > 0 ? Math.max(...(prices as number[])) : 0,
         },
         lastUpdated: new Date().toISOString(),
       };
@@ -219,6 +219,23 @@ export class PropertyServiceImpl {
       return stats;
     } catch (error) {
       serviceLogger.error({ error, operation: 'getPropertiesStats' }, 'Failed to get properties statistics');
+      throw error;
+    }
+  }
+
+  async incrementPropertyViews(id: string): Promise<void> {
+    serviceLogger.debug({ operation: 'incrementPropertyViews', id }, 'Incrementing property views');
+    
+    try {
+      await this.propertyRepository.incrementViews(id);
+      
+      serviceLogger.debug({ 
+        operation: 'incrementPropertyViews', 
+        propertyId: id,
+        success: true 
+      }, 'Property views incremented successfully');
+    } catch (error) {
+      serviceLogger.error({ error, operation: 'incrementPropertyViews', id }, 'Failed to increment property views');
       throw error;
     }
   }
@@ -338,22 +355,22 @@ export class PropertyServiceImpl {
     const errors: string[] = [];
     
     // Price range validation
-    if (filters.minPrice !== undefined && filters.maxPrice !== undefined) {
-      if (filters.minPrice > filters.maxPrice) {
+    if (filters.minPrice !== undefined && filters.minPrice !== null && filters.maxPrice !== undefined && filters.maxPrice !== null) {
+      if (Number(filters.minPrice) > Number(filters.maxPrice)) {
         errors.push('Minimum price cannot be greater than maximum price');
       }
     }
     
     // Area range validation
-    if (filters.minArea !== undefined && filters.maxArea !== undefined) {
-      if (filters.minArea > filters.maxArea) {
+    if (filters.minArea !== undefined && filters.minArea !== null && filters.maxArea !== undefined && filters.maxArea !== null) {
+      if (Number(filters.minArea) > Number(filters.maxArea)) {
         errors.push('Minimum area cannot be greater than maximum area');
       }
     }
     
     // Year range validation
-    if (filters.minYearBuilt !== undefined && filters.maxYearBuilt !== undefined) {
-      if (filters.minYearBuilt > filters.maxYearBuilt) {
+    if (filters.minYearBuilt !== undefined && filters.minYearBuilt !== null && filters.maxYearBuilt !== undefined && filters.maxYearBuilt !== null) {
+      if (Number(filters.minYearBuilt) > Number(filters.maxYearBuilt)) {
         errors.push('Minimum year built cannot be greater than maximum year built');
       }
     }

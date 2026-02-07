@@ -77,7 +77,7 @@ export async function errorHandler(
           error: 'Resource already exists',
           code: 'DUPLICATE_RESOURCE',
           details: {
-            target: error.meta?.target,
+            target: (error as any).meta?.target,
           },
           requestId,
           timestamp: new Date().toISOString(),
@@ -96,7 +96,7 @@ export async function errorHandler(
           error: 'Invalid reference to related resource',
           code: 'FOREIGN_KEY_VIOLATION',
           details: {
-            field: error.meta?.field_name,
+            field: (error as any).meta?.field_name,
           },
           requestId,
           timestamp: new Date().toISOString(),

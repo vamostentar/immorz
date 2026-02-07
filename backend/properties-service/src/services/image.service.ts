@@ -303,7 +303,7 @@ export class ImageService {
       }
 
       // Update orders in a transaction
-      await this.prisma.$transaction(async (tx) => {
+      await this.prisma.$transaction(async (tx: any) => {
         for (const { id, order } of imageOrders) {
           await tx.propertyImage.update({
             where: { 

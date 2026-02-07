@@ -137,9 +137,12 @@ function isPublicRoute(url: string, method: string): boolean {
   }
 
   // Public properties endpoints (including query parameters)
-  if (url.startsWith('/api/v1/properties') && method === 'GET') {
-    // Allow /api/v1/properties, /api/v1/properties?limit=12, /api/v1/properties/search, etc.
-    return true;
+  if (url.startsWith('/api/v1/properties')) {
+    // Allow GET /api/v1/properties, /api/v1/properties/:id, etc.
+    if (method === 'GET') return true;
+    
+    // Allow POST /api/v1/properties/:id/views for public view counting
+    if (method === 'POST' && url.endsWith('/views')) return true;
   }
 
   // Public contact form endpoint (messages service)

@@ -2,9 +2,9 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { ServiceFactory } from '../factories/service.factory';
 import { AppError } from '../types/common';
 import {
-    propertyCreateSchema,
-    propertyFiltersSchema,
-    propertyUpdateSchema
+  propertyCreateSchema,
+  propertyFiltersSchema,
+  propertyUpdateSchema
 } from '../types/property';
 import { httpLogger } from '../utils/logger';
 import { validateInput, validateUUID } from '../utils/validation';
@@ -127,11 +127,12 @@ export class PropertyController {
       const filtersWithDefaults = {
         ...validatedFilters,
         limit: validatedFilters.limit || 20,
-        sortBy: validatedFilters.sortBy || 'createdAt',
-        sortOrder: validatedFilters.sortOrder || 'desc',
+        sortBy: (validatedFilters.sortBy as any) || 'createdAt',
+        sortOrder: (validatedFilters.sortOrder as any) || 'desc',
         nearbySearch: validatedFilters.nearbySearch ? {
-          ...validatedFilters.nearbySearch,
-          radiusKm: validatedFilters.nearbySearch.radiusKm || 5,
+          latitude: (validatedFilters.nearbySearch as any).latitude,
+          longitude: (validatedFilters.nearbySearch as any).longitude,
+          radiusKm: (validatedFilters.nearbySearch as any).radiusKm || 5,
         } : undefined,
       };
 
@@ -433,6 +434,37 @@ export class PropertyController {
         operation: 'updateAdminStatus',
         responseTime
       }, 'Failed to update property admin status');
+      throw error;
+    }
+  }
+
+  async incrementViews(request: FastifyRequest, reply: FastifyReply) {
+    const startTime = Date.now();
+
+    try {
+      const { id } = request.params as { id: string };
+      validateUUID(id);
+
+      httpLogger.debug({ operation: 'incrementViews', id }, 'Incrementing property views');
+
+      const propertyService = this.serviceFactory.createCompletePropertyService();
+      await propertyService.incrementPropertyViews(id);
+
+      const responseTime = Date.now() - startTime;
+      httpLogger.debug({
+        operation: 'incrementViews',
+        propertyId: id,
+        responseTime
+      }, 'Property views incremented successfully');
+
+      return reply.code(204).send();
+    } catch (error) {
+      const responseTime = Date.now() - startTime;
+      httpLogger.error({
+        error,
+        operation: 'incrementViews',
+        responseTime
+      }, 'Failed to increment property views');
       throw error;
     }
   }
