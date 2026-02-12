@@ -61,7 +61,7 @@ export function Navbar() {
               to="/admin/dashboard" 
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
-              Painel Admin
+              Entrar
             </Link>
           </div>
 
@@ -114,7 +114,7 @@ export function Navbar() {
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-center block"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Painel Admin
+              Entrar
             </Link>
           </div>
         </div>

@@ -80,6 +80,7 @@ export default function UsersManagementPage() {
         sendCommunication,
         bulkImportUsers,
         refetch,
+        resetTwoFactor,
     } = useUserManagement();
 
     return (
@@ -220,6 +221,7 @@ export default function UsersManagementPage() {
                     onViewDetails={handleViewDetails}
                     onSelectUser={handleSelectUser}
                     onSelectAll={handleSelectAll}
+                    onResetTwoFactor={resetTwoFactor}
                 />
 
                 {/* Create User Modal */}

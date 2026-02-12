@@ -104,6 +104,7 @@ model Session {
   
   // Session metadata
   isActive    Boolean   @default(true)
+  rememberMe  Boolean   @default(false)
   expiresAt   DateTime
   lastActiveAt DateTime @default(now())
   
@@ -196,6 +197,22 @@ model PasswordReset {
   usedAt    DateTime?
   
   @@map("password_resets")
+}
+
+// Two-Factor Token model - Email 2FA tokens
+model TwoFactorToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   // 6-digit code
+  
+  // Token metadata
+  expiresAt DateTime
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  
+  @@unique([email, token])
+  @@map("two_factor_tokens")
 }
 
 // Email Verification model - Email verification tokens

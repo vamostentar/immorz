@@ -11,6 +11,7 @@ export const config = {
   USERS_SERVICE_URL: process.env.USERS_SERVICE_URL || 'http://users:8086',
   MESSAGES_SERVICE_URL: process.env.MESSAGES_SERVICE_URL || 'http://messages:8090',
   NOTIFICATIONS_SERVICE_URL: process.env.NOTIFICATIONS_SERVICE_URL || 'http://notifications:8087',
+  INTELLIGENCE_SERVICE_URL: process.env.INTELLIGENCE_SERVICE_URL || 'http://intelligence:8088',
 
   // CORS Origins (accept both CORS_ORIGINS and CORS_ORIGIN)
   CORS_ORIGINS: (() => {

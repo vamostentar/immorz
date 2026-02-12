@@ -2,9 +2,9 @@ import { UserController } from '@/controllers/user.controller';
 import { authenticate, requireRole } from '@/middlewares/auth.middleware';
 import { UserService } from '@/services/user.service';
 import {
-    type CreateUserRequest,
-    type UpdateUserRequest,
-    type UserListQuery,
+  type CreateUserRequest,
+  type UpdateUserRequest,
+  type UserListQuery,
 } from '@/types/auth';
 import { PrismaClient } from '@prisma/client';
 import type { FastifyInstance } from 'fastify';
@@ -38,6 +38,7 @@ const userResponseProperties = {
   instagram: { type: 'string', nullable: true },
   isProfilePublic: { type: 'boolean' },
   isProfileApproved: { type: 'boolean' },
+  twoFactorEnabled: { type: 'boolean' },
   createdAt: { type: 'string', format: 'date-time' },
   updatedAt: { type: 'string', format: 'date-time' }
 };
@@ -98,6 +99,55 @@ export async function userRoutes(fastify: FastifyInstance) {
       },
     },
   }, userController.updateProfile.bind(userController));
+
+  // Get user by ID (Accessible by owner or admin)
+  fastify.get<{ Params: { userId: string } }>('/:userId', {
+    schema: {
+      tags: ['Users'],
+      summary: 'Get user by ID',
+      security: [{ bearerAuth: [] }],
+      params: {
+        type: 'object',
+        required: ['userId'],
+        properties: {
+          userId: { type: 'string' },
+        },
+      },
+      response: {
+        200: {
+          description: 'User details',
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: {
+              type: 'object',
+              properties: userResponseProperties
+            },
+            meta: { type: 'object' },
+          },
+        },
+        404: {
+          description: 'User not found',
+          type: 'object',
+        },
+      },
+    },
+  }, async (request: any, reply) => {
+    const { userId } = request.params;
+    const currentUserId = request.user?.id;
+    const currentUserRole = request.user?.role;
+
+    // Permissions check: Owner or Admin
+    if (userId !== currentUserId && !['admin', 'super_admin'].includes(currentUserRole)) {
+      return reply.status(403).send({
+        success: false,
+        error: 'Acesso negado. Apenas o próprio utilizador ou administradores podem aceder a estes dados.',
+        code: 'FORBIDDEN'
+      });
+    }
+
+    return userController.getUser(request, reply);
+  });
 
   // Admin-only routes
   fastify.register(async function adminRoutes(fastify) {
@@ -221,39 +271,6 @@ export async function userRoutes(fastify: FastifyInstance) {
       },
     }, userController.listUsers.bind(userController));
 
-    // Get user by ID
-    fastify.get<{ Params: { userId: string } }>('/:userId', {
-      schema: {
-        tags: ['Users'],
-        summary: 'Get user by ID',
-        security: [{ bearerAuth: [] }],
-        params: {
-          type: 'object',
-          required: ['userId'],
-          properties: {
-            userId: { type: 'string' },
-          },
-        },
-        response: {
-          200: {
-            description: 'User details',
-            type: 'object',
-            properties: {
-              success: { type: 'boolean' },
-              data: {
-                type: 'object',
-                properties: userResponseProperties
-              },
-              meta: { type: 'object' },
-            },
-          },
-          404: {
-            description: 'User not found',
-            type: 'object',
-          },
-        },
-      },
-    }, userController.getUser.bind(userController));
 
     // Create user
     fastify.post<{ Body: CreateUserRequest }>('/', {
@@ -469,6 +486,38 @@ export async function userRoutes(fastify: FastifyInstance) {
         },
       },
     }, userController.resetUserPassword.bind(userController));
+
+    // Reset 2FA
+    fastify.post<{ Params: { userId: string } }>('/:userId/reset-2fa', {
+      schema: {
+        tags: ['Users'],
+        summary: 'Reset user 2FA',
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: 'object',
+          required: ['userId'],
+          properties: {
+            userId: { type: 'string' },
+          },
+        },
+        response: {
+          200: {
+            description: '2FA reset',
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  message: { type: 'string' },
+                },
+              },
+              meta: { type: 'object' },
+            },
+          },
+        },
+      },
+    }, userController.resetUserTwoFactor.bind(userController));
 
     // Verify email
     fastify.post<{ Params: { userId: string } }>('/:userId/verify-email', {

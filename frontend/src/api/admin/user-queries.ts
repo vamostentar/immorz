@@ -152,6 +152,7 @@ export function useUserPermissions(userId: string) {
   });
 }
 
+
 export function useUpdateUserPermissions() {
   const queryClient = useQueryClient();
   return useMutation<{ message: string; permissions: string[] }, Error, { userId: string; permissions: string[] }>({
@@ -161,6 +162,19 @@ export function useUpdateUserPermissions() {
     },
     onSuccess: (_, { userId }) => {
       queryClient.invalidateQueries({ queryKey: ['user-permissions', userId] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+}
+
+export function useResetUserTwoFactor() {
+  const queryClient = useQueryClient();
+  return useMutation<{ message: string }, Error, string>({
+    mutationFn: async (userId: string) => {
+      const { data } = await api.post(`/api/v1/users/${userId}/reset-2fa`);
+      return data;
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
   });

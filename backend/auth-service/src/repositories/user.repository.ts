@@ -40,7 +40,7 @@ export class UserRepository {
   /**
    * Create new user
    */
-  async create(data: CreateUserRequest & { password: string }): Promise<User & { role: Role }> {
+  async create(data: CreateUserRequest & { password: string; isEmailVerified?: boolean }): Promise<User & { role: Role }> {
     return this.prisma.user.create({
       data: {
         email: data.email.toLowerCase(),
@@ -51,6 +51,7 @@ export class UserRepository {
         phone: data.phone,
         roleId: data.roleId,
         isActive: data.isActive,
+        isEmailVerified: data.isEmailVerified || false,
       },
       include: { role: true },
     });
@@ -259,8 +260,11 @@ export class UserRepository {
   /**
    * Disable two-factor authentication
    */
-  async disableTwoFactor(id: string): Promise<void> {
-    await this.prisma.user.update({
+  /**
+   * Disable two-factor authentication (Reset)
+   */
+  async disableTwoFactor(id: string): Promise<User> {
+    return this.prisma.user.update({
       where: { id },
       data: {
         twoFactorEnabled: false,
@@ -268,6 +272,7 @@ export class UserRepository {
         twoFactorBackupCodes: [],
         updatedAt: new Date(),
       },
+      include: { role: true }
     });
   }
 

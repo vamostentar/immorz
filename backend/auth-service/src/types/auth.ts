@@ -76,6 +76,7 @@ export interface Session {
   userAgent: string | null;
   location: string | null;
   isActive: boolean;
+  rememberMe?: boolean;
   expiresAt: Date;
   lastActiveAt: Date;
   createdAt: Date;
@@ -117,6 +118,8 @@ export interface JWTPayload {
   role: string;
   permissions: string[];
   sessionId: string;
+  rememberMe?: boolean;
+  type?: string;     // Generic type (e.g., 'temp_2fa')
   iat: number;      // Issued at
   exp?: number;     // Expires at (optional when using expiresIn)
   iss: string;      // Issuer

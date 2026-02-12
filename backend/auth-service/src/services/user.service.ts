@@ -348,6 +348,29 @@ export class UserService {
   }
 
   /**
+   * Reset user 2FA
+   */
+  async resetTwoFactor(
+    id: string,
+    resetBy: string,
+    context: RequestContext
+  ) {
+    const user = await this.userRepository.findById(id);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    if (!user.twoFactorEnabled) {
+      throw new ValidationError('2FA is not enabled for this user');
+    }
+
+    await this.userRepository.disableTwoFactor(id);
+
+    // Log 2FA reset
+    logHelpers.userUpdated(id, resetBy, { twoFactorEnabled: false, action: 'RESET_2FA' }, context);
+  }
+
+  /**
    * Verify user email
    */
   async verifyEmail(id: string, verifiedBy: string, context: RequestContext) {

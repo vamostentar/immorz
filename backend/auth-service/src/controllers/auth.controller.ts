@@ -1,16 +1,16 @@
 import { createSuccessResponse } from '@/middlewares/error-handler';
 import { AuthService } from '@/services/auth.service';
 import type {
-    ChangePasswordRequest,
-    LoginRequest,
-    RefreshTokenRequest,
-    RegisterRequest
+  ChangePasswordRequest,
+  LoginRequest,
+  RefreshTokenRequest,
+  RegisterRequest
 } from '@/types/auth';
 import {
-    changePasswordSchema,
-    loginSchema,
-    refreshTokenSchema,
-    RegisterSchema
+  changePasswordSchema,
+  loginSchema,
+  refreshTokenSchema,
+  RegisterSchema
 } from '@/types/auth';
 import { getRequestContext } from '@/utils/request-context';
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -113,8 +113,9 @@ export class AuthController {
   async logout(request: FastifyRequest, reply: FastifyReply) {
     const context = getRequestContext(request)!;
     const sessionToken = request.headers['x-session-token'] as string || '';
+    const sessionId = (request.user as any)?.sessionId;
     
-    await this.authService.logout(sessionToken, context);
+    await this.authService.logout(sessionToken, context, sessionId);
     
     return reply.code(200).send(
       createSuccessResponse({ message: 'Logged out successfully' }, context.requestId)

@@ -3,7 +3,6 @@ import {
   CreatePropertyInterestData,
   CreateSavedPropertyData,
   CreateSearchHistoryData,
-  CreateUserPreferencesData,
   CreateUserProfileData,
   DatabaseConnection,
   DatabaseTransaction,
@@ -16,10 +15,9 @@ import {
   UpdateNotificationData,
   UpdatePropertyInterestData,
   UpdateSavedPropertyData,
-  UpdateUserPreferencesData,
   UpdateUserProfileData,
   UserPreferencesRepositoryInterface,
-  UserProfileRepositoryInterface,
+  UserProfileRepositoryInterface
 } from '@/interfaces/database.interface';
 import { PrismaClient } from '@prisma/client';
 
@@ -229,16 +227,66 @@ class PrismaUserPreferencesRepository implements UserPreferencesRepositoryInterf
     });
   }
 
-  async create(data: CreateUserPreferencesData) {
+  private mapUserPreferences(data: any): any {
+    const prismaData: any = {};
+
+    // Map propertyTypes
+    if (data.propertyTypes) prismaData.propertyTypes = data.propertyTypes;
+
+    // Map priceRange -> minPrice, maxPrice
+    if (data.priceRange) {
+      if (data.priceRange.min !== undefined) prismaData.minPrice = data.priceRange.min;
+      if (data.priceRange.max !== undefined) prismaData.maxPrice = data.priceRange.max;
+    }
+
+    // Map location -> preferredLocation, searchRadius
+    if (data.location) {
+      if (data.location.city !== undefined) prismaData.preferredLocation = data.location.city;
+      if (data.location.radius !== undefined) prismaData.searchRadius = data.location.radius;
+    }
+
+    // Map bedrooms -> minBedrooms, maxBedrooms
+    if (data.bedrooms) {
+      if (data.bedrooms.min !== undefined) prismaData.minBedrooms = data.bedrooms.min;
+      if (data.bedrooms.max !== undefined) prismaData.maxBedrooms = data.bedrooms.max;
+    }
+
+    // Map bathrooms -> minBathrooms, maxBathrooms
+    if (data.bathrooms) {
+      if (data.bathrooms.min !== undefined) prismaData.minBathrooms = data.bathrooms.min;
+      if (data.bathrooms.max !== undefined) prismaData.maxBathrooms = data.bathrooms.max;
+    }
+
+    // Map notifications
+    if (data.notifications) {
+      if (data.notifications.email !== undefined) prismaData.emailNotifications = data.notifications.email;
+      if (data.notifications.sms !== undefined) prismaData.smsNotifications = data.notifications.sms;
+      if (data.notifications.push !== undefined) prismaData.pushNotifications = data.notifications.push;
+    }
+
+    // Handle other flat fields
+    const flatFields = [
+      'userId', 'minArea', 'maxArea', 'sortBy', 'viewMode', 
+      'priceDropAlerts', 'newPropertyAlerts', 'marketUpdateAlerts'
+    ];
+    
+    for (const field of flatFields) {
+      if (data[field] !== undefined) prismaData[field] = data[field];
+    }
+
+    return prismaData;
+  }
+
+  async create(data: any) {
     return this.prisma.userPreferences.create({
-      data,
+      data: this.mapUserPreferences(data),
     });
   }
 
-  async update(userId: string, data: UpdateUserPreferencesData) {
+  async update(userId: string, data: any) {
     return this.prisma.userPreferences.update({
       where: { userId },
-      data,
+      data: this.mapUserPreferences(data),
     });
   }
 

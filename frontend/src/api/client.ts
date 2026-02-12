@@ -409,6 +409,21 @@ export async function complete2FA(params: { tempToken: string; code: string }) {
   return data;
 }
 
+export async function enable2FARequest() {
+  const { data } = await api.post('/api/v1/auth/2fa/enable');
+  return data;
+}
+
+export async function confirm2FARequest(params: { secret: string; token: string }) {
+  const { data } = await api.post('/api/v1/auth/2fa/confirm', params);
+  return data;
+}
+
+export async function disable2FARequest(params: { password: string; token: string }) {
+  const { data } = await api.post('/api/v1/auth/2fa/disable', params);
+  return data;
+}
+
 export async function registerRequest(params: {
   email: string;
   password: string;

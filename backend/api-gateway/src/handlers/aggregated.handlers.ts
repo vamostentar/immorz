@@ -32,6 +32,7 @@ interface AggregatedUser {
     };
     isActive: boolean;
     isEmailVerified: boolean;
+    twoFactorEnabled: boolean;
     createdAt: string;
     updatedAt: string;
 
@@ -191,6 +192,7 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
                 role: authUser.role,
                 isActive: authUser.isActive ?? true,
                 isEmailVerified: authUser.isEmailVerified ?? false,
+                twoFactorEnabled: authUser.twoFactorEnabled ?? false,
                 createdAt: authUser.createdAt,
                 updatedAt: authUser.updatedAt,
                 // Mapear campos de perfil que podem já vir do auth-service (nova migração)
@@ -614,6 +616,7 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
                 role: authUser.role,
                 isActive: authUser.isActive ?? true,
                 isEmailVerified: authUser.isEmailVerified ?? false,
+                twoFactorEnabled: authUser.twoFactorEnabled ?? false,
                 createdAt: authUser.createdAt,
                 updatedAt: authUser.updatedAt,
                 profile: {

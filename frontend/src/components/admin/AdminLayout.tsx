@@ -3,15 +3,17 @@ import { useMessages } from '@/api/queries';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import {
-    BarChart3,
-    Bell,
-    Building,
-    LogOut,
-    Mail,
-    Moon,
-    Settings,
-    Sun,
-    Users
+  BarChart3,
+  Bell,
+  Building,
+  LogOut,
+  Mail,
+  Moon,
+  Settings,
+  Sun,
+  Target,
+  User as UserIcon,
+  Users
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -96,6 +98,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         return 'Aprovações';
       case '/admin/messages':
         return 'Central de Mensagens';
+      case '/admin/leadhunter':
+        return 'Lead Hunter IA';
       default:
         return 'Administração';
     }
@@ -118,6 +122,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         <nav className="p-4 space-y-2">
           <MenuItem icon={BarChart3} label="Dashboard" path="/admin/dashboard" />
+          <MenuItem icon={Target} label="Lead Hunter" path="/admin/leadhunter" />
           <MenuItem icon={Building} label="Propriedades" path="/admin/properties" />
           <MenuItem icon={Mail} label="Mensagens" path="/admin/messages" count={unreadCount} />
           <MenuItem icon={Users} label="Utilizadores" path="/admin/users" />
@@ -125,6 +130,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <MenuItem icon={BarChart3} label="Análises" path="/admin/analytics" />
           <MenuItem icon={Settings} label="Configurações" path="/admin/settings" />
           <MenuItem icon={Bell} label="Aprovações" path="/admin/approvals" count={pendingApprovals} />
+          <MenuItem icon={UserIcon} label="Perfil" path="/admin/profile" />
         </nav>
       </div>
 

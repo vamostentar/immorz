@@ -31,6 +31,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
       email: payload.email,
       role: payload.role,
       permissions: payload.permissions || [],
+      sessionId: payload.sessionId,
     };
 
     // Update request context with user info

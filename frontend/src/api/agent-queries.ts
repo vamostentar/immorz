@@ -18,6 +18,7 @@ export interface AgentProfile {
     instagram: string | null;
     isProfilePublic: boolean;
     isProfileApproved: boolean;
+    twoFactorEnabled?: boolean;
 }
 
 export interface Property {
@@ -51,6 +52,7 @@ export function flattenProfile(data: any): AgentProfile {
         ...profile,
         isProfilePublic: isProfilePublic ?? profile.isProfilePublic ?? rest.isProfilePublic ?? false,
         isProfileApproved: profile.isProfileApproved ?? rest.isProfileApproved ?? false,
+        twoFactorEnabled: rest.twoFactorEnabled ?? profile.twoFactorEnabled ?? false,
         // Ensure arrays are initialized
         specialties: profile.specialties || rest.specialties || []
     } as AgentProfile;

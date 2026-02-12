@@ -15,7 +15,8 @@ const UsersTable: React.FC<UsersTableProps> = ({
     onDelete,
     onViewDetails,
     onSelectUser,
-    onSelectAll
+    onSelectAll,
+    onResetTwoFactor
 }) => {
     const isAllSelected = users.length > 0 && selectedUsers.length === users.length;
     const isSomeSelected = selectedUsers.length > 0 && selectedUsers.length < users.length;
@@ -116,6 +117,9 @@ const UsersTable: React.FC<UsersTableProps> = ({
                                 Estado
                             </th>
                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-dark-muted uppercase tracking-wider">
+                                2FA
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-dark-muted uppercase tracking-wider">
                                 Criado em
                             </th>
                             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-dark-muted uppercase tracking-wider">
@@ -133,6 +137,7 @@ const UsersTable: React.FC<UsersTableProps> = ({
                                 onEdit={onEdit}
                                 onDelete={onDelete}
                                 onViewDetails={onViewDetails}
+                                onResetTwoFactor={onResetTwoFactor}
                             />
                         ))}
                     </tbody>

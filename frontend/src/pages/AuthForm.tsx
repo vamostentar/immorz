@@ -120,10 +120,10 @@ export default function AuthForm() {
         <Card variant="elevated" className="w-full max-w-md">
           <div className="text-center mb-6">
             <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-              <Lock className="w-6 h-6 text-blue-600" />
+              <Mail className="w-6 h-6 text-blue-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Verificação em Duas Etapas</h1>
-            <p className="text-gray-600 mt-2">Digite o código de 6 dígitos do seu autenticador</p>
+            <h1 className="text-2xl font-bold text-gray-900">Verifique seu Email</h1>
+            <p className="text-gray-600 mt-2">Enviamos um código de verificação para o seu email. Por favor, insira-o abaixo para continuar.</p>
           </div>
 
           {error && (
@@ -134,7 +134,7 @@ export default function AuthForm() {
 
           <form onSubmit={handle2FA} className="space-y-4">
             <Input
-              label="Código de Verificação"
+              label="Código de Segurança"
               type="text"
               maxLength={6}
               placeholder="000000"

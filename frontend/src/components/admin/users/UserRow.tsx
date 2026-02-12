@@ -14,7 +14,8 @@ const UserRow: React.FC<UserRowProps> = ({
     onDelete,
     onViewDetails,
     isSelected,
-    onSelect
+    onSelect,
+    onResetTwoFactor
 }) => {
     // DEBUG: Inspect user object failure
     useEffect(() => {
@@ -163,6 +164,21 @@ const UserRow: React.FC<UserRowProps> = ({
                 </span>
             </td>
 
+            {/* 2FA Status */}
+            <td className="px-4 py-4">
+                {user.twoFactorEnabled ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded">
+                        <Shield size={12} />
+                        Ativo
+                    </span>
+                ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                        <Shield size={12} />
+                        Inativo
+                    </span>
+                )}
+            </td>
+
             {/* Created Date */}
             <td className="px-4 py-4 text-sm text-gray-500 dark:text-dark-muted">
                 {formatDate(user?.createdAt)}
@@ -259,6 +275,17 @@ const UserRow: React.FC<UserRowProps> = ({
                                     >
                                         <Shield size={14} />
                                         Gerir Permissões
+                                    </button>
+                                    <button
+                                         className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-dark-text 
+                                                  hover:bg-gray-50 dark:hover:bg-dark-border flex items-center gap-2"
+                                         onClick={() => {
+                                             if (onResetTwoFactor) onResetTwoFactor(user.id);
+                                             setShowActions(false);
+                                         }}
+                                    >
+                                        <Shield size={14} />
+                                        Resetar 2FA
                                     </button>
                                 </div>
                             </div>,

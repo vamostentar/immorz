@@ -20,6 +20,12 @@ export interface PasswordResetEmailData {
     resetToken: string;
 }
 
+export interface TwoFactorEmailData {
+    email: string;
+    firstName: string;
+    token: string;
+}
+
 export class EmailService {
     private transporter?: Transporter;
     private isConfigured = false;
@@ -146,6 +152,44 @@ export class EmailService {
             return true;
         } catch (error: any) {
             logger.error({ email: data.email, error: error.message }, 'Failed to send welcome email');
+            return false;
+        }
+    }
+
+    /**
+     * Send 2FA token email
+     */
+    async sendTwoFactorToken(data: TwoFactorEmailData): Promise<boolean> {
+        if (!this.isConfigured || !this.transporter) {
+            logger.warn({ email: data.email }, 'Email service not configured, skipping 2FA email');
+            return false;
+        }
+
+        const emailConfig = configService.emailConfig;
+        if (!emailConfig) return false;
+
+        const html = this.generateTwoFactorEmailTemplate({
+            firstName: data.firstName,
+            token: data.token,
+        });
+
+        try {
+            const info = await this.transporter.sendMail({
+                from: emailConfig.from,
+                to: data.email,
+                subject: 'Seu código de verificação - Immorz',
+                html,
+                headers: {
+                    'X-Priority': '1', 
+                    'X-Message-Source': 'ribeirazul-auth-service',
+                },
+            });
+
+            logger.info({ email: data.email, messageId: info.messageId }, '2FA email sent successfully');
+
+            return true;
+        } catch (error: any) {
+            logger.error({ email: data.email, error: error.message }, 'Failed to send 2FA email');
             return false;
         }
     }
@@ -300,6 +344,41 @@ export class EmailService {
             <li>Gerir o seu perfil</li>
           </ul>
         </div>
+      </div>
+      <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+        <p>© ${new Date().getFullYear()} Immorz. Todos os direitos reservados.</p>
+      </div>
+    </body>
+    </html>
+    `;
+    }
+
+    private generateTwoFactorEmailTemplate(data: { firstName: string; token: string }): string {
+        return `
+    <!DOCTYPE html>
+    <html lang="pt">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Código de Verificação</title>
+    </head>
+    <body style="font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 10px 10px 0 0; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">🔐 Código de Segurança</h1>
+      </div>
+      <div style="background: #fff; padding: 40px; border: 1px solid #e0e0e0; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #333; margin-top: 0;">Olá, ${this.escapeHtml(data.firstName)}!</h2>
+        <p>Recebemos um pedido de login na sua conta Immorz.</p>
+        <p>Para continuar, insira o código de verificação abaixo:</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <div style="background: #f0f7ff; border: 1px dashed #667eea; padding: 15px; display: inline-block; border-radius: 8px;">
+            <span style="font-family: monospace; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #333;">${data.token}</span>
+          </div>
+        </div>
+
+        <p style="color: #666; font-size: 14px;">Este código é válido por 10 minutos.</p>
+        <p style="color: #666; font-size: 14px;">Se não tentou fazer login, por favor altere a sua password imediatamente.</p>
       </div>
       <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
         <p>© ${new Date().getFullYear()} Immorz. Todos os direitos reservados.</p>

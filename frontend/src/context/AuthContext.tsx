@@ -1,15 +1,10 @@
-import { flattenProfile } from '@/api/agent-queries';
-import { api, clearTokens, complete2FA, getAccessToken, loginRequest, registerRequest, setTokens } from '@/api/client';
+import { AgentProfile, flattenProfile } from '@/api/agent-queries';
+import { api, clearTokens, complete2FA as clientComplete2FA, confirm2FARequest, disable2FARequest, enable2FARequest, getAccessToken, loginRequest, registerRequest, setTokens } from '@/api/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface AuthUser {
-  id: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string | null;
+interface AuthUser extends Omit<AgentProfile, 'role'> {
   role?: string | { id: string; name: string; displayName: string };
   isActive?: boolean;
   isVerified?: boolean;
@@ -23,6 +18,7 @@ interface AuthState {
   initialized: boolean;
   requiresTwoFactor?: boolean;
   tempToken?: string;
+  rememberMe?: boolean;
 }
 
 // Helper to determine dashboard path
@@ -46,6 +42,9 @@ interface AuthContextValue extends AuthState {
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   complete2FA: (code: string) => Promise<void>;
+  enable2FA: () => Promise<{ secret: string; qrCode: string; backupCodes: string[] }>;
+  confirm2FA: (secret: string, token: string) => Promise<void>;
+  disable2FA: (password: string, token: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -94,11 +93,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const { data } = await api.get('/api/v1/users/me');
         const userDataRaw = data?.data ?? data ?? null;
+        
+        // Log para debug de dados do utilizador
+        if (userDataRaw) {
+          console.log('🔐 AuthContext: Raw user data received:', { 
+            id: userDataRaw.id, 
+            hasProfile: !!userDataRaw.profile,
+            twoFactorEnabled: userDataRaw.twoFactorEnabled 
+          });
+        }
+
         const userData = userDataRaw ? flattenProfile(userDataRaw) : null;
 
-        console.log('🔐 AuthContext: User verified successfully:', userData?.email);
+        console.log('🔐 AuthContext: User verified successfully:', { 
+          email: userData?.email, 
+          twoFactor: userData?.twoFactorEnabled 
+        });
+        
         setState({
-          user: userData as any,
+          user: userData as unknown as AuthUser, // Cast seguro após verificação
           loading: false,
           initialized: true
         });
@@ -131,18 +144,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string, rememberMe?: boolean) => {
+    console.log(`🔐 AuthContext: Login requested for ${email}, rememberMe=${rememberMe}`);
     setState(s => ({ ...s, loading: true, requiresTwoFactor: false, tempToken: undefined }));
     try {
       const response = await loginRequest({ email, password, rememberMe });
+      console.log('🔐 AuthContext: Login response received:', response);
 
-      // Se a autenticação em duas etapas for necessária
-      if (response?.requiresTwoFactor && response?.tempToken) {
+      // Extract data handling potential nesting
+      const responseData: any = response.data || response;
+
+      // Check for 2FA requirement
+      if (responseData.requiresTwoFactor && responseData.tempToken) {
+        console.log('🔐 AuthContext: 2FA required');
         setState({
           user: null,
           loading: false,
           initialized: true,
           requiresTwoFactor: true,
-          tempToken: response.tempToken
+          tempToken: responseData.tempToken,
+          rememberMe
         });
         return;
       }
@@ -168,52 +188,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       };
 
-      // Verifica se temos os tokens de acesso
-      // Primeiro verifica se a resposta tem o formato padrão da API: { success: true, data: { user, tokens } }
-      if (response.data && response.data.tokens) {
-        const { tokens } = response.data;
-        if (tokens.accessToken) {
-          await handleSuccess(tokens.accessToken, tokens.refreshToken);
-          return;
-        }
+      // Check for tokens in various possible locations
+      const tokens = responseData.tokens || (responseData.data && responseData.data.tokens);
+      
+      if (tokens && tokens.accessToken) {
+        await handleSuccess(tokens.accessToken, tokens.refreshToken);
+        return;
       }
-      // Formato alternativo: { tokens: { accessToken, refreshToken }, user }
-      else if ('tokens' in response && response.tokens) {
-        const { tokens } = response as { tokens: { accessToken: string; refreshToken?: string }; user?: any };
-        if (tokens.accessToken) {
-          await handleSuccess(tokens.accessToken, tokens.refreshToken);
-          return;
-        }
-      }
-      // Formato direto: { accessToken, refreshToken, user? }
-      else if ('accessToken' in response) {
-        const { accessToken, refreshToken } = response as {
-          accessToken: string;
-          refreshToken?: string;
-          user?: any
-        };
-        if (accessToken) {
-          await handleSuccess(accessToken, refreshToken);
-          return;
-        }
+      
+      // Fallback for direct accessToken property
+      if (responseData.accessToken) {
+        await handleSuccess(responseData.accessToken, responseData.refreshToken);
+        return;
       }
 
-      // Se chegou até aqui, algo deu errado
-      const error = new Error('Formato de resposta inesperado da API');
-      console.error('Login error - unexpected response format:', response);
-      throw error;
+      console.error('🔐 AuthContext: Invalid response format:', response);
+      throw new Error('Formato de resposta inesperado da API');
 
     } catch (e: any) {
       console.error('Login error:', e);
       setState(s => ({ ...s, loading: false, initialized: true }));
-
-      // Se o erro já tiver uma mensagem, apenas repassa
-      if (e.message) {
-        throw e;
-      }
-
-      // Se não, cria um erro com uma mensagem genérica
-      throw new Error('Falha na autenticação. Verifique suas credenciais.');
+      throw e.message ? e : new Error('Falha na autenticação. Verifique suas credenciais.');
     }
   }, [navigate]);
 
@@ -221,12 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setState(s => ({ ...s, loading: true }));
     try {
       await registerRequest(userData);
-
-      // Registration successful - show success message
       setState({ user: null, loading: false, initialized: true });
-
-      // You might want to show a success message or redirect to login
-      // For now, we'll just reset the form
     } catch (e) {
       setState({ user: null, loading: false, initialized: true });
       throw e;
@@ -234,36 +224,89 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const doComplete2FA = useCallback(async (code: string) => {
+    console.log(`🔐 AuthContext: Completing 2FA with code, rememberMe=${state.rememberMe}`);
     if (!state.tempToken) throw new Error('Missing temp token');
     setState(s => ({ ...s, loading: true }));
     try {
-      const res = await complete2FA({ tempToken: state.tempToken, code });
+      const res = await clientComplete2FA({ tempToken: state.tempToken, code });
       const payload = res?.data ?? res;
       const tokens = payload?.tokens ?? payload;
-      if (tokens?.accessToken) setTokens(tokens.accessToken, tokens.refreshToken ?? null);
+      
+      if (tokens?.accessToken) {
+        setTokens(tokens.accessToken, tokens.refreshToken ?? null, state.rememberMe);
+      }
+      
       const user = payload?.user ?? null;
       setState({ user, loading: false, initialized: true });
-      // Redirect to admin dashboard after successful 2FA
-      navigate('/admin/dashboard');
+
+      if (user) {
+        const dashboardPath = getDashboardPath(user);
+        navigate(dashboardPath);
+      } else {
+        navigate('/');
+      }
     } catch (e) {
+      console.error('2FA verification error:', e);
       setState(s => ({ ...s, loading: false, initialized: true }));
       throw e;
     }
-  }, [state.tempToken, navigate]);
+  }, [state.tempToken, state.rememberMe, navigate]);
+
+  const enable2FA = useCallback(async () => {
+    setState(s => ({ ...s, loading: true }));
+    try {
+      const res = await enable2FARequest();
+      setState(s => ({ 
+        ...s, 
+        user: s.user ? { ...s.user, twoFactorEnabled: true } : null,
+        loading: false 
+      }));
+      return res.data;
+    } catch (e) {
+      setState(s => ({ ...s, loading: false }));
+      throw e;
+    }
+  }, []);
+
+  const confirm2FA = useCallback(async (secret: string, token: string) => {
+    setState(s => ({ ...s, loading: true }));
+    try {
+      await confirm2FARequest({ secret, token });
+      setState(s => ({ 
+        ...s, 
+        user: s.user ? { ...s.user, twoFactorEnabled: true } : null,
+        loading: false 
+      }));
+    } catch (e) {
+      setState(s => ({ ...s, loading: false }));
+      throw e;
+    }
+  }, []);
+
+  const disable2FA = useCallback(async (password: string, token: string) => {
+    setState(s => ({ ...s, loading: true }));
+    try {
+      await disable2FARequest({ password, token });
+      setState(s => ({ 
+        ...s, 
+        user: s.user ? { ...s.user, twoFactorEnabled: false } : null,
+        loading: false 
+      }));
+    } catch (e) {
+      setState(s => ({ ...s, loading: false }));
+      throw e;
+    }
+  }, []);
 
   const logout = useCallback(async () => {
     try {
       await api.post('/api/v1/auth/logout');
     } catch (err) {
-      // ignore network/logout errors during client-side logout, but log for debugging
       console.warn('Logout request failed:', err);
     }
     clearTokens();
-
-    // Clear all react-query cache to prevent data leaking between users
     queryClient.removeQueries();
     queryClient.clear();
-
     setState({ user: null, loading: false, initialized: true });
     navigate('/login');
   }, [navigate, queryClient]);
@@ -273,8 +316,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     register,
     complete2FA: doComplete2FA,
+    enable2FA,
+    confirm2FA,
+    disable2FA,
     logout,
-  }), [state, login, register, doComplete2FA, logout]);
+  }), [state, login, register, doComplete2FA, enable2FA, confirm2FA, disable2FA, logout]);
 
   return (
     <AuthContext.Provider value={value}>

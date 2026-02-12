@@ -5,6 +5,7 @@ import {
     Building,
     LogOut,
     Mail,
+    Target,
     User
 } from 'lucide-react';
 import React from 'react';
@@ -78,6 +79,8 @@ export default function AgentLayout({ children }: AgentLayoutProps) {
                 return 'Mensagens';
             case '/agent/profile':
                 return 'Perfil';
+            case '/agent/leadhunter':
+                return 'Lead Hunter IA';
             default:
                 return 'Painel do Agente';
         }
@@ -102,6 +105,7 @@ export default function AgentLayout({ children }: AgentLayoutProps) {
                 {/* Navigation Menu */}
                 <nav className="p-4 space-y-2 flex-1">
                     <MenuItem icon={BarChart3} label="Dashboard" path="/agent/dashboard" />
+                    <MenuItem icon={Target} label="Lead Hunter" path="/agent/leadhunter" />
                     <MenuItem icon={Building} label="Os Meus Imóveis" path="/agent/properties" />
                     <MenuItem icon={Mail} label="Mensagens" path="/agent/messages" count={unreadCount} />
                     <MenuItem icon={User} label="Perfil" path="/agent/profile" />

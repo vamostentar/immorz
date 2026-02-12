@@ -1,6 +1,6 @@
+import { RefreshToken, Session } from '@/types/auth';
 import type { PaginatedResponse, Pagination } from '@/types/common';
 import { PrismaClient } from '@prisma/client';
-import { RefreshToken, Session } from '@/types/auth';
 
 export class SessionRepository {
   constructor(private prisma: PrismaClient) {}
@@ -15,6 +15,7 @@ export class SessionRepository {
     userAgent?: string;
     location?: string;
     expiresAt: Date;
+    rememberMe?: boolean;
   }): Promise<Session> {
     return this.prisma.session.create({
       data: {
@@ -24,9 +25,10 @@ export class SessionRepository {
         userAgent: data.userAgent,
         location: data.location,
         expiresAt: data.expiresAt,
+        rememberMe: data.rememberMe || false,
         isActive: true,
         lastActiveAt: new Date(),
-      },
+      } as any,
     });
   }
 
@@ -36,7 +38,7 @@ export class SessionRepository {
   async findByToken(sessionToken: string): Promise<Session | null> {
     return this.prisma.session.findUnique({
       where: { sessionToken },
-    });
+    }) as Promise<Session | null>;
   }
 
   /**
@@ -45,7 +47,7 @@ export class SessionRepository {
   async findById(id: string): Promise<Session | null> {
     return this.prisma.session.findUnique({
       where: { id },
-    });
+    }) as Promise<Session | null>;
   }
 
   /**
@@ -59,7 +61,7 @@ export class SessionRepository {
         expiresAt: { gt: new Date() },
       },
       orderBy: { lastActiveAt: 'desc' },
-    });
+    }) as Promise<Session[]>;
   }
 
   /**
@@ -81,7 +83,7 @@ export class SessionRepository {
         skip,
         take: limit,
         orderBy: { [sortBy]: sortOrder },
-      }),
+      }) as Promise<Session[]>,
     ]);
 
     return {
@@ -286,7 +288,7 @@ export class SessionRepository {
       where: { ipAddress },
       orderBy: { createdAt: 'desc' },
       take: limit,
-    });
+    }) as Promise<Session[]>;
   }
 
   /**

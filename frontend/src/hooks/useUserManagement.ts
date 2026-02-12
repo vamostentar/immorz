@@ -2,6 +2,7 @@ import {
     useBulkImportUsers,
     useCreateUser,
     useDeleteUser,
+    useResetUserTwoFactor,
     useSendCommunication,
     useUpdateUser,
     useUsers
@@ -52,9 +53,10 @@ export function useUserManagement() {
     const { mutateAsync: deleteUser } = useDeleteUser();
     const { mutateAsync: sendCommunication } = useSendCommunication();
     const { mutateAsync: bulkImportUsers } = useBulkImportUsers();
+    const { mutateAsync: resetUserTwoFactor } = useResetUserTwoFactor();
 
     // Derived data
-    const users = usersData?.data || [];
+    const users = useMemo(() => usersData?.data || [], [usersData]);
     const totalUsers = usersData?.pagination?.total || users.length;
     const totalPages = usersData?.pagination?.totalPages || 1;
 
@@ -217,6 +219,47 @@ export function useUserManagement() {
         }
     }, [deleteUser]);
 
+    const resetTwoFactor = useCallback(async (id: string) => {
+        if (!confirm('Tem a certeza que deseja resetar o 2FA deste utilizador?')) return;
+        try {
+            await resetUserTwoFactor(id);
+            setToast('2FA resetado com sucesso');
+        } catch (error) {
+            setToast('Erro ao resetar 2FA');
+        }
+    }, [resetUserTwoFactor]);
+
+    // Export functionality
+    const exportUsers = useCallback((userIds?: string[]) => {
+        const usersToExport = userIds
+            ? users.filter((u: User) => userIds.includes(u.id))
+            : users;
+
+        const headers = ['Nome', 'Email', 'Telefone', 'Tipo', 'Status', 'Verificado', 'Data Criação'];
+        const rows = usersToExport.map((user: User) => [
+            `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+            user.email,
+            user.phone || '',
+            user.role || 'Cliente',
+            user.isActive ? 'Ativo' : 'Inativo',
+            user.isVerified ? 'Sim' : 'Não',
+            new Date(user.createdAt).toLocaleDateString('pt-PT')
+        ]);
+
+        const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `utilizadores_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setToast('Exportação concluída');
+    }, [users]);
+
     // Bulk action handlers
     const handleBulkAction = useCallback(async (action: BulkAction['type']) => {
         if (selectedUsers.length === 0) {
@@ -251,38 +294,7 @@ export function useUserManagement() {
         } catch (error) {
             setToast('Erro ao executar ação em lote');
         }
-    }, [selectedUsers]);
-
-    // Export functionality
-    const exportUsers = useCallback((userIds?: string[]) => {
-        const usersToExport = userIds
-            ? users.filter((u: User) => userIds.includes(u.id))
-            : users;
-
-        const headers = ['Nome', 'Email', 'Telefone', 'Tipo', 'Status', 'Verificado', 'Data Criação'];
-        const rows = usersToExport.map((user: User) => [
-            `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-            user.email,
-            user.phone || '',
-            user.role || 'Cliente',
-            user.isActive ? 'Ativo' : 'Inativo',
-            user.isVerified ? 'Sim' : 'Não',
-            new Date(user.createdAt).toLocaleDateString('pt-PT')
-        ]);
-
-        const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `utilizadores_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        setToast('Exportação concluída');
-    }, [users]);
+    }, [selectedUsers, exportUsers]);
 
     // Modal handlers
     const openCreateModal = useCallback(() => {
@@ -343,6 +355,7 @@ export function useUserManagement() {
         handleViewDetails,
         handleSaveUser,
         handleDelete,
+        resetTwoFactor,
         handleBulkAction,
         exportUsers,
         openCreateModal,

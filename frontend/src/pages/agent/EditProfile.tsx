@@ -1,4 +1,4 @@
-import { Camera, Loader } from 'lucide-react';
+import { Camera, Eye, EyeOff, Loader, Shield } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { updateMyProfile } from '../../api/agent-queries';
@@ -18,7 +18,7 @@ const SPECIALTIES_OPTIONS = [
 ];
 
 export default function EditAgentProfile() {
-    const { user } = useAuth();
+    const { user, enable2FA, disable2FA } = useAuth();
     const navigate = useNavigate();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,11 +36,44 @@ export default function EditAgentProfile() {
         isProfilePublic: (user as any)?.isProfilePublic || false
     });
 
+    // 2FA State
+    const [confirmCode, setConfirmCode] = useState(''); // Used for deactivation
+    const [disablePassword, setDisablePassword] = useState('');
+    const [showDisableForm, setShowDisableForm] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(formData.avatar);
+
+    const handleStart2FASetup = async () => {
+        const message = "Garanta que tenha acesso ao email que utilizou no registo da plataforma, porque depois da ativação do 2FA, será exigido na próxima sessão que confirme o código que será enviado para o seu email.";
+        
+        if (window.confirm(message)) {
+            try {
+                await enable2FA();
+                setSaveSuccess(true);
+                setTimeout(() => setSaveSuccess(false), 3000);
+            } catch (error) {
+                setError('Erro ao ativar 2FA');
+            }
+        }
+    };
+
+    const handleDisable2FA = async () => {
+        try {
+            await disable2FA(disablePassword, confirmCode);
+            setSaveSuccess(true);
+            setTimeout(() => setSaveSuccess(false), 3000);
+            setShowDisableForm(false);
+            setDisablePassword('');
+            setConfirmCode('');
+        } catch (err: any) {
+            setError(err.message || 'Falha ao desativar 2FA');
+        }
+    };
 
     const handleAvatarClick = () => {
         fileInputRef.current?.click();
@@ -301,12 +334,118 @@ export default function EditAgentProfile() {
                         </p>
                     </div>
 
+                    {/* Security / 2FA Section */}
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <Shield className="w-5 h-5 text-blue-600" />
+                            Segurança da Conta
+                        </h3>
+                        
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <h4 className="font-medium text-gray-900">Autenticação em Duas Etapas (2FA)</h4>
+                                <p className="text-sm text-gray-600 max-w-md">
+                                    Aumente a segurança da sua conta exigindo um código de verificação enviado por email sempre que fizer login.
+                                </p>
+                                <div className="mt-2 flex items-center">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                        user?.twoFactorEnabled 
+                                        ? 'bg-green-100 text-green-800' 
+                                        : 'bg-gray-100 text-gray-800'
+                                    }`}>
+                                        {user?.twoFactorEnabled ? 'Ativado' : 'Desativado'}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            {!user?.twoFactorEnabled ? (
+                                <button
+                                    type="button"
+                                    onClick={handleStart2FASetup}
+                                    className="px-4 py-2 border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors"
+                                >
+                                    Ativar 2FA
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDisableForm(!showDisableForm)}
+                                    className="px-4 py-2 border border-red-200 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                                >
+                                    Desativar 2FA
+                                </button>
+                            )}
+                        </div>
+
+
+                        {/* 2FA Disable Form */}
+                        {showDisableForm && user?.twoFactorEnabled && (
+                            <div className="mt-6 p-6 bg-red-50 rounded-xl border border-red-100 space-y-4">
+                                <h4 className="font-semibold text-red-900">Desativar Autenticação em Duas Etapas</h4>
+                                <p className="text-sm text-red-700">Por segurança, introduza a sua palavra-passe e o código 2FA enviado para o seu email para prosseguir.</p>
+                                
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+                                    <div>
+                                        <label className="block text-sm font-medium text-red-900 mb-1">
+                                            Palavra-passe
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showPassword ? 'text' : 'password'}
+                                                value={disablePassword}
+                                                onChange={(e) => setDisablePassword(e.target.value)}
+                                                className="w-full px-4 py-2 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent pr-10"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 hover:text-red-600"
+                                            >
+                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-red-900 mb-1">
+                                            Código 2FA
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={confirmCode}
+                                            onChange={(e) => setConfirmCode(e.target.value)}
+                                            maxLength={6}
+                                            placeholder="000000"
+                                            className="w-full px-4 py-2 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={handleDisable2FA}
+                                        className="px-4 py-2 border border-red-600 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
+                                    >
+                                        Confirmar Desativação
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDisableForm(false)}
+                                        className="px-4 py-2 text-red-700 hover:bg-red-100 rounded-lg transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Social Links */}
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Redes Sociais Profissionais</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                                     <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                                     </svg>
@@ -322,7 +461,7 @@ export default function EditAgentProfile() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                                     <svg className="w-5 h-5 text-blue-700" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                                     </svg>
@@ -338,7 +477,7 @@ export default function EditAgentProfile() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                                     <svg className="w-5 h-5 text-pink-600" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.070-4.85.070-3.204 0-3.584-.012-4.849-.070-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                                     </svg>

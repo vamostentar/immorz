@@ -165,6 +165,51 @@ export class NotificationClient {
       return { success: false, error: errorMessage };
     }
   }
+
+  /**
+   * Send 2FA token email via notification service.
+   */
+  async sendTwoFactorToken(
+    email: string,
+    token: string,
+    firstName?: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const url = `${this.baseUrl}/api/v1/notifications/email`;
+
+    try {
+      logger.info({ email, url }, 'Sending 2FA token email');
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: email,
+          template: 'TWO_FACTOR_TOKEN',
+          data: {
+            name: firstName || 'Utilizador',
+            token 
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(
+          { email, status: response.status, error: errorText },
+          'Failed to send 2FA token email'
+        );
+        return { success: false, error: `Notification service returned ${response.status}: ${errorText}` };
+      }
+
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error({ email, error: errorMessage }, 'Exception sending 2FA token email');
+      return { success: false, error: errorMessage };
+    }
+  }
 }
 
 // Singleton instance

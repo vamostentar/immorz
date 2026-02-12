@@ -41,6 +41,9 @@ const ClientDashboard = lazy(() => import('@/pages/client/Dashboard'));
 // Lazy load public agent profile
 const AgentProfile = lazy(() => import('@/pages/agent/AgentProfile'));
 const EditProfile = lazy(() => import('@/pages/agent/EditProfile'));
+const AgentLeadHunter = lazy(() => import('@/pages/agent/LeadHunter'));
+const AdminLeadHunter = lazy(() => import('@/pages/admin/LeadHunter'));
+const AdminProfile = lazy(() => import('@/pages/admin/UserProfile'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -170,6 +173,16 @@ const router = createBrowserRouter([
       </AppWrapper>
     )
   },
+  {
+    path: '/agent/leadhunter',
+    element: (
+      <AppWrapper>
+        <ProtectedRoute allowedRoles={['agent']}>
+          <AgentLeadHunter />
+        </ProtectedRoute>
+      </AppWrapper>
+    )
+  },
 
   // Client routes
   {
@@ -206,6 +219,16 @@ const router = createBrowserRouter([
       <AppWrapper>
         <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
           <Dashboard />
+        </ProtectedRoute>
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/admin/leadhunter',
+    element: (
+      <AppWrapper>
+        <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+          <AdminLeadHunter />
         </ProtectedRoute>
       </AppWrapper>
     )
@@ -277,6 +300,16 @@ const router = createBrowserRouter([
       <AppWrapper>
         <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
           <Settings />
+        </ProtectedRoute>
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/admin/profile',
+    element: (
+      <AppWrapper>
+        <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+          <AdminProfile />
         </ProtectedRoute>
       </AppWrapper>
     )

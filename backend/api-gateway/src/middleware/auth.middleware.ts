@@ -157,6 +157,14 @@ function isPublicRoute(url: string, method: string): boolean {
     return true;
   }
 
+  // Intelligence Endpoints
+  if (url === '/api/v1/intelligence/health' && method === 'GET') {
+    return true;
+  }
+  if (url === '/api/v1/intelligence/analyze' && method === 'POST') {
+    return true;
+  }
+
   return false;
 }
 

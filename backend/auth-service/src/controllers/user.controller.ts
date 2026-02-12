@@ -383,4 +383,23 @@ export class UserController {
       createSuccessResponse(result, context.requestId)
     );
   }
+
+  /**
+   * Reset user 2FA (admin only)
+   * POST /api/v1/users/:userId/reset-2fa
+   */
+  async resetUserTwoFactor(
+    request: FastifyRequest<{ Params: { userId: string } }>, 
+    reply: FastifyReply
+  ) {
+    const context = getRequestContext(request)!;
+    const { userId } = request.params;
+    const resetBy = request.user?.id!;
+    
+    await this.userService.resetTwoFactor(userId, resetBy, context);
+    
+    return reply.code(200).send(
+      createSuccessResponse({ message: 'Two-factor authentication reset successfully' }, context.requestId)
+    );
+  }
 }

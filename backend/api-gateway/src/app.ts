@@ -24,6 +24,40 @@ export async function createApp() {
     bodyLimit: 50 * 1024 * 1024, // 50MB limit for file uploads
   });
 
+  // Global error handler
+  app.setErrorHandler((error, request, reply) => {
+    // Log full error details for debugging
+    console.error(`❌ [API Gateway Error] ${request.method} ${request.url}:`, {
+      message: error.message,
+      code: (error as any).code,
+      statusCode: error.statusCode,
+      stack: error.stack,
+      // Log nested errors if they exist (common in fastify-reply-from)
+      cause: (error as any).cause || (error as any).originalError
+    });
+    
+    // Check if it's a Host validation error from undici/fast-proxy
+    if (error.message && error.message.includes('Host validation failed')) {
+      console.error('🚨 DETECTED Host validation failure in API Gateway!');
+    }
+
+    const statusCode = error.statusCode || 500;
+    const message = error.message || 'Internal Server Error';
+    
+    reply.status(statusCode).send({
+      success: false,
+      error: {
+        code: (error as any).code || 'GATEWAY_ERROR',
+        message: message,
+        details: config.NODE_ENV !== 'production' ? error.stack : undefined
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        requestId: (request as any).requestContext?.requestId,
+      }
+    });
+  });
+
   // CORS
   console.log('🔧 CORS Configuration:', {
     origins: config.CORS_ORIGINS,

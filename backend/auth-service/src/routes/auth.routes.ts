@@ -39,7 +39,18 @@ export async function authRoutes(fastify: FastifyInstance) {
             data: {
               type: 'object',
               properties: {
-                user: { type: 'object' },
+                user: { 
+                  type: 'object',
+                  additionalProperties: true,
+                  properties: {
+                    id: { type: 'string' },
+                    email: { type: 'string' },
+                    firstName: { type: 'string' },
+                    lastName: { type: 'string' },
+                    roleId: { type: 'string' },
+                    twoFactorEnabled: { type: 'boolean' },
+                  }
+                },
                 tokens: {
                   type: 'object',
                   properties: {
@@ -59,6 +70,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         401: {
           description: 'Invalid credentials',
           type: 'object',
+          additionalProperties: true,
         },
       },
     },
@@ -89,7 +101,18 @@ export async function authRoutes(fastify: FastifyInstance) {
             data: {
               type: 'object',
               properties: {
-                user: { type: 'object' },
+                user: { 
+                  type: 'object',
+                  additionalProperties: true,
+                  properties: {
+                    id: { type: 'string' },
+                    email: { type: 'string' },
+                    firstName: { type: 'string' },
+                    lastName: { type: 'string' },
+                    roleId: { type: 'string' },
+                    twoFactorEnabled: { type: 'boolean' },
+                  }
+                },
                 message: { type: 'string' },
               },
             },
@@ -99,10 +122,12 @@ export async function authRoutes(fastify: FastifyInstance) {
         409: {
           description: 'Email already exists',
           type: 'object',
+          additionalProperties: true,
         },
         400: {
           description: 'Validation error',
           type: 'object',
+          additionalProperties: true,
         },
       },
     },
@@ -124,10 +149,41 @@ export async function authRoutes(fastify: FastifyInstance) {
         200: {
           description: '2FA successful',
           type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: {
+              type: 'object',
+              properties: {
+                user: { 
+                  type: 'object',
+                  additionalProperties: true,
+                  properties: {
+                    id: { type: 'string' },
+                    email: { type: 'string' },
+                    firstName: { type: 'string' },
+                    lastName: { type: 'string' },
+                    roleId: { type: 'string' },
+                    twoFactorEnabled: { type: 'boolean' },
+                  }
+                },
+                tokens: {
+                  type: 'object',
+                  properties: {
+                    accessToken: { type: 'string' },
+                    refreshToken: { type: 'string' },
+                    expiresIn: { type: 'number' },
+                    tokenType: { type: 'string' },
+                  },
+                },
+              },
+            },
+            meta: { type: 'object' },
+          },
         },
         401: {
           description: 'Invalid 2FA code',
           type: 'object',
+          additionalProperties: true,
         },
       },
     },
@@ -170,6 +226,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         401: {
           description: 'Invalid refresh token',
           type: 'object',
+          additionalProperties: true,
         },
       },
     },
@@ -297,6 +354,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           401: {
             description: 'Current password incorrect',
             type: 'object',
+            additionalProperties: true,
           },
         },
       },
@@ -363,6 +421,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           400: {
             description: 'Invalid 2FA code',
             type: 'object',
+            additionalProperties: true,
           },
         },
       },
@@ -399,6 +458,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           401: {
             description: 'Invalid password or 2FA code',
             type: 'object',
+            additionalProperties: true,
           },
         },
       },

@@ -18,6 +18,7 @@ export interface User {
     updatedAt: string;
     lastLoginAt?: string;
     loginCount?: number;
+    twoFactorEnabled?: boolean;
 }
 
 export interface UserFormData {
@@ -64,6 +65,7 @@ export interface UserRowProps {
     onViewDetails: (user: User) => void;
     isSelected: boolean;
     onSelect: (userId: string) => void;
+    onResetTwoFactor?: (userId: string) => void;
 }
 
 export interface UsersTableProps {
@@ -75,6 +77,7 @@ export interface UsersTableProps {
     onViewDetails: (user: User) => void;
     onSelectUser: (userId: string) => void;
     onSelectAll: (e?: any) => void;
+    onResetTwoFactor?: (userId: string) => void;
 }
 
 export interface UsersFiltersProps {

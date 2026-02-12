@@ -110,7 +110,7 @@ export class NotificationController {
     request: FastifyRequest<{
       Body: {
         to: string;
-        template: 'PASSWORD_RESET' | 'PASSWORD_RESET_SUCCESS' | 'APPROVAL' | 'MESSAGE' | 'WELCOME';
+        template: 'PASSWORD_RESET' | 'PASSWORD_RESET_SUCCESS' | 'APPROVAL' | 'MESSAGE' | 'WELCOME' | 'TWO_FACTOR_TOKEN';
         data: Record<string, any>;
       };
     }>,
@@ -138,6 +138,10 @@ export class NotificationController {
       } else if (template === 'PASSWORD_RESET_SUCCESS') {
         const html = await this.generatePasswordResetSuccessHtml(data);
         await queueEmail({ to, subject: 'Palavra-passe Alterada com Sucesso - Ribeirazul', html });
+        success = true;
+      } else if (template === 'TWO_FACTOR_TOKEN') {
+        const html = await this.generateTwoFactorTokenHtml(data);
+        await queueEmail({ to, subject: 'Seu código de verificação - Ribeirazul', html });
         success = true;
       }
 
@@ -214,6 +218,42 @@ export class NotificationController {
             <p>Olá <strong>${data.name || 'Utilizador'}</strong>,</p>
             <p>Este email serve para confirmar que a palavra-passe da sua conta na Ribeirazul foi alterada com sucesso.</p>
             <p style="margin-top: 20px;">Se não realizou esta alteração, por favor contacte o nosso suporte imediatamente.</p>
+          </div>
+          <div style="text-align: center; padding: 20px; font-size: 12px; color: #a0aec0;">
+            <p>&copy; ${year} Ribeirazul Imobiliária. Todos os direitos reservados.</p>
+          </div>
+        </div>
+    `;
+  }
+
+  private async generateTwoFactorTokenHtml(data: any): Promise<string> {
+    const year = new Date().getFullYear();
+    const token = data.token || '------';
+    const name = data.name || 'Utilizador';
+    
+    return `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #2d3748;">
+          <div style="text-align: center; padding: 20px 0;">
+            <h2 style="color: #1a365d; margin: 0;">Ribeirazul Imobiliária</h2>
+          </div>
+          <div style="background-color: #ffffff; padding: 30px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h3 style="color: #2d3748; margin-top: 0; text-align: center;">Código de Segurança</h3>
+            <p>Olá <strong>${name}</strong>,</p>
+            <p>Recebemos um pedido de acesso à sua conta na Ribeirazul.</p>
+            <p>Para concluir a verificação, utilize o código abaixo:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <div style="background-color: #f7fafc; border: 2px dashed #4299e1; padding: 20px; border-radius: 8px; display: inline-block;">
+                <span style="font-family: 'Courier New', monospace; font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #1a365d;">${token}</span>
+              </div>
+            </div>
+            
+            <p style="font-size: 14px; color: #4a5568; text-align: center;">
+              Este código é válido por 10 minutos.
+            </p>
+            <p style="margin-top: 25px; font-size: 13px; color: #718096; border-top: 1px solid #edf2f7; padding-top: 20px;">
+              Se não solicitou este código, por favor <a href="https://immorz.pt/reset-password" style="color: #4299e1;">altere a sua senha</a> imediatamente para proteger a sua conta.
+            </p>
           </div>
           <div style="text-align: center; padding: 20px; font-size: 12px; color: #a0aec0;">
             <p>&copy; ${year} Ribeirazul Imobiliária. Todos os direitos reservados.</p>

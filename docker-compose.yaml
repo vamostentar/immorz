@@ -19,6 +19,8 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
     # networks:
     #   - backend
     labels:
@@ -109,6 +111,7 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
       API_URL: ${API_URL:-https://www.immorz.pt}
       EMAIL_FROM: ${AUTH_EMAIL_FROM}
+      API_KEY_VALUE: ${API_KEY_VALUE}
     # networks:
     #   - backend
     labels:
@@ -291,6 +294,8 @@ services:
         condition: service_healthy
       notifications:
         condition: service_healthy
+      intelligence:
+        condition: service_healthy
     ports:
       - "8081:8081"
     environment:
@@ -323,11 +328,39 @@ services:
       # Desabilitar Traefik para API Gateway (serviço interno)
       - "traefik.enable=false"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+
+  # ====================================
+  # Intelligence Service (AI Lead Hunter)
+  # ====================================
+  intelligence:
+    build:
+      context: ./backend/intelligence-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      PORT: 8088
+      HOST: "0.0.0.0"
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      PROXY_URL: ${PROXY_URL}
+      BROWSER_HEADLESS: ${BROWSER_HEADLESS:-true}
+      PROPERTIES_SERVICE_URL: http://properties:8082
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   # ====================================
   # Messages Service
   # ====================================

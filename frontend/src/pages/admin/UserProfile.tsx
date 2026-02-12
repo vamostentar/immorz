@@ -2,10 +2,14 @@ import { useUpdateUserPreferences, useUpdateUserProfile, useUserPreferences, use
 import AdminLayout from '@/components/admin/AdminLayout';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Toast } from '@/components/Toast';
-import { Save, Settings, User } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { useAuth } from '@/context/AuthContext';
+import { Eye, EyeOff, Save, Settings, Shield, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function UserProfile() {
+  const { user: authUser, enable2FA, disable2FA } = useAuth();
   const [toast, setToast] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   
@@ -16,6 +20,12 @@ export default function UserProfile() {
   // Dados das preferências
   const { data: preferences, isLoading: preferencesLoading, error: preferencesError } = useUserPreferences();
   const { mutateAsync: updatePreferences, isPending: preferencesUpdating } = useUpdateUserPreferences();
+
+  // 2FA Management State
+  const [confirmCode, setConfirmCode] = useState(''); // Used for deactivation
+  const [disablePassword, setDisablePassword] = useState('');
+  const [showDisableForm, setShowDisableForm] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [profileData, setProfileData] = useState({
     firstName: '',
@@ -120,6 +130,32 @@ export default function UserProfile() {
       setToast('Preferências atualizadas com sucesso');
     } catch (error) {
       setToast('Erro ao atualizar preferências');
+    }
+  };
+
+  const handleStart2FASetup = async () => {
+    const message = "Garanta que tenha acesso ao email que utilizou no registo da plataforma, porque depois da ativação do 2FA, será exigido na próxima sessão que confirme o código que será enviado para o seu email.";
+    
+    if (window.confirm(message)) {
+      try {
+        await enable2FA();
+        setToast('2FA ativado com sucesso!');
+      } catch (error) {
+        setToast('Erro ao ativar 2FA');
+      }
+    }
+  };
+
+
+  const handleDisable2FA = async () => {
+    try {
+      await disable2FA(disablePassword, confirmCode);
+      setToast('2FA desativado com sucesso');
+      setShowDisableForm(false);
+      setDisablePassword('');
+      setConfirmCode('');
+    } catch (error: any) {
+      setToast(error.message || 'Falha ao desativar 2FA');
     }
   };
 
@@ -247,6 +283,92 @@ export default function UserProfile() {
                 />
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Security / 2FA Section */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="p-6 border-b border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
+              <Shield size={20} className="text-blue-600" />
+              <span>Segurança da Conta</span>
+            </h3>
+          </div>
+          <div className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <h4 className="font-medium text-gray-900">Autenticação em Duas Etapas (2FA)</h4>
+                <p className="text-sm text-gray-600 max-w-md">
+                  Aumente a segurança da sua conta exigindo um código de verificação enviado por email sempre que fizer login.
+                </p>
+                <div className="mt-2 flex items-center">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    authUser?.twoFactorEnabled 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {authUser?.twoFactorEnabled ? 'Ativado' : 'Desativado'}
+                  </span>
+                </div>
+              </div>
+              
+              {!authUser?.twoFactorEnabled ? (
+                <Button 
+                  onClick={handleStart2FASetup} 
+                  variant="outline"
+                  className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                >
+                  Ativar 2FA
+                </Button>
+              ) : (
+                <Button 
+                  onClick={() => setShowDisableForm(!showDisableForm)} 
+                  variant="outline"
+                  className="border-red-200 text-red-700 hover:bg-red-50"
+                >
+                  Desativar 2FA
+                </Button>
+              )}
+            </div>
+
+
+            {/* 2FA Disable Form */}
+            {showDisableForm && authUser?.twoFactorEnabled && (
+              <div className="mt-8 p-6 bg-red-50 rounded-xl border border-red-100 space-y-4">
+                <h4 className="font-semibold text-red-900">Desativar Autenticação em Duas Etapas</h4>
+                <p className="text-sm text-red-700">Por segurança, introduza a sua palavra-passe e o código 2FA enviado para o seu email para prosseguir.</p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+                  <Input
+                    label="Palavra-passe"
+                    type={showPassword ? 'text' : 'password'}
+                    value={disablePassword}
+                    onChange={(e) => setDisablePassword(e.target.value)}
+                    rightIcon={
+                      <button type="button" onClick={() => setShowPassword(!showPassword)}>
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    }
+                  />
+                  <Input
+                    label="Código 2FA"
+                    value={confirmCode}
+                    onChange={(e) => setConfirmCode(e.target.value)}
+                    maxLength={6}
+                    placeholder="000000"
+                  />
+                </div>
+                
+                <div className="flex gap-3">
+                  <Button variant="outline" className="border-red-600 text-red-700 hover:bg-red-100" onClick={handleDisable2FA}>
+                    Confirmar Desativação
+                  </Button>
+                  <Button variant="ghost" onClick={() => setShowDisableForm(false)}>
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
