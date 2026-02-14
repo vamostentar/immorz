@@ -48,6 +48,11 @@ model UserProfile {
   facebook          String?
   instagram         String?
   
+  // Reputation and Approval (Consolidated from auth-service)
+  rating            Decimal?          @db.Decimal(3,2)
+  reviewCount       Int               @default(0)
+  isProfileApproved Boolean           @default(false)
+  
   // Relacionamentos com outras entidades deste serviço
   propertyInterests PropertyInterest[]
   savedProperties   SavedProperty[]

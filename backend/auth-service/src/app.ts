@@ -314,9 +314,8 @@ export async function createApp() {
   });
 
   // Register route modules
-  const { agentRoutes, authRoutes, userRoutes, roleRoutes, sessionRoutes } = await import('./routes');
+  const { authRoutes, userRoutes, roleRoutes, sessionRoutes } = await import('./routes');
 
-  await app.register(agentRoutes, { prefix: '/api/v1' });
   await app.register(authRoutes, { prefix: '/api/v1/auth' });
   await app.register(userRoutes, { prefix: '/api/v1/users' });
   await app.register(roleRoutes, { prefix: '/api/v1/roles' });

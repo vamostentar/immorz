@@ -150,6 +150,7 @@ export class MessageCoreService {
       }
 
       this.metricsService.incrementCounter('messages_created_total');
+      await this.cacheService.delete('message:stats');
       this.metricsService.recordHistogram('message_creation_duration_ms', Date.now() - startTime);
 
       messageLogger.business('message_created', {
@@ -269,6 +270,7 @@ export class MessageCoreService {
 
       // Update status to SENT
       await this.updateMessageStatus(message.id, 'SENT', correlationId);
+      await this.cacheService.delete('message:stats');
       
       this.metricsService.incrementCounter('outbound_messages_sent_total');
       
@@ -329,6 +331,7 @@ export class MessageCoreService {
 
       this.metricsService.incrementCounter(`messages_${status.toLowerCase()}_total`);
       await this.cacheService.delete(`message:${messageId}`);
+      await this.cacheService.delete('message:stats');
 
       return message;
     } catch (error: any) {
@@ -496,6 +499,7 @@ export class MessageCoreService {
         data: { read: true },
       });
       await this.cacheService.delete(`message:${messageId}`);
+      await this.cacheService.delete('message:stats');
       this.logger.info('Message marked as read', { messageId });
     } catch (error: any) {
       this.logger.error('Failed to mark message as read', { error: error.message, messageId });
@@ -510,6 +514,7 @@ export class MessageCoreService {
         data: { read: false },
       });
       await this.cacheService.delete(`message:${messageId}`);
+      await this.cacheService.delete('message:stats');
       this.logger.info('Message marked as unread', { messageId });
     } catch (error: any) {
       this.logger.error('Failed to mark message as unread', { error: error.message, messageId });
@@ -524,6 +529,7 @@ export class MessageCoreService {
         data: { deleted: true },
       });
       await this.cacheService.delete(`message:${messageId}`);
+      await this.cacheService.delete('message:stats');
       this.logger.info('Message moved to trash', { messageId });
     } catch (error: any) {
       this.logger.error('Failed to delete message', { error: error.message, messageId });
@@ -538,6 +544,7 @@ export class MessageCoreService {
         data: { deleted: false },
       });
       await this.cacheService.delete(`message:${messageId}`);
+      await this.cacheService.delete('message:stats');
       this.logger.info('Message restored from trash', { messageId });
     } catch (error: any) {
       this.logger.error('Failed to restore message', { error: error.message, messageId });
@@ -556,6 +563,7 @@ export class MessageCoreService {
         });
       });
       await this.cacheService.delete(`message:${messageId}`);
+      await this.cacheService.delete('message:stats');
       this.logger.info('Message permanently deleted', { messageId });
     } catch (error: any) {
       this.logger.error('Failed to permanently delete message', { error: error.message, messageId });

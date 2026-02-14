@@ -76,6 +76,11 @@ export async function registerMessageRoutes(app: FastifyInstance) {
 
   // Authentication for POST requests
   app.addHook('preHandler', async (request, reply) => {
+    // Allow public contact form submissions without auth
+    if (request.url === '/api/v1/messages' && request.method === 'POST') {
+      return;
+    }
+
     if (request.url.startsWith('/api/v1/messages') && request.method !== 'GET') {
       const isAuthenticated = await authenticateRequest(request);
       if (!isAuthenticated) {

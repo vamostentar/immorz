@@ -13,6 +13,7 @@ import Fastify from 'fastify';
 async function main() {
   const fastify = Fastify({
     logger: false, // We use our own pino logger
+    trustProxy: true,
   });
 
   // Security middleware

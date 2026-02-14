@@ -2,25 +2,26 @@ import {
     useCreateProperty,
     useDeleteProperty,
     useProperties,
-    useUpdateProperty,
-    useUpdatePropertyAdminStatus
+    useUpdateProperty
 } from '@/api/queries';
 import { uploadPropertyImagesImproved } from '@/api/upload-utils';
 import { AdminStatusBadge } from '@/components/Badges';
 import PropertyForm, { PropertyFormRef } from '@/components/forms/PropertyForm';
 import Modal from '@/components/Modal';
+import { OfferStatusDropdown } from '@/components/OfferStatusDropdown';
 import { ListSkeleton } from '@/components/Skeleton';
-import { StatusDropdown } from '@/components/StatusDropdown';
 import { Toast } from '@/components/Toast';
 import { useAuth } from '@/context/AuthContext';
 import {
     Eye,
     Filter,
+    Image as ImageIcon,
     Pencil,
     Plus,
     Search,
     Trash2
 } from 'lucide-react';
+
 import React, { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -32,7 +33,7 @@ interface PropertyRowProps {
     property: any;
     onEdit: (property: any) => void;
     onDelete: (property: any) => void;
-    onQuickStatusChange: (property: any, status: 'ACTIVE' | 'PENDING' | 'INACTIVE') => void;
+    onOfferStatusChange: (property: any, status: 'for_sale' | 'for_rent' | 'sold') => void;
     isPending: boolean;
     mode: 'admin' | 'agent';
 }
@@ -41,33 +42,54 @@ const PropertyRow: React.FC<PropertyRowProps> = ({
     property,
     onEdit,
     onDelete,
-    onQuickStatusChange,
+    onOfferStatusChange,
     isPending,
     mode
 }) => {
-    // Verificar se a propriedade tem ID válido
     const hasValidId = property?.id && typeof property.id === 'string' && property.id.length > 0;
+    const mainImage = property.imageUrl || property.images?.[0]?.url;
 
     return (
         <tr className="border-b border-gray-100 hover:bg-gray-50">
             <td className="p-4">
-                <div className="font-medium text-gray-800">{property.title}</div>
-                <div className="text-sm text-gray-500">{property.type || 'Venda'}</div>
+                <div className="flex items-center gap-4">
+                    <div className="w-16 h-12 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                        {mainImage ? (
+                            <img 
+                                src={mainImage} 
+                                alt={property.title}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=No+Image';
+                                }}
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                <ImageIcon size={20} />
+                            </div>
+                        )}
+                    </div>
+                    <div>
+                        <div className="font-medium text-gray-800">{property.title}</div>
+                        <div className="text-sm text-gray-500">{property.type || 'Venda'}</div>
+                        <div className="text-xs text-gray-400 mt-0.5 font-mono">
+                            Ref: {property.id.slice(0, 8).toUpperCase()}
+                        </div>
+                    </div>
+                </div>
             </td>
             <td className="p-4 font-semibold text-green-600">€{Number(property.price ?? 0).toLocaleString('pt-PT')}</td>
             <td className="p-4">
-                {mode === 'admin' ? (
-                    <div className="flex items-center gap-3">
-                        <AdminStatusBadge status={property.adminStatus || 'ACTIVE'} />
-                        <StatusDropdown
-                            value={property.adminStatus || 'ACTIVE'}
-                            onChange={(value) => onQuickStatusChange(property, value)}
-                            className="min-w-[100px]"
-                        />
-                    </div>
-                ) : (
+                <div className="flex items-center gap-2">
                     <AdminStatusBadge status={property.adminStatus || 'ACTIVE'} />
-                )}
+                </div>
+            </td>
+            <td className="p-4">
+                <OfferStatusDropdown
+                    value={property.status || 'for_sale'}
+                    onChange={(value) => onOfferStatusChange(property, value)}
+                    className="min-w-[120px]"
+                />
             </td>
             <td className="p-4 text-gray-600">{property.views || 0} visualizações</td>
             <td className="p-4">
@@ -131,7 +153,6 @@ export default function PropertiesManager({ mode }: PropertiesManagerProps) {
     const deleteProperty = useDeleteProperty();
     const createProperty = useCreateProperty();
     const updateProperty = useUpdateProperty();
-    const updateStatus = useUpdatePropertyAdminStatus();
 
     const rows = useMemo(() => propertiesData?.data ?? [], [propertiesData]);
     const pagination = propertiesData?.pagination;
@@ -154,18 +175,16 @@ export default function PropertiesManager({ mode }: PropertiesManagerProps) {
         }
     };
 
-    const handleQuickStatusChange = async (property: any, newStatus: 'ACTIVE' | 'PENDING' | 'INACTIVE') => {
-        // Agentes não devem poder mudar status diretamente via quick dropdown
-        if (mode === 'agent') return;
-
+    const handleOfferStatusChange = async (property: any, newStatus: 'for_sale' | 'for_rent' | 'sold') => {
         try {
-            await updateStatus.mutateAsync({
-                propertyId: property.id,
-                adminStatus: newStatus
+            await updateProperty.mutateAsync({
+                id: property.id,
+                payload: { status: newStatus }
             });
-            setToast(`Estado alterado para ${newStatus === 'ACTIVE' ? 'Ativo' : newStatus === 'PENDING' ? 'Pendente' : 'Inativo'}`);
+            setToast('Estado da oferta atualizado com sucesso');
+            refetch();
         } catch (error) {
-            setToast('Erro ao alterar estado da propriedade');
+            setToast('Erro ao alterar estado da oferta');
         }
     };
 
@@ -228,6 +247,7 @@ export default function PropertiesManager({ mode }: PropertiesManagerProps) {
                                         <th className="text-left p-4 font-semibold text-gray-700">Propriedade</th>
                                         <th className="text-left p-4 font-semibold text-gray-700">Preço</th>
                                         <th className="text-left p-4 font-semibold text-gray-700">Estado</th>
+                                        <th className="text-left p-4 font-semibold text-gray-700">Oferta</th>
                                         <th className="text-left p-4 font-semibold text-gray-700">Visualizações</th>
                                         <th className="text-left p-4 font-semibold text-gray-700">Ações</th>
                                     </tr>
@@ -239,7 +259,7 @@ export default function PropertiesManager({ mode }: PropertiesManagerProps) {
                                             property={property}
                                             onEdit={(p) => setEdit({ open: true, property: p })}
                                             onDelete={() => handleDelete(property)}
-                                            onQuickStatusChange={handleQuickStatusChange}
+                                            onOfferStatusChange={handleOfferStatusChange}
                                             isPending={deleteProperty.isPending}
                                             mode={mode}
                                         />

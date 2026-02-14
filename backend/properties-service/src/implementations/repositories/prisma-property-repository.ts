@@ -16,15 +16,15 @@ export class PrismaPropertyRepository implements IPropertyRepository {
         data: {
           title: data.title,
           location: data.location,
-          price: new Prisma.Decimal(data.price),
+          price: new Prisma.Decimal(data.price as number),
           status: data.status,
-          adminStatus: data.adminStatus,
+          adminStatus: data.adminStatus as any,
           type: data.type,
           imageUrl: data.imageUrl,
           description: data.description,
           bedrooms: data.bedrooms,
           bathrooms: data.bathrooms,
-          area: data.area ? new Prisma.Decimal(data.area) : null,
+          area: data.area ? new Prisma.Decimal(data.area as number) : null,
           yearBuilt: data.yearBuilt,
           coordinates: data.coordinates,
           features: data.features,
@@ -70,7 +70,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
 
     try {
       const where = this.buildWhereClause(filters);
-      const orderBy = this.buildOrderByClause(filters.sortBy, filters.sortOrder);
+      const orderBy = this.buildOrderByClause(filters.sortBy as string, filters.sortOrder as string);
 
       let properties;
 
@@ -113,7 +113,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
 
       if (data.title !== undefined) updateData.title = data.title;
       if (data.location !== undefined) updateData.location = data.location;
-      if (data.price !== undefined) updateData.price = new Prisma.Decimal(data.price);
+      if (data.price !== undefined) updateData.price = new Prisma.Decimal(data.price as number);
       if (data.status !== undefined) updateData.status = data.status;
       if (data.adminStatus !== undefined) updateData.adminStatus = data.adminStatus;
       if (data.type !== undefined) updateData.type = data.type;
@@ -121,7 +121,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
       if (data.description !== undefined) updateData.description = data.description;
       if (data.bedrooms !== undefined) updateData.bedrooms = data.bedrooms;
       if (data.bathrooms !== undefined) updateData.bathrooms = data.bathrooms;
-      if (data.area !== undefined) updateData.area = new Prisma.Decimal(data.area);
+      if (data.area !== undefined) updateData.area = new Prisma.Decimal(data.area as number);
       if (data.yearBuilt !== undefined) updateData.yearBuilt = data.yearBuilt;
       if (data.coordinates !== undefined) updateData.coordinates = data.coordinates;
       if (data.features !== undefined) updateData.features = data.features;
@@ -130,6 +130,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
       if (data.garage !== undefined) updateData.garage = data.garage;
       if (data.pool !== undefined) updateData.pool = data.pool;
       if (data.energyRating !== undefined) updateData.energyRating = data.energyRating;
+      if (data.adminStatus !== undefined) updateData.adminStatus = data.adminStatus;
 
       console.log('🔧 PrismaPropertyRepository.update updateData:', updateData);
 
@@ -182,7 +183,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
       throw new Error('Nearby search requires coordinates');
     }
 
-    const { latitude, longitude, radiusKm } = filters.nearbySearch;
+    const { latitude, longitude, radiusKm } = filters.nearbySearch as { latitude: number, longitude: number, radiusKm: number };
 
     // Get all properties with coordinates first
     const properties = await this.prisma.property.findMany({
@@ -227,6 +228,20 @@ export class PrismaPropertyRepository implements IPropertyRepository {
     }
   }
 
+  async getTotalViews(): Promise<number> {
+    try {
+      const result = await this.prisma.property.aggregate({
+        _sum: {
+          views: true,
+        },
+      });
+      return Number(result._sum.views || 0);
+    } catch (error) {
+      repositoryLogger.error({ error, operation: 'getTotalViews' }, 'Failed to get total property views');
+      throw error;
+    }
+  }
+
   private buildWhereClause(filters: Partial<PropertyFilters>) {
     const where: any = {};
 
@@ -244,8 +259,8 @@ export class PrismaPropertyRepository implements IPropertyRepository {
     }
     if (filters.minPrice || filters.maxPrice) {
       where.price = {};
-      if (filters.minPrice) where.price.gte = new Prisma.Decimal(filters.minPrice);
-      if (filters.maxPrice) where.price.lte = new Prisma.Decimal(filters.maxPrice);
+      if (filters.minPrice) where.price.gte = new Prisma.Decimal(filters.minPrice as any);
+      if (filters.maxPrice) where.price.lte = new Prisma.Decimal(filters.maxPrice as any);
     }
     if (filters.minBedrooms || filters.maxBedrooms) {
       where.bedrooms = {};
@@ -259,15 +274,15 @@ export class PrismaPropertyRepository implements IPropertyRepository {
     }
     if (filters.minArea || filters.maxArea) {
       where.area = {};
-      if (filters.minArea) where.area.gte = new Prisma.Decimal(filters.minArea);
-      if (filters.maxArea) where.area.lte = new Prisma.Decimal(filters.maxArea);
+      if (filters.minArea) where.area.gte = new Prisma.Decimal(filters.minArea as any);
+      if (filters.maxArea) where.area.lte = new Prisma.Decimal(filters.maxArea as any);
     }
     if (filters.minYearBuilt || filters.maxYearBuilt) {
       where.yearBuilt = {};
       if (filters.minYearBuilt) where.yearBuilt.gte = filters.minYearBuilt;
       if (filters.maxYearBuilt) where.yearBuilt.lte = filters.maxYearBuilt;
     }
-    if (filters.features && filters.features.length > 0) {
+    if (filters.features && (filters.features as any).length > 0) {
       where.features = { hasSome: filters.features };
     }
     if (filters.q) {

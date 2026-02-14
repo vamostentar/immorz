@@ -2,9 +2,9 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { ServiceFactory } from '../factories/service.factory';
 import { AppError } from '../types/common';
 import {
-  propertyCreateSchema,
-  propertyFiltersSchema,
-  propertyUpdateSchema
+    propertyCreateSchema,
+    propertyFiltersSchema,
+    propertyUpdateSchema
 } from '../types/property';
 import { httpLogger } from '../utils/logger';
 import { validateInput, validateUUID } from '../utils/validation';
@@ -138,6 +138,16 @@ export class PropertyController {
 
       const propertyService = this.serviceFactory.createCompletePropertyService();
       const result = await propertyService.getProperties(filtersWithDefaults);
+
+      // Track research region for analytics (Fire and forget)
+      if (filtersWithDefaults.location) {
+        const analyticsUrl = process.env.ANALYTICS_SERVICE_URL || 'http://analytics:8089';
+        fetch(`${analyticsUrl}/api/v1/analytics/record-search`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ region: filtersWithDefaults.location })
+        }).catch(() => {/* ignore analytics errors */});
+      }
 
       const responseTime = Date.now() - startTime;
       httpLogger.info({

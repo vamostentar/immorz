@@ -140,3 +140,41 @@ export interface SEOValidationResult {
   };
   overallScore: number;
 }
+
+// Analytics Types
+export interface PropertyTypeDistribution {
+  name: string;
+  percentage: number;
+  color: string;
+}
+
+export interface RegionalSearchData {
+  name: string;
+  searches: number;
+}
+
+export interface MonthlyAnalytics {
+  month: string;
+  views: number;
+  leads: number;
+  sold: number;
+}
+
+export interface ActivitySummary {
+  propertiesViewed: number;
+  contactsReceived: number;
+  propertiesSold: number;
+  newAgents: number;
+}
+
+export interface AnalyticsData {
+  propertyTypes: PropertyTypeDistribution[];
+  topRegions: RegionalSearchData[];
+  monthlyStats: MonthlyAnalytics[];
+  activitySummary: ActivitySummary;
+  performanceMetrics: {
+    conversionRate: { value: number; change: number };
+    averageViews: { value: number; change: number };
+    propertiesPerAgent: { value: number; change: number };
+  };
+}

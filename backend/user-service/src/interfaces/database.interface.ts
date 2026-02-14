@@ -187,6 +187,10 @@ export interface CreateUserProfileData {
   linkedin?: string | null;
   facebook?: string | null;
   instagram?: string | null;
+  // Reputation and Approval
+  rating?: number | null;
+  reviewCount?: number;
+  isProfileApproved?: boolean;
 }
 
 export interface UpdateUserProfileData {
@@ -216,6 +220,10 @@ export interface UpdateUserProfileData {
   linkedin?: string | null;
   facebook?: string | null;
   instagram?: string | null;
+  // Reputation and Approval
+  rating?: number | null;
+  reviewCount?: number;
+  isProfileApproved?: boolean;
 }
 
 export interface CreateUserPreferencesData {

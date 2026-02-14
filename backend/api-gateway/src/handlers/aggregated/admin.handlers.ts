@@ -67,45 +67,31 @@ export function registerAdminHandlers(app: FastifyInstance) {
                 twoFactorEnabled: authUser.twoFactorEnabled ?? false,
                 createdAt: authUser.createdAt,
                 updatedAt: authUser.updatedAt,
-                profile: {
-                    bio: authUser.bio,
-                    avatar: authUser.avatar,
-                    dateOfBirth: userProfile?.dateOfBirth,
-                    gender: userProfile?.gender,
-                    address: userProfile?.address,
-                    city: userProfile?.city,
-                    state: userProfile?.state,
-                    country: userProfile?.country,
-                    postalCode: userProfile?.postalCode,
-                    preferredContactMethod: userProfile?.preferredContactMethod,
-                    language: userProfile?.language,
-                    timezone: userProfile?.timezone,
-                    profileVisibility: userProfile?.profileVisibility,
-                    allowMarketing: userProfile?.allowMarketing,
-                    allowNotifications: userProfile?.allowNotifications,
-                    specialties: authUser.specialties,
-                    rating: authUser.rating,
-                    reviewCount: authUser.reviewCount,
-                    experience: authUser.experience,
-                    linkedin: authUser.linkedin,
-                    facebook: authUser.facebook,
-                    instagram: authUser.instagram,
-                    isProfilePublic: authUser.isProfilePublic,
-                    isProfileApproved: authUser.isProfileApproved
-                }
+                profile: userProfile || undefined
             };
 
-            if (userProfile && aggregatedUser.profile) {
-                aggregatedUser.profile = {
-                    ...aggregatedUser.profile,
-                    bio: userProfile.bio || aggregatedUser.profile.bio,
-                    avatar: userProfile.avatar || aggregatedUser.profile.avatar,
-                    specialties: userProfile.specialties || aggregatedUser.profile.specialties,
-                    experience: userProfile.experience || aggregatedUser.profile.experience,
-                };
-            }
-
             return reply.send({ success: true, data: aggregatedUser });
+        } catch (error) {
+            return reply.status(500).send({ success: false, error: 'Erro interno' });
+        }
+    });
+
+    /**
+     * PATCH /api/v1/admin/agents/:userId/approve - Aprova perfil de agente
+     */
+    app.patch<{ Params: { userId: string }; Body: { isApproved: boolean } }>('/api/v1/admin/agents/:userId/approve', async (request, reply) => {
+        try {
+            const { userId } = request.params;
+            const response = await forwardRequest({
+                url: `${config.USERS_SERVICE_URL}/api/v1/user-profiles/${userId}/approve`,
+                method: 'PATCH',
+                authHeader: request.headers.authorization,
+                authUser: (request as any).user,
+                body: request.body
+            });
+            
+            const data = await response.json().catch(() => ({}));
+            return reply.status(response.status).send(data);
         } catch (error) {
             return reply.status(500).send({ success: false, error: 'Erro interno' });
         }

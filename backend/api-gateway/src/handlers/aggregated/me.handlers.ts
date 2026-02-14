@@ -65,29 +65,8 @@ export function registerMeHandlers(app: FastifyInstance) {
                 twoFactorEnabled: authUser.twoFactorEnabled ?? authUser.two_factor_enabled ?? false,
                 createdAt: authUser.createdAt,
                 updatedAt: authUser.updatedAt,
-                profile: {
-                    bio: authUser.bio,
-                    avatar: authUser.avatar,
-                    specialties: authUser.specialties,
-                    rating: authUser.rating,
-                    reviewCount: authUser.reviewCount,
-                    experience: authUser.experience,
-                    linkedin: authUser.linkedin,
-                    facebook: authUser.facebook,
-                    instagram: authUser.instagram,
-                    isProfilePublic: authUser.isProfilePublic,
-                    isProfileApproved: authUser.isProfileApproved
-                }
+                profile: userProfile || undefined
             };
-
-            if (userProfile) {
-                aggregatedUser.profile = {
-                    ...aggregatedUser.profile,
-                    ...userProfile,
-                    bio: userProfile.bio || aggregatedUser.profile?.bio,
-                    avatar: userProfile.avatar || aggregatedUser.profile?.avatar,
-                };
-            }
 
             return reply.send({
                 success: true,

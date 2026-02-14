@@ -7,9 +7,10 @@ interface ConfirmDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void;
-  onCancel: () => void;
+  onCancel?: () => void;
   variant?: 'danger' | 'primary' | 'success';
   isLoading?: boolean;
+  showCancel?: boolean;
 }
 
 export default function ConfirmDialog({
@@ -21,9 +22,16 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
   variant = 'primary',
-  isLoading = false
+  isLoading = false,
+  showCancel = true
 }: ConfirmDialogProps) {
   if (!open) return null;
+
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+    }
+  };
 
   const variants = {
     primary: {
@@ -50,7 +58,7 @@ export default function ConfirmDialog({
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div 
           className="fixed inset-0 bg-gray-500/75 backdrop-blur-sm transition-opacity" 
-          onClick={isLoading ? undefined : onCancel}
+          onClick={isLoading ? undefined : handleCancel}
         />
 
         <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
@@ -71,14 +79,16 @@ export default function ConfirmDialog({
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
-                onClick={onCancel}
-                disabled={isLoading}
-              >
-                <X size={20} />
-              </button>
+              {showCancel && (
+                <button
+                  type="button"
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
+                  onClick={handleCancel}
+                  disabled={isLoading}
+                >
+                  <X size={20} />
+                </button>
+              )}
             </div>
           </div>
           <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
@@ -95,14 +105,16 @@ export default function ConfirmDialog({
                 </div>
               ) : confirmLabel}
             </button>
-            <button
-              type="button"
-              disabled={isLoading}
-              className="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-all"
-              onClick={onCancel}
-            >
-              {cancelLabel}
-            </button>
+            {showCancel && (
+              <button
+                type="button"
+                disabled={isLoading}
+                className="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-all"
+                onClick={handleCancel}
+              >
+                {cancelLabel}
+              </button>
+            )}
           </div>
         </div>
       </div>

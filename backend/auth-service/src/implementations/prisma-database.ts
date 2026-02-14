@@ -1,14 +1,14 @@
 import {
-  ApiKeyRepositoryInterface,
-  AuditRepositoryInterface,
-  DatabaseConnection,
-  DatabaseTransaction,
-  FindManyOptions,
-  LoginAttemptRepositoryInterface,
-  RefreshTokenRepositoryInterface,
-  RoleRepositoryInterface,
-  SessionRepositoryInterface,
-  UserRepositoryInterface
+    ApiKeyRepositoryInterface,
+    AuditRepositoryInterface,
+    DatabaseConnection,
+    DatabaseTransaction,
+    FindManyOptions,
+    LoginAttemptRepositoryInterface,
+    RefreshTokenRepositoryInterface,
+    RoleRepositoryInterface,
+    SessionRepositoryInterface,
+    UserRepositoryInterface
 } from '@/interfaces/database.interface';
 import { ApiKey, AuditLog, LoginAttempt, RefreshToken, Role, Session, User } from '@/types/auth';
 import { PrismaClient } from '@prisma/client';
@@ -130,7 +130,6 @@ class PrismaUserRepository implements UserRepositoryInterface {
     if (data.firstName !== undefined) updateData.firstName = data.firstName;
     if (data.lastName !== undefined) updateData.lastName = data.lastName;
     if (data.phone !== undefined) updateData.phone = data.phone;
-    if (data.avatar !== undefined) updateData.avatar = data.avatar;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
     if (data.isEmailVerified !== undefined) updateData.isEmailVerified = data.isEmailVerified;
     if (data.emailVerifiedAt !== undefined) updateData.emailVerifiedAt = data.emailVerifiedAt;

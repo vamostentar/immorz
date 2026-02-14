@@ -253,6 +253,7 @@ export async function propertiesRoutes(fastify: FastifyInstance) {
               type: 'object',
               properties: {
                 total: { type: 'integer' },
+                totalViews: { type: 'integer' },
                 byStatus: {
                   type: 'object',
                   properties: {

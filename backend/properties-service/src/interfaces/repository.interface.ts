@@ -9,6 +9,7 @@ export interface IPropertyRepository {
   count(filters?: Partial<PropertyFilters>): Promise<number>;
   findNearby(filters: PropertyFilters): Promise<PropertyResponse[]>;
   incrementViews(id: string): Promise<void>;
+  getTotalViews(): Promise<number>;
 }
 
 export interface IRepositoryFactory {

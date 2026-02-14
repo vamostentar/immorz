@@ -1,4 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
+import { AnalyticsData } from './types';
+
+import { api } from '../client';
 
 /**
  * Analytics Data
@@ -7,15 +10,15 @@ import { useQuery } from '@tanstack/react-query';
 export function useAnalyticsData() {
   return useQuery({
     queryKey: ['analytics'],
-    queryFn: async () => {
+    queryFn: async (): Promise<AnalyticsData> => {
       try {
-        // TODO: Implementar endpoints reais de analytics
-        // Por enquanto retorna dados vazios
-        return {
-          propertyTypes: [],
-          topRegions: [],
-          monthlyStats: []
-        };
+        const { data } = await api.get('/api/v1/analytics/dashboard');
+        
+        if (!data.success) {
+          throw new Error(data.error || 'Falha ao carregar dados analíticos');
+        }
+
+        return data.data;
       } catch (error) {
         console.error('Error fetching analytics data:', error);
         throw error;

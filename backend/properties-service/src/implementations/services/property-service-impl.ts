@@ -74,7 +74,7 @@ export class PropertyServiceImpl implements IPropertyService {
       this.validateFilters(filters);
       
       // Fetch one extra to determine if there are more results
-      const limitPlusOne = filters.limit + 1;
+      const limitPlusOne = (filters as any).limit + 1;
       const filtersWithExtraLimit = { ...filters, limit: limitPlusOne };
       
       const properties = await this.propertyRepository.findMany(filtersWithExtraLimit);
@@ -83,9 +83,9 @@ export class PropertyServiceImpl implements IPropertyService {
       let nextCursor: string | null = null;
       let hasMore = false;
       
-      if (properties.length > filters.limit) {
+      if (properties.length > (filters as any).limit) {
         const lastProperty = properties.pop(); // Remove the extra item
-        nextCursor = lastProperty?.id || null;
+        nextCursor = (lastProperty as any)?.id || null;
         hasMore = true;
       }
       
@@ -104,7 +104,7 @@ export class PropertyServiceImpl implements IPropertyService {
         pagination: {
           nextCursor,
           hasMore,
-          limit: filters.limit,
+          limit: (filters as any).limit,
           totalEstimate,
         },
       };
@@ -169,7 +169,7 @@ export class PropertyServiceImpl implements IPropertyService {
       // Delete associated images if any
       if (existingProperty.imageUrl) {
         try {
-          await this.mediaService.deleteImage(existingProperty.imageUrl);
+          await this.mediaService.deleteImage(existingProperty.imageUrl as string);
         } catch (error) {
           serviceLogger.warn({ error, imageUrl: existingProperty.imageUrl }, 'Failed to delete property image');
         }
@@ -192,6 +192,7 @@ export class PropertyServiceImpl implements IPropertyService {
     
     try {
       const total = await this.propertyRepository.count();
+      const totalViews = await this.propertyRepository.getTotalViews();
       
       // Get counts by status
       const forSale = await this.propertyRepository.count({ status: 'for_sale' });
@@ -204,6 +205,7 @@ export class PropertyServiceImpl implements IPropertyService {
       
       const stats = {
         total,
+        totalViews,
         byStatus: { forSale, forRent, sold },
         pricing: {
           average: prices.length > 0 ? (prices as number[]).reduce((a, b) => a + Number(b), 0) / prices.length : 0,
@@ -316,32 +318,32 @@ export class PropertyServiceImpl implements IPropertyService {
     try {
       // Price validation
       if (data.price !== undefined) {
-        validatePriceRange(data.price);
+        validatePriceRange(data.price as number);
       }
       
       // Area validation
       if (data.area !== undefined) {
-        validateAreaRange(data.area);
+        validateAreaRange(data.area as number);
       }
       
       // Bedroom validation
       if (data.bedrooms !== undefined) {
-        validateBedroomRange(data.bedrooms);
+        validateBedroomRange(data.bedrooms as number);
       }
       
       // Bathroom validation
       if (data.bathrooms !== undefined) {
-        validateBathroomRange(data.bathrooms);
+        validateBathroomRange(data.bathrooms as number);
       }
       
       // Year built validation
       if (data.yearBuilt !== undefined) {
-        validateYearRange(data.yearBuilt);
+        validateYearRange(data.yearBuilt as number);
       }
       
       // Coordinates validation
       if (data.coordinates !== undefined && data.coordinates !== null) {
-        validateCoordinates(data.coordinates.latitude, data.coordinates.longitude);
+        validateCoordinates((data.coordinates as any).latitude, (data.coordinates as any).longitude);
       }
     } catch (error) {
       if (error instanceof ValidationError) {

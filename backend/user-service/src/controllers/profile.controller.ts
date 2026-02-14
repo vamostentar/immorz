@@ -69,6 +69,10 @@ export class UserProfileController {
                 linkedin: profileData.linkedin || null,
                 facebook: profileData.facebook || null,
                 instagram: profileData.instagram || null,
+                // Reputation and Approval
+                rating: profileData.rating || null,
+                reviewCount: profileData.reviewCount || 0,
+                isProfileApproved: profileData.isProfileApproved ?? false,
             });
 
             // Criar preferências padrão
@@ -251,6 +255,11 @@ export class UserProfileController {
             if (updateData.facebook !== undefined) allowedFields.facebook = updateData.facebook;
             if (updateData.instagram !== undefined) allowedFields.instagram = updateData.instagram;
 
+            // Reputation and Approval (Note: users typically don't update their own rating)
+            if (updateData.rating !== undefined) allowedFields.rating = updateData.rating;
+            if (updateData.reviewCount !== undefined) allowedFields.reviewCount = updateData.reviewCount;
+            if (updateData.isProfileApproved !== undefined) allowedFields.isProfileApproved = updateData.isProfileApproved;
+
             // Verificar se perfil existe, senão criar (Upsert logic)
             const existingProfile = await dependencyConfig.database.userProfiles.findById(userId);
             let updatedProfile;
@@ -339,6 +348,11 @@ export class UserProfileController {
             if (updateData.linkedin !== undefined) allowedFields.linkedin = updateData.linkedin;
             if (updateData.facebook !== undefined) allowedFields.facebook = updateData.facebook;
             if (updateData.instagram !== undefined) allowedFields.instagram = updateData.instagram;
+
+            // Reputation and Approval (Admin can definitely update these)
+            if (updateData.rating !== undefined) allowedFields.rating = updateData.rating;
+            if (updateData.reviewCount !== undefined) allowedFields.reviewCount = updateData.reviewCount;
+            if (updateData.isProfileApproved !== undefined) allowedFields.isProfileApproved = updateData.isProfileApproved;
 
             // Verificar se perfil existe, senão criar (Upsert logic)
             const existingProfile = await dependencyConfig.database.userProfiles.findById(userId);
@@ -449,15 +463,103 @@ export class UserProfileController {
             return reply.send({
                 success: true,
                 data: profiles,
-                pagination: {
-                    page: parseInt(page),
-                    limit: parseInt(limit),
-                    total: profiles.length
+                meta: {
+                    pagination: {
+                        page: parseInt(page),
+                        limit: parseInt(limit),
+                        total: profiles.length // This should be the total count, not just the length of the current page
+                    }
                 },
                 message: 'Perfis listados com sucesso'
             });
         } catch (error) {
             console.error('❌ Erro ao listar perfis:', error);
+            return reply.status(500).send({
+                success: false,
+                error: 'Erro interno do servidor',
+                code: 'INTERNAL_ERROR'
+            });
+        }
+    }
+
+    /**
+     * Listar agentes públicos (aprovados e com perfil público)
+     * GET /api/v1/public/agents
+     */
+    async listPublicAgents(request: FastifyRequest, reply: FastifyReply) {
+        try {
+            const query = request.query as any;
+            const page = parseInt(query.page) || 1;
+            const limit = parseInt(query.limit) || 20;
+
+            const where: any = {
+                profileVisibility: 'PUBLIC',
+                isProfileApproved: true
+            };
+
+            // Filtrar por especialidade se fornecida
+            if (query.specialty) {
+                where.specialties = { has: query.specialty };
+            }
+
+            const total = await dependencyConfig.database.userProfiles.count(where);
+            const profiles = await dependencyConfig.database.userProfiles.findMany({
+                skip: (page - 1) * limit,
+                take: limit,
+                where,
+                orderBy: { createdAt: 'desc' }
+            });
+
+            return reply.send({
+                success: true,
+                data: profiles,
+                meta: {
+                    pagination: {
+                        page,
+                        limit,
+                        total,
+                        totalPages: Math.ceil(total / limit)
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('❌ Erro ao listar agentes públicos:', error);
+            return reply.status(500).send({
+                success: false,
+                error: 'Erro interno do servidor',
+                code: 'INTERNAL_ERROR'
+            });
+        }
+    }
+
+    /**
+     * Aprovar/Rejeitar perfil (admin)
+     * PATCH /api/v1/user-profiles/:userId/approve
+     */
+    async approveProfile(request: FastifyRequest, reply: FastifyReply) {
+        try {
+            const { userId } = request.params as { userId: string };
+            const { isApproved } = request.body as { isApproved: boolean };
+
+            if (!userId) {
+                return reply.status(400).send({
+                    success: false,
+                    error: 'ID do utilizador é obrigatório',
+                    code: 'MISSING_USER_ID'
+                });
+            }
+
+            const profile = await dependencyConfig.database.userProfiles.update(userId, {
+                isProfileApproved: isApproved
+            });
+
+            return reply.send({
+                success: true,
+                data: profile,
+                message: isApproved ? 'Perfil aprovado com sucesso' : 'Aprovação de perfil removida'
+            });
+        } catch (error) {
+            console.error('❌ Erro ao aprovar perfil:', error);
             return reply.status(500).send({
                 success: false,
                 error: 'Erro interno do servidor',

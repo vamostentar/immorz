@@ -56,6 +56,16 @@ export interface UserProfile {
   profileVisibility: ProfileVisibility;
   allowMarketing: boolean;
   allowNotifications: boolean;
+  // Agent fields
+  specialties: string[];
+  experience: number | null;
+  linkedin: string | null;
+  facebook: string | null;
+  instagram: string | null;
+  // Reputation and Approval
+  rating: number | null;
+  reviewCount: number;
+  isProfileApproved: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -188,6 +198,16 @@ export interface CreateProfileRequest {
   profileVisibility?: ProfileVisibility;
   allowMarketing?: boolean;
   allowNotifications?: boolean;
+  // Agent fields
+  specialties?: string[];
+  experience?: number;
+  linkedin?: string;
+  facebook?: string;
+  instagram?: string;
+  // Reputation and Approval
+  rating?: number;
+  reviewCount?: number;
+  isProfileApproved?: boolean;
 }
 
 export interface UpdateProfileRequest {
@@ -206,6 +226,16 @@ export interface UpdateProfileRequest {
   profileVisibility?: ProfileVisibility;
   allowMarketing?: boolean;
   allowNotifications?: boolean;
+  // Agent fields
+  specialties?: string[];
+  experience?: number | null;
+  linkedin?: string | null;
+  facebook?: string | null;
+  instagram?: string | null;
+  // Reputation and Approval
+  rating?: number | null;
+  reviewCount?: number;
+  isProfileApproved?: boolean;
 }
 
 export interface ProfileResponse {
@@ -223,8 +253,17 @@ export interface ProfileResponse {
   language: string;
   timezone: string;
   profileVisibility: ProfileVisibility;
-  allowMarketing: boolean;
   allowNotifications: boolean;
+  // Agent fields
+  specialties: string[];
+  experience: number | null;
+  linkedin: string | null;
+  facebook: string | null;
+  instagram: string | null;
+  // Reputation and Approval
+  rating: number | null;
+  reviewCount: number;
+  isProfileApproved: boolean;
   createdAt: string;
   updatedAt: string;
 }

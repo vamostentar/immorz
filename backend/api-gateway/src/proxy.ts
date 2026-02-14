@@ -56,7 +56,7 @@ export async function setupProxy(app: FastifyInstance) {
     };
   };
 
-  // @ts-ignore
+
   await app.register(import('@fastify/http-proxy'), {
     upstream: config.AUTH_SERVICE_URL,
     prefix: '/api/v1/auth',
@@ -82,16 +82,7 @@ export async function setupProxy(app: FastifyInstance) {
     }
   });
 
-  // 4. AGENTS PROXY - Public agent profiles
-  await app.register(import('@fastify/http-proxy'), {
-    upstream: config.AUTH_SERVICE_URL,
-    prefix: '/api/v1/agents',
-    websocket: false,
-    rewritePrefix: '/api/v1/agents',
-    replyOptions: {
-      rewriteRequestHeaders: createHeaderProcessor(config.AUTH_SERVICE_URL),
-    }
-  });
+
 
   // 5. USER PROFILES PROXY
   await app.register(import('@fastify/http-proxy'), {
@@ -104,16 +95,6 @@ export async function setupProxy(app: FastifyInstance) {
     }
   });
 
-  // 6. ADMIN ENDPOINTS PROXY
-  await app.register(import('@fastify/http-proxy'), {
-    upstream: config.USERS_SERVICE_URL,
-    prefix: '/api/v1/admin',
-    websocket: false,
-    rewritePrefix: '/api/v1/admin',
-    replyOptions: {
-      rewriteRequestHeaders: createHeaderProcessor(config.USERS_SERVICE_URL),
-    }
-  });
 
   // 6. PROPERTIES SERVICE PROXY (with minimal auth-only header processing)
   const minimalAuthHeaderProcessor = (upstreamBaseUrl: string) => {
@@ -340,6 +321,17 @@ export async function setupProxy(app: FastifyInstance) {
     rewritePrefix: '/api/v1/intelligence',
     replyOptions: {
       rewriteRequestHeaders: createHeaderProcessor(config.INTELLIGENCE_SERVICE_URL),
+    }
+  });
+
+  // 22. ANALYTICS SERVICE PROXY
+  await app.register(import('@fastify/http-proxy'), {
+    upstream: config.ANALYTICS_SERVICE_URL,
+    prefix: '/api/v1/analytics',
+    websocket: false,
+    rewritePrefix: '/api/v1/analytics',
+    replyOptions: {
+      rewriteRequestHeaders: createHeaderProcessor(config.ANALYTICS_SERVICE_URL),
     }
   });
 

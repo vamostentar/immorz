@@ -1,13 +1,14 @@
 import { AgentProfile, fetchAgentById } from '@/api/agent-queries';
 import { useIncrementPropertyViews, useProperty, usePropertyImages } from '@/api/properties';
 import { Footer } from '@/components/Footer';
-import { ArrowLeft, Calendar, Check, ChevronLeft, ChevronRight, Eye, MapPin, User, X } from 'lucide-react';
+import { ImageModal } from '@/components/properties/ImageModal';
+import { PropertyContactForm } from '@/components/properties/PropertyContactForm';
+import { ArrowLeft, Bath, BedDouble, Check, Expand, Eye, Heart, Home, Info, MapPin, Ruler, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 export default function PropertyDetails() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
   const { data: property, isLoading: propertyLoading, error: propertyError } = useProperty(id || '');
@@ -115,231 +116,223 @@ export default function PropertyDetails() {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Gallery Section - Hero Style */}
+        <div className="mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-[500px]">
+             {/* Main Image (8 cols) */}
+             <div 
+               className="lg:col-span-8 h-full bg-gray-200 rounded-xl overflow-hidden relative group cursor-pointer"
+               onClick={() => openImageModal(0)}
+             >
+               {imagesLoading ? (
+                 <div className="w-full h-full flex items-center justify-center animate-pulse">
+                   <span className="text-gray-400">A carregar...</span>
+                 </div>
+               ) : images.length > 0 ? (
+                 <>
+                   <img 
+                     src={images[selectedImageIndex !== null ? selectedImageIndex : 0]?.url || images[0]?.url} 
+                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                     alt="Destaque"
+                   />
+                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
+                   <button className="absolute bottom-4 right-4 bg-white/90 backdrop-blur text-gray-800 px-4 py-2 rounded-lg text-sm font-medium shadow-lg flex items-center gap-2 hover:bg-white transition-colors">
+                     <Expand size={16} />
+                     Ver todas as {images.length} fotos
+                   </button>
+                 </>
+               ) : (
+                 <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                   <span className="text-gray-400">Sem imagens</span>
+                 </div>
+               )}
+             </div>
+
+             {/* Side Thumbnails (4 cols) */}
+             <div className="hidden lg:grid lg:col-span-4 grid-rows-2 gap-4 h-full">
+               {images.slice(1, 3).map((img, idx) => (
+                 <div 
+                   key={idx} 
+                   className="w-full h-full bg-gray-200 rounded-xl overflow-hidden relative cursor-pointer group"
+                   onClick={() => openImageModal(idx + 1)}
+                 >
+                   <img 
+                     src={img.url} 
+                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                     alt={`Miniatura ${idx + 1}`}
+                   />
+                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
+                 </div>
+               ))}
+               {images.length < 2 && (
+                 <div className="w-full h-full bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 text-sm">
+                   RibeiraZul
+                 </div>
+               )}
+               {images.length < 3 && (
+                 <div className="w-full h-full bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 text-sm">
+                   RibeiraZul
+                 </div>
+               )}
+             </div>
+          </div>
+        </div>
+
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Imagens */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              {imagesLoading ? (
-                <div className="aspect-video bg-gray-200 animate-pulse flex items-center justify-center">
-                  <div className="text-gray-500">A carregar imagens...</div>
+          {/* Main Content (Left Column) */}
+          <div className="lg:col-span-2 space-y-8">
+            
+            {/* Header Info */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ${
+                  property.status === 'for_sale' ? 'bg-green-100 text-green-700' :
+                  property.status === 'for_rent' ? 'bg-blue-100 text-blue-700' :
+                  'bg-gray-100 text-gray-700'
+                }`}>
+                  {property.status === 'for_sale' ? 'Para Venda' : property.status === 'for_rent' ? 'Para Arrendar' : 'Vendido'}
+                </span>
+                <div className="flex items-center gap-2 text-gray-500 text-sm">
+                   <div className="flex items-center gap-1">
+                     <Eye size={14} /> {((property as any).uniqueViews || property.views || 0) + 1}
+                   </div>
+                   <span>•</span>
+                   <span>Ref: {property.id.slice(0, 8).toUpperCase()}</span>
                 </div>
-              ) : images.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2 p-4">
-                  {images.map((image, index) => (
-                    <div
-                      key={image.id}
-                      className="aspect-square overflow-hidden rounded-lg cursor-pointer group relative"
-                      onClick={() => openImageModal(index)}
-                    >
-                      <img
-                        src={image.url}
-                        alt={image.alt || `${property.title} - Imagem ${index + 1}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                          </svg>
-                        </div>
-                      </div>
+              </div>
+
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{property.title}</h1>
+              <div className="flex items-center text-gray-600">
+                <MapPin size={18} className="mr-1 text-gray-400" />
+                <span>{property.location}</span>
+              </div>
+            </div>
+
+
+            {/* Key Features Bar */}
+            <div className="grid grid-cols-4 gap-4 p-6 bg-white rounded-xl border border-gray-100 shadow-sm">
+              <div className="flex flex-col items-center justify-center text-center p-2">
+                <BedDouble className="w-6 h-6 text-blue-600 mb-2" />
+                <span className="font-bold text-gray-900 text-lg">{property.bedrooms || '-'}</span>
+                <span className="text-xs text-gray-500 uppercase">Quartos</span>
+              </div>
+              <div className="flex flex-col items-center justify-center text-center p-2 border-l border-gray-100">
+                <Bath className="w-6 h-6 text-blue-600 mb-2" />
+                <span className="font-bold text-gray-900 text-lg">{property.bathrooms || '-'}</span>
+                <span className="text-xs text-gray-500 uppercase">Banhos</span>
+              </div>
+              <div className="flex flex-col items-center justify-center text-center p-2 border-l border-gray-100">
+                <Ruler className="w-6 h-6 text-blue-600 mb-2" />
+                <span className="font-bold text-gray-900 text-lg">{property.area || '-'}</span>
+                <span className="text-xs text-gray-500 uppercase">m² Últis</span>
+              </div>
+              <div className="flex flex-col items-center justify-center text-center p-2 border-l border-gray-100">
+                <Home className="w-6 h-6 text-blue-600 mb-2" />
+                <span className="font-bold text-gray-900 text-lg capitalize">{property.type || '-'}</span>
+                <span className="text-xs text-gray-500 uppercase">Tipo</span>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="prose max-w-none text-gray-600">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Sobre este imóvel</h3>
+              <div className="whitespace-pre-line leading-relaxed">
+                {property.description}
+              </div>
+            </div>
+
+            {/* Detailed Features */}
+            {((property as any).features && (property as any).features.length > 0) && (
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">Características</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-6">
+                  {(property as any).features.map((feature: string, idx: number) => (
+                    <div key={idx} className="flex items-center text-gray-700 bg-gray-50 p-3 rounded-lg">
+                      <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                      <span className="text-sm">{feature}</span>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="aspect-video bg-gray-200 flex items-center justify-center">
-                  <div className="text-gray-500">Nenhuma imagem disponível</div>
-                </div>
-              )}
+              </div>
+            )}
+
+            {/* Map */}
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Localização</h3>
+              <div className="bg-gray-100 rounded-xl overflow-hidden h-80 relative shadow-inner">
+                <iframe 
+                  width="100%" 
+                  height="100%" 
+                  frameBorder="0" 
+                  scrolling="no" 
+                  marginHeight={0} 
+                  marginWidth={0} 
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(property.location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                  className="w-full h-full grayscale hover:grayscale-0 transition-all duration-500"
+                ></iframe>
+                <div className="absolute inset-0 pointer-events-none border border-black/5 rounded-xl"></div>
+              </div>
+              <div className="mt-2 text-sm text-gray-500 flex items-center">
+                <Info size={14} className="mr-1" />
+                A localização no mapa é aproximada.
+              </div>
             </div>
+
           </div>
 
-          {/* Detalhes */}
-          <div className="space-y-6">
-            {/* Informações Principais */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900 mb-2">{property.title}</h1>
-                  <div className="flex items-center text-gray-600 mb-2">
-                    <MapPin size={16} className="mr-1" />
-                    <span className="text-sm">{property.location}</span>
-                  </div>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${property.status === 'for_sale' ? 'bg-green-100 text-green-700' :
-                  property.status === 'for_rent' ? 'bg-blue-100 text-blue-700' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
-                  {property.status === 'for_sale' ? 'À venda' :
-                    property.status === 'for_rent' ? 'Para arrendar' : 'Vendido'}
-                </span>
-              </div>
-
-              <div className="text-3xl font-bold text-green-600 mb-4">
-                €{property.price.toLocaleString('pt-PT')}
-              </div>
-
-              {/* Características */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <div className="text-lg font-semibold text-gray-900">{property.bedrooms || 'N/A'}</div>
-                  <div className="text-sm text-gray-600">Quartos</div>
-                </div>
-                <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <div className="text-lg font-semibold text-gray-900">{property.bathrooms || 'N/A'}</div>
-                  <div className="text-sm text-gray-600">Casas de banho</div>
-                </div>
-                <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <div className="text-lg font-semibold text-gray-900">{property.area ? `${property.area}m²` : 'N/A'}</div>
-                  <div className="text-sm text-gray-600">Área</div>
-                </div>
-              </div>
+          {/* Sidebar (Right Column) */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24 space-y-6">
               
-              {/* Características Adicionais */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                {(property as any).garage && (
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <div className="text-lg font-semibold text-gray-900">Sim</div>
-                    <div className="text-sm text-gray-600">Garagem</div>
-                  </div>
-                )}
-                {(property as any).pool && (
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <div className="text-lg font-semibold text-gray-900">Sim</div>
-                    <div className="text-sm text-gray-600">Piscina</div>
-                  </div>
-                )}
-                {(property as any).energyRating && (
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <div className="text-lg font-semibold text-green-600">{(property as any).energyRating}</div>
-                    <div className="text-sm text-gray-600">Certificado Energético</div>
-                  </div>
-                )}
-              </div>
-
-              {/* Lista de Features */}
-              {((property as any).features && (property as any).features.length > 0) && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Outras características</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {(property as any).features.map((feature: string, idx: number) => (
-                      <div key={idx} className="flex items-center text-gray-700">
-                        <Check className="w-5 h-5 text-yellow-500 mr-2" />
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
+              {/* Price Card */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="text-sm text-gray-500 mb-1">Preço de Venda</div>
+                <div className="text-4xl font-bold text-blue-900 mb-4">
+                  {property.price.toLocaleString('pt-PT')}€
                 </div>
-              )}
-
-              {/* Descrição */}
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Descrição</h3>
-                <p className="text-gray-700 leading-relaxed">{property.description}</p>
-              </div>
-
-              {/* Informações Adicionais */}
-              <div className="space-y-3 text-sm text-gray-600">
-                <div className="flex items-center">
-                  <Calendar size={16} className="mr-2" />
-                  <span>Publicado em {property.createdAt ? new Date(property.createdAt).toLocaleDateString('pt-PT') : 'N/A'}</span>
-                </div>
-                <div className="flex items-center">
-                  <Eye size={16} className="mr-2" />
-                  <span>Última atualização: {property.updatedAt ? new Date(property.updatedAt).toLocaleDateString('pt-PT') : 'N/A'}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Contacto e Agente */}
-            <div className="bg-white rounded-xl shadow-sm p-6 space-y-8">
-              {/* Agent info */}
-              {agentLoading ? (
-                <div className="animate-pulse flex items-center gap-4 p-3 -m-3 rounded-xl">
-                  <div className="w-16 h-16 rounded-full bg-gray-200"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-                  </div>
-                </div>
-              ) : agent && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Agente Responsável</h3>
-                  <Link 
-                    to={`/agent/${agent.id}`}
-                    className="flex items-center gap-4 group hover:bg-gray-50 p-3 -m-3 rounded-xl transition-colors"
-                  >
-                    {agent.avatar ? (
-                      <img 
-                        src={agent.avatar} 
-                        alt={`${agent.firstName} ${agent.lastName}`} 
-                        className="w-16 h-16 rounded-full object-cover border-2 border-gray-100 shadow-sm"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center border-2 border-gray-100 shadow-sm">
-                        <User size={24} className="text-blue-500" />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <div className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                        {agent.firstName} {agent.lastName}
-                      </div>
-                      <div className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
-                        <span>Ver Perfil Público</span>
-                        <svg className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-              )}
-
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Interessado?</h3>
-                <p className="text-gray-600 mb-4">
-                  Entre em contacto connosco para mais informações sobre esta propriedade.
-                </p>
-                <div className="space-y-3">
-                  <button
-                    onClick={() => {
-                      // Cria string com detalhes da propriedade para pré-preencher o formulário
-                      const propertyDetails = `
-Propriedade: ${property.title}
-Localização: ${property.location}
-Preço: €${Number(property.price).toLocaleString('pt-PT')}
-Tipo: ${property.type || 'N/A'}
-Quartos: ${property.bedrooms || 'N/A'}
-Casas de banho: ${property.bathrooms || 'N/A'}
-Área: ${property.area ? `${property.area}m²` : 'N/A'}
-Estado: ${property.status === 'for_sale' ? 'À venda' : property.status === 'for_rent' ? 'Para arrendar' : 'Vendido'}
-
-Gostaria de agendar uma visita para esta propriedade.`.trim();
-
-                      // Constrói URL com parâmetros para o formulário de contacto
-                      const searchParams = new URLSearchParams();
-                      searchParams.set('property', propertyDetails);
-                      searchParams.set('propertyId', property.id);
-                      if (property.agentId) {
-                        searchParams.set('agentId', property.agentId);
-                      }
-
-                      // Navega para a página inicial com parâmetros
-                      navigate(`/?${searchParams.toString()}`);
-
-                      // Aguarda a navegação e faz scroll para o formulário de contacto
-                      setTimeout(() => {
-                        const formElement = document.getElementById('lead-form') || document.getElementById('contato');
-                        if (formElement) {
-                          formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                      }, 150);
-                    }}
-                    className="w-full bg-sky-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-sky-700 transition-colors"
-                  >
-                    Agendar Visita
+                
+                <div className="flex gap-2 mb-6">
+                  <button className="flex-1 btn bg-gray-100 text-gray-700 hover:bg-gray-200 border-0">
+                    <Share2 size={18} className="mr-2" />
+                    Partilhar
+                  </button>
+                  <button className="flex-1 btn bg-gray-100 text-gray-700 hover:bg-gray-200 border-0">
+                    <Heart size={18} className="mr-2" />
+                    Guardar
                   </button>
                 </div>
+
+                {/* Agent Short Profile */}
+                {agentLoading ? (
+                  <div className="flex items-center gap-3 pt-6 border-t border-gray-100 animate-pulse">
+                    <div className="w-12 h-12 rounded-full bg-gray-200" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-24 bg-gray-200 rounded" />
+                      <div className="h-3 w-16 bg-gray-200 rounded" />
+                    </div>
+                  </div>
+                ) : agent && (
+                  <div className="flex items-center gap-3 pt-6 border-t border-gray-100">
+                    <img 
+                      src={agent.avatar || "https://ui-avatars.com/api/?name=" + agent.firstName} 
+                      alt={agent.firstName} 
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                    <div>
+                      <div className="font-bold text-gray-900 text-sm">{agent.firstName} {agent.lastName}</div>
+                      <div className="text-xs text-gray-500">Agente Imobiliário</div>
+                    </div>
+                    <Link to={`/agent/${agent.id}`} className="ml-auto text-blue-600 hover:text-blue-800 text-xs font-bold uppercase">
+                      Ver Perfil
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Contact Form */}
+              <div id="contact-form">
+                <PropertyContactForm property={property} agentId={property.agentId} />
               </div>
             </div>
           </div>
@@ -348,46 +341,14 @@ Gostaria de agendar uma visita para esta propriedade.`.trim();
 
       {/* Modal de Imagem */}
       {selectedImageIndex !== null && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center">
-          <div className="relative max-w-7xl max-h-full p-4">
-            <button
-              onClick={closeImageModal}
-              className="absolute top-4 right-4 z-10 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70 transition-colors"
-            >
-              <X size={24} />
-            </button>
-
-            {selectedImageIndex > 0 && (
-              <button
-                onClick={prevImage}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70 transition-colors"
-              >
-                <ChevronLeft size={24} />
-              </button>
-            )}
-
-            {selectedImageIndex < images.length - 1 && (
-              <button
-                onClick={nextImage}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70 transition-colors"
-              >
-                <ChevronRight size={24} />
-              </button>
-            )}
-
-            <img
-              src={images[selectedImageIndex]?.url}
-              alt={images[selectedImageIndex]?.alt || `${property.title} - Imagem ${selectedImageIndex + 1}`}
-              className="max-w-full max-h-full object-contain"
-            />
-
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-center">
-              <p className="text-sm opacity-75">
-                {selectedImageIndex + 1} de {images.length}
-              </p>
-            </div>
-          </div>
-        </div>
+        <ImageModal
+          images={images}
+          selectedIndex={selectedImageIndex}
+          onClose={closeImageModal}
+          onNext={nextImage}
+          onPrev={prevImage}
+          title={property.title}
+        />
       )}
       <Footer />
     </div>

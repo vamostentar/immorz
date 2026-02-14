@@ -1,0 +1,56 @@
+// Prisma schema for Analytics Service
+// Responsável por armazenar métricas agregadas e snapshots históricos
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/**
+ * Representa uma métrica agregada em um determinado momento (snapshot)
+ */
+model DailyMetric {
+  id        String   @id @default(uuid())
+  date      DateTime @db.Date // Data do snapshot
+  type      MetricType
+  value     Decimal  @db.Decimal(18, 2)
+  metadata  Json?    // Dados extra (ex: { region: 'Lisboa', propertyType: 'Apt' })
+  createdAt DateTime @default(now())
+
+  @@unique([date, type, metadata])
+  @@map("daily_metrics")
+}
+
+/**
+ * Histórico de pesquisas para análise de tendências
+ */
+model SearchSnapshot {
+  id        String   @id @default(uuid())
+  region    String
+  count     Int
+  date      DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  @@unique([region, date])
+  @@map("search_snapshots")
+}
+
+/**
+ * Tipos de métricas suportadas
+ */
+enum MetricType {
+  TOTAL_PROPERTIES
+  ACTIVE_USERS
+  CONVERSION_RATE
+  AVG_SITE_TIME
+  BOUNCE_RATE
+  NEW_LEADS
+  PROPERTIES_BY_STATUS
+  TOTAL_MESSAGES
+  TOTAL_VIEWS
+  NEW_AGENTS
+}

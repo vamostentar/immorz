@@ -1,25 +1,25 @@
 import {
-  CreateNotificationData,
-  CreatePropertyInterestData,
-  CreateSavedPropertyData,
-  CreateSearchHistoryData,
-  CreateUserProfileData,
-  DatabaseConnection,
-  DatabaseTransaction,
-  FindManyOptions,
-  NotificationFindOptions,
-  NotificationRepositoryInterface,
-  PropertyInterestRepositoryInterface,
-  SavedPropertyRepositoryInterface,
-  SearchHistoryRepositoryInterface,
-  UpdateNotificationData,
-  UpdatePropertyInterestData,
-  UpdateSavedPropertyData,
-  UpdateUserProfileData,
-  UserPreferencesRepositoryInterface,
-  UserProfileRepositoryInterface
+    CreateNotificationData,
+    CreatePropertyInterestData,
+    CreateSavedPropertyData,
+    CreateSearchHistoryData,
+    CreateUserProfileData,
+    DatabaseConnection,
+    DatabaseTransaction,
+    FindManyOptions,
+    NotificationFindOptions,
+    NotificationRepositoryInterface,
+    PropertyInterestRepositoryInterface,
+    SavedPropertyRepositoryInterface,
+    SearchHistoryRepositoryInterface,
+    UpdateNotificationData,
+    UpdatePropertyInterestData,
+    UpdateSavedPropertyData,
+    UpdateUserProfileData,
+    UserPreferencesRepositoryInterface,
+    UserProfileRepositoryInterface
 } from '@/interfaces/database.interface';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 /**
  * Implementação do banco de dados usando Prisma
@@ -53,7 +53,7 @@ export class PrismaDatabase implements DatabaseConnection {
   }
 
   async transaction<T>(callback: (tx: DatabaseTransaction) => Promise<T>): Promise<T> {
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const transactionDb = new PrismaDatabaseTransaction(tx);
       return callback(transactionDb);
     });

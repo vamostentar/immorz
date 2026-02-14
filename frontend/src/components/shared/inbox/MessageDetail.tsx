@@ -25,7 +25,7 @@ interface MessageDetailProps {
     onDelete: (id: string, permanent: boolean) => Promise<void>;
     onRestore: (id: string) => Promise<void>;
     onMarkUnread: (id: string) => Promise<void>;
-    onReply: (id: string, text: string, recipient: string, files: (File | { id: string; file: File })[]) => Promise<void>;
+    onReply: (id: string, text: string, recipient: string, files: (File | { id: string; file: File })[]) => Promise<boolean | void>;
     isLoadingAction: boolean;
 }
 
@@ -64,24 +64,23 @@ export function MessageDetail({
         setIsUploading(true);
         try {
             const fileList = files.map(f => f.file);
-            await onReply(message.id, replyText, message.fromEmail, fileList);
-            setReplyText('');
-            setFiles([]);
-            alert('Resposta enviada com sucesso!');
+            const success = await onReply(message.id, replyText, message.fromEmail, fileList);
+            
+            // If onReply returns boolean true, or if it returns void (undefined) and didn't throw
+            if (success === true || success === undefined) {
+                setReplyText('');
+                setFiles([]);
+            }
         } catch (error: any) {
-            alert(`Erro ao enviar resposta: ${error.message || 'Tente novamente.'}`);
+            // Parent handles error notification
         } finally {
             setIsUploading(false);
         }
     };
 
     const handleConfirmDelete = async () => {
-        try {
-            await onDelete(message.id, activeTab === 'trash');
-            setShowDeleteConfirm(false);
-        } catch (error) {
-            alert('Erro ao eliminar mensagem.');
-        }
+        await onDelete(message.id, activeTab === 'trash');
+        setShowDeleteConfirm(false);
     };
 
     const getStatusColor = (status: MessageStatus) => {

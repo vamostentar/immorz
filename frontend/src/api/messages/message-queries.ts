@@ -28,7 +28,7 @@ export function useMessageStats(agentId?: string) {
       const { data } = await api.get(`/api/v1/messages/stats${params}`);
       return data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 30, // 30 seconds
   });
 }
 

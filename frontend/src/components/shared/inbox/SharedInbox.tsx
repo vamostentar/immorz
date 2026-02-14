@@ -1,6 +1,8 @@
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useInbox } from '@/hooks/useInbox';
 import { useMessageActions } from '@/hooks/useMessageActions';
 import { Message } from '@/types';
+import { useState } from 'react';
 import { ComposeModal } from './ComposeModal';
 import { InboxSidebar } from './InboxSidebar';
 import { MessageDetail } from './MessageDetail';
@@ -45,41 +47,107 @@ export function SharedInbox({ mode }: SharedInboxProps) {
         }
     };
 
+    const [dialogState, setDialogState] = useState<{
+        open: boolean;
+        title: string;
+        message: string;
+        variant: 'success' | 'danger' | 'primary';
+    }>({
+        open: false,
+        title: '',
+        message: '',
+        variant: 'primary'
+    });
+
     const handleSendMessage = async (data: { toEmail: string; subject: string; body: string; files: File[] }) => {
         try {
             await sendMessage(data);
             setIsComposing(false);
-            alert('Mensagem enviada com sucesso!');
+            setDialogState({
+                open: true,
+                title: 'Mensagem Enviada',
+                message: 'A sua mensagem foi enviada com sucesso.',
+                variant: 'success'
+            });
             refetch();
         } catch (error: any) {
-            alert(`Erro ao enviar mensagem: ${error.message || 'Tente novamente.'}`);
+            setDialogState({
+                open: true,
+                title: 'Erro ao Enviar',
+                message: error.message || 'Ocorreu um erro ao enviar a mensagem. Por favor, tente novamente.',
+                variant: 'danger'
+            });
         }
     };
 
-    const handleSendReply = async (messageId: string, replyText: string, recipientEmail: string, files: (File | { id: string; file: File })[]) => {
+    const handleSendReply = async (messageId: string, replyText: string, recipientEmail: string, files: (File | { id: string; file: File })[]): Promise<boolean> => {
         // useMessageActions handles File[] currently, so we extract just the files if needed
         // but sendMessage/sendReply in useMessageActions expect File[]
         const fileList = files.map(f => 'file' in f ? f.file : f);
-        await sendReply(messageId, replyText, recipientEmail, fileList);
-        refetch();
+        try {
+            await sendReply(messageId, replyText, recipientEmail, fileList);
+            setDialogState({
+                open: true,
+                title: 'Resposta Enviada',
+                message: 'A sua resposta foi enviada com sucesso.',
+                variant: 'success'
+            });
+            refetch();
+            return true;
+        } catch (error: any) {
+             setDialogState({
+                open: true,
+                title: 'Erro ao Responder',
+                message: error.message || 'Ocorreu um erro ao enviar a resposta. Por favor, tente novamente.',
+                variant: 'danger'
+            });
+            return false;
+        }
     };
 
     const handleDelete = async (id: string, permanent: boolean) => {
-        await deleteMessage(id, permanent);
-        setSelectedMessage(null);
-        refetch();
+        try {
+            await deleteMessage(id, permanent);
+            setSelectedMessage(null);
+            refetch();
+        } catch (error: any) {
+            setDialogState({
+                open: true,
+                title: 'Erro ao Eliminar',
+                message: error.message || 'Ocorreu um erro ao eliminar a mensagem.',
+                variant: 'danger'
+            });
+        }
     };
 
     const handleRestore = async (id: string) => {
-        await restoreMessage(id);
-        setSelectedMessage(null);
-        refetch();
+        try {
+            await restoreMessage(id);
+            setSelectedMessage(null);
+            refetch();
+        } catch (error: any) {
+            setDialogState({
+                open: true,
+                title: 'Erro ao Restaurar',
+                message: error.message || 'Ocorreu um erro ao restaurar a mensagem.',
+                variant: 'danger'
+            });
+        }
     };
 
     const handleMarkUnread = async (id: string) => {
-        await markAsUnread(id);
-        setSelectedMessage(null);
-        refetch();
+        try {
+            await markAsUnread(id);
+            setSelectedMessage(null);
+            refetch();
+        } catch (error: any) {
+            setDialogState({
+                open: true,
+                title: 'Erro ao Marcar como Não Lido',
+                message: error.message || 'Ocorreu um erro ao marcar a mensagem como não lida.',
+                variant: 'danger'
+            });
+        }
     };
 
     return (
@@ -128,6 +196,18 @@ export function SharedInbox({ mode }: SharedInboxProps) {
                     isSending={isLoadingAction}
                 />
             )}
+
+            {/* Notification Dialog */}
+            <ConfirmDialog
+                open={dialogState.open}
+                title={dialogState.title}
+                message={dialogState.message}
+                variant={dialogState.variant}
+                confirmLabel="OK"
+                showCancel={false}
+                onConfirm={() => setDialogState(prev => ({ ...prev, open: false }))}
+                onCancel={() => setDialogState(prev => ({ ...prev, open: false }))}
+            />
         </div>
     );
 }

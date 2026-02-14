@@ -22,6 +22,7 @@ export async function createApp() {
     disableRequestLogging: config.NODE_ENV === 'production',
     ignoreTrailingSlash: true,
     bodyLimit: 50 * 1024 * 1024, // 50MB limit for file uploads
+    trustProxy: true, // Trust X-Forwarded-For header from Nginx
   });
 
   // Global error handler

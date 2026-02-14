@@ -66,24 +66,11 @@ export class UserRepository {
     // Whitelist de campos válidos do Prisma User model
     const updateData: any = {};
 
-    // Campos de perfil
+    // Campos de utilizador base
     if (input.firstName !== undefined) updateData.firstName = input.firstName;
     if (input.lastName !== undefined) updateData.lastName = input.lastName;
     if (input.phone !== undefined) updateData.phone = input.phone;
     if (input.username !== undefined) updateData.username = input.username;
-    if (input.avatar !== undefined) updateData.avatar = input.avatar;
-
-    // Campos de agente
-    if (input.bio !== undefined) updateData.bio = input.bio;
-    if (input.specialties !== undefined) updateData.specialties = input.specialties;
-    if (input.experience !== undefined) updateData.experience = input.experience;
-    if (input.rating !== undefined) updateData.rating = input.rating;
-    if (input.reviewCount !== undefined) updateData.reviewCount = input.reviewCount;
-    if (input.linkedin !== undefined) updateData.linkedin = input.linkedin;
-    if (input.facebook !== undefined) updateData.facebook = input.facebook;
-    if (input.instagram !== undefined) updateData.instagram = input.instagram;
-    if (input.isProfilePublic !== undefined) updateData.isProfilePublic = input.isProfilePublic;
-    if (input.isProfileApproved !== undefined) updateData.isProfileApproved = input.isProfileApproved;
 
     // Campos de estado
     if (input.isActive !== undefined) updateData.isActive = input.isActive;

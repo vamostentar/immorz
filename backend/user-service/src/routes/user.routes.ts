@@ -11,12 +11,13 @@
 
 import { FastifyInstance } from 'fastify';
 import {
-    notificationController,
-    savedPropertyController,
-    searchHistoryController,
-    userPreferencesController,
-    userProfileController
+  notificationController,
+  savedPropertyController,
+  searchHistoryController,
+  userPreferencesController,
+  userProfileController
 } from '../controllers/profile.controller.js';
+import { statsController } from '../controllers/stats.controller.js';
 
 export async function userRoutes(fastify: FastifyInstance) {
   if (process.env.ENABLE_DETAILED_LOGGING === 'true' || process.env.NODE_ENV !== 'production') {
@@ -62,6 +63,16 @@ export async function userRoutes(fastify: FastifyInstance) {
     return userProfileController.listProfiles(req, rep);
   });
 
+  // Listar agentes públicos (público)
+  fastify.get('/api/v1/user-profiles/public/agents', async (req, rep) => {
+    return userProfileController.listPublicAgents(req, rep);
+  });
+
+  // Aprovar/Rejeitar perfil (admin)
+  fastify.patch('/api/v1/user-profiles/:userId/approve', async (req, rep) => {
+    return userProfileController.approveProfile(req, rep);
+  });
+
   // ============================================================
   // Rotas de Preferências
   // ============================================================
@@ -104,6 +115,14 @@ export async function userRoutes(fastify: FastifyInstance) {
 
   fastify.delete('/api/v1/search-history/me', async (req, rep) => {
     return searchHistoryController.clearMySearchHistory(req, rep);
+  });
+
+  // ============================================================
+  // Rotas de Estatísticas (Analytics)
+  // ============================================================
+
+  fastify.get('/api/v1/users/stats/activity', async (req, rep) => {
+    return statsController.getActivityStats(req, rep);
   });
 
   // ============================================================
