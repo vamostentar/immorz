@@ -237,10 +237,10 @@ export class NotificationController {
             <h2 style="color: #1a365d; margin: 0;">Ribeirazul Imobiliária</h2>
           </div>
           <div style="background-color: #ffffff; padding: 30px; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <h3 style="color: #2d3748; margin-top: 0; text-align: center;">Código de Segurança</h3>
+            <h3 style="color: #2d3748; margin-top: 0; text-align: center;">Código de Acesso</h3>
             <p>Olá <strong>${name}</strong>,</p>
             <p>Recebemos um pedido de acesso à sua conta na Ribeirazul.</p>
-            <p>Para concluir a verificação, utilize o código abaixo:</p>
+            <p>Para concluir o login, utilize o código de verificação abaixo:</p>
             
             <div style="text-align: center; margin: 30px 0;">
               <div style="background-color: #f7fafc; border: 2px dashed #4299e1; padding: 20px; border-radius: 8px; display: inline-block;">

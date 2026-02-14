@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { updateMyProfile } from '../../api/agent-queries';
 import { uploadMediaImage } from '../../api/queries';
 import AgentLayout from '../../components/layouts/AgentLayout';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useAuth } from '../../context/AuthContext';
 
 const SPECIALTIES_OPTIONS = [
@@ -37,7 +38,6 @@ export default function EditAgentProfile() {
     });
 
     // 2FA State
-    const [confirmCode, setConfirmCode] = useState(''); // Used for deactivation
     const [disablePassword, setDisablePassword] = useState('');
     const [showDisableForm, setShowDisableForm] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -47,31 +47,53 @@ export default function EditAgentProfile() {
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(formData.avatar);
+    
+    // Dialog States
+    const [showEnableConfirm, setShowEnableConfirm] = useState(false);
+    const [showDisableConfirm, setShowDisableConfirm] = useState(false);
+    const [isProcessing2FA, setIsProcessing2FA] = useState(false);
 
-    const handleStart2FASetup = async () => {
-        const message = "Garanta que tenha acesso ao email que utilizou no registo da plataforma, porque depois da ativação do 2FA, será exigido na próxima sessão que confirme o código que será enviado para o seu email.";
-        
-        if (window.confirm(message)) {
-            try {
-                await enable2FA();
-                setSaveSuccess(true);
-                setTimeout(() => setSaveSuccess(false), 3000);
-            } catch (error) {
-                setError('Erro ao ativar 2FA');
-            }
+    const handleStart2FASetup = () => {
+        setShowEnableConfirm(true);
+    };
+
+    const confirmEnable2FA = async () => {
+        try {
+            setIsProcessing2FA(true);
+            await enable2FA();
+            setSaveSuccess(true);
+            setTimeout(() => setSaveSuccess(false), 3000);
+            setShowEnableConfirm(false);
+        } catch (error) {
+            setError('Erro ao ativar 2FA');
+        } finally {
+            setIsProcessing2FA(false);
         }
     };
 
-    const handleDisable2FA = async () => {
+    const handleConfirmDisable2FA = () => {
+        if (!disablePassword) {
+            setError('A palavra-passe é obrigatória para desativar 2FA');
+            return;
+        }
+        setShowDisableConfirm(true);
+    };
+
+    const confirmDisable2FA = async () => {
         try {
-            await disable2FA(disablePassword, confirmCode);
+            setError(null);
+            setIsProcessing2FA(true);
+            await disable2FA(disablePassword);
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 3000);
             setShowDisableForm(false);
             setDisablePassword('');
-            setConfirmCode('');
+            setShowDisableConfirm(false);
         } catch (err: any) {
+            console.error('[2FA] Error confirming disable:', err);
             setError(err.message || 'Falha ao desativar 2FA');
+        } finally {
+            setIsProcessing2FA(false);
         }
     };
 
@@ -370,9 +392,13 @@ export default function EditAgentProfile() {
                                 <button
                                     type="button"
                                     onClick={() => setShowDisableForm(!showDisableForm)}
-                                    className="px-4 py-2 border border-red-200 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                                    className={`px-4 py-2 border rounded-lg transition-colors ${
+                                        showDisableForm 
+                                        ? 'border-gray-200 text-gray-700 hover:bg-gray-50' 
+                                        : 'border-red-200 text-red-700 hover:bg-red-50'
+                                    }`}
                                 >
-                                    Desativar 2FA
+                                    {showDisableForm ? 'Cancelar' : 'Desativar 2FA'}
                                 </button>
                             )}
                         </div>
@@ -382,48 +408,34 @@ export default function EditAgentProfile() {
                         {showDisableForm && user?.twoFactorEnabled && (
                             <div className="mt-6 p-6 bg-red-50 rounded-xl border border-red-100 space-y-4">
                                 <h4 className="font-semibold text-red-900">Desativar Autenticação em Duas Etapas</h4>
-                                <p className="text-sm text-red-700">Por segurança, introduza a sua palavra-passe e o código 2FA enviado para o seu email para prosseguir.</p>
+                                <p className="text-sm text-red-700">Por segurança, introduza a sua palavra-passe para confirmar a desativação do 2FA.</p>
                                 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-                                    <div>
-                                        <label className="block text-sm font-medium text-red-900 mb-1">
-                                            Palavra-passe
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type={showPassword ? 'text' : 'password'}
-                                                value={disablePassword}
-                                                onChange={(e) => setDisablePassword(e.target.value)}
-                                                className="w-full px-4 py-2 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent pr-10"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 hover:text-red-600"
-                                            >
-                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-red-900 mb-1">
-                                            Código 2FA
-                                        </label>
+                                <div className="max-w-md">
+                                    <label className="block text-sm font-medium text-red-900 mb-1">
+                                        Palavra-passe
+                                    </label>
+                                    <div className="relative">
                                         <input
-                                            type="text"
-                                            value={confirmCode}
-                                            onChange={(e) => setConfirmCode(e.target.value)}
-                                            maxLength={6}
-                                            placeholder="000000"
-                                            className="w-full px-4 py-2 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                            type={showPassword ? 'text' : 'password'}
+                                            value={disablePassword}
+                                            onChange={(e) => setDisablePassword(e.target.value)}
+                                            className="w-full px-4 py-2 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent pr-10"
+                                            placeholder="Introduza a sua password"
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 hover:text-red-600"
+                                        >
+                                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
                                     </div>
                                 </div>
                                 
                                 <div className="flex gap-3">
                                     <button
                                         type="button"
-                                        onClick={handleDisable2FA}
+                                        onClick={handleConfirmDisable2FA}
                                         className="px-4 py-2 border border-red-600 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
                                     >
                                         Confirmar Desativação
@@ -542,6 +554,28 @@ export default function EditAgentProfile() {
                     </div>
                 </form>
             </div>
+
+            {/* Confirmation Dialogs */}
+            <ConfirmDialog
+                open={showEnableConfirm}
+                title="Ativar Autenticação em Duas Etapas?"
+                message="Garanta que tenha acesso ao email que utilizou no registo da plataforma. Após a ativação, será exigido um código enviado para o seu email sempre que iniciar sessão."
+                confirmLabel="Sim, Ativar"
+                onConfirm={confirmEnable2FA}
+                onCancel={() => setShowEnableConfirm(false)}
+                isLoading={isProcessing2FA}
+            />
+
+            <ConfirmDialog
+                open={showDisableConfirm}
+                title="Desativar 2FA?"
+                message="Tem a certeza que deseja desativar a autenticação em duas etapas? A sua conta ficará menos protegida."
+                confirmLabel="Sim, Desativar"
+                variant="danger"
+                onConfirm={confirmDisable2FA}
+                onCancel={() => setShowDisableConfirm(false)}
+                isLoading={isProcessing2FA}
+            />
         </AgentLayout>
     );
 }

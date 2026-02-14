@@ -109,7 +109,7 @@ export default function PropertyDetails() {
           <div className="flex items-center gap-6">
             <Link to="/" className="hover:text-sky-700">Imóveis</Link>
             <Link to="#contato" className="hover:text-sky-700">Contato</Link>
-            <Link to="/admin/dashboard" className="btn btn-primary text-sm">Painel Admin</Link>
+            <Link to="/admin/dashboard" className="btn btn-primary text-sm">Entrar</Link>
           </div>
         </div>
       </nav>
@@ -212,7 +212,7 @@ export default function PropertyDetails() {
                 {(property as any).energyRating && (
                   <div className="text-center p-3 bg-gray-50 rounded-lg">
                     <div className="text-lg font-semibold text-green-600">{(property as any).energyRating}</div>
-                    <div className="text-sm text-gray-600">Cert. Energético</div>
+                    <div className="text-sm text-gray-600">Certificado Energético</div>
                   </div>
                 )}
               </div>

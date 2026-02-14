@@ -5,7 +5,7 @@ import axios from 'axios';
 export const API_URL = import.meta.env.VITE_API_URL ||
   (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
     ? '' // Empty string for relative URLs in production
-    : 'http://localhost:3000'); // API Gateway port for local development
+    : 'http://localhost:8081'); // API Gateway port for local development
 
 type TokenBundle = {
   accessToken: string | null;
@@ -89,6 +89,7 @@ console.log('🔐 Initial tokens loaded:', {
   refreshTokenLength: inMemoryTokens.refreshToken?.length,
   storage: localStorage.getItem(STORAGE_KEY) ? 'local' : (sessionStorage.getItem(STORAGE_KEY) ? 'session' : 'none')
 });
+console.log('🔌 API_URL:', API_URL);
 
 export const getAccessToken = () => inMemoryTokens.accessToken;
 export const getRefreshToken = () => inMemoryTokens.refreshToken;
@@ -419,8 +420,13 @@ export async function confirm2FARequest(params: { secret: string; token: string 
   return data;
 }
 
-export async function disable2FARequest(params: { password: string; token: string }) {
+export async function disable2FARequest(params: { password: string }) {
   const { data } = await api.post('/api/v1/auth/2fa/disable', params);
+  return data;
+}
+
+export async function requestDisable2FACode() {
+  const { data } = await api.post('/api/v1/auth/2fa/disable-request');
   return data;
 }
 

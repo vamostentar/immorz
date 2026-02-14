@@ -400,15 +400,22 @@ export class RefreshTokenRepository {
    * Revoke refresh token
    */
   async revoke(token: string, replacedBy?: string): Promise<void> {
-    await this.prisma.refreshToken.update({
-      where: { token },
-      data: {
-        isRevoked: true,
-        revokedAt: new Date(),
-        replacedBy,
-        updatedAt: new Date(),
-      },
-    });
+    try {
+      await this.prisma.refreshToken.update({
+        where: { token },
+        data: {
+          isRevoked: true,
+          revokedAt: new Date(),
+          replacedBy,
+          updatedAt: new Date(),
+        },
+      });
+    } catch (error: any) {
+      // Ignore record not found error (P2025)
+      if (error.code !== 'P2025') {
+        throw error;
+      }
+    }
   }
 
   /**

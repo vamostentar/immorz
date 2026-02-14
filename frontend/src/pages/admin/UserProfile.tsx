@@ -3,6 +3,7 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Toast } from '@/components/Toast';
 import { Button } from '@/components/ui/Button';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/context/AuthContext';
 import { Eye, EyeOff, Save, Settings, Shield, User } from 'lucide-react';
@@ -22,10 +23,14 @@ export default function UserProfile() {
   const { mutateAsync: updatePreferences, isPending: preferencesUpdating } = useUpdateUserPreferences();
 
   // 2FA Management State
-  const [confirmCode, setConfirmCode] = useState(''); // Used for deactivation
   const [disablePassword, setDisablePassword] = useState('');
   const [showDisableForm, setShowDisableForm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Dialog States
+  const [showEnableConfirm, setShowEnableConfirm] = useState(false);
+  const [showDisableConfirm, setShowDisableConfirm] = useState(false);
+  const [isProcessing2FA, setIsProcessing2FA] = useState(false);
 
   const [profileData, setProfileData] = useState({
     firstName: '',
@@ -133,29 +138,44 @@ export default function UserProfile() {
     }
   };
 
-  const handleStart2FASetup = async () => {
-    const message = "Garanta que tenha acesso ao email que utilizou no registo da plataforma, porque depois da ativação do 2FA, será exigido na próxima sessão que confirme o código que será enviado para o seu email.";
-    
-    if (window.confirm(message)) {
-      try {
-        await enable2FA();
-        setToast('2FA ativado com sucesso!');
-      } catch (error) {
-        setToast('Erro ao ativar 2FA');
-      }
+  const handleStart2FASetup = () => {
+    setShowEnableConfirm(true);
+  };
+
+  const confirmEnable2FA = async () => {
+    try {
+      setIsProcessing2FA(true);
+      await enable2FA();
+      setToast('2FA ativado com sucesso!');
+      setShowEnableConfirm(false);
+    } catch (error) {
+      setToast('Erro ao ativar 2FA');
+    } finally {
+      setIsProcessing2FA(false);
     }
   };
 
 
-  const handleDisable2FA = async () => {
+  const handleDisable2FA = () => {
+    if (!disablePassword) {
+      setToast('A palavra-passe é obrigatória para desativar 2FA');
+      return;
+    }
+    setShowDisableConfirm(true);
+  };
+
+  const confirmDisable2FA = async () => {
     try {
-      await disable2FA(disablePassword, confirmCode);
+      setIsProcessing2FA(true);
+      await disable2FA(disablePassword);
       setToast('2FA desativado com sucesso');
       setShowDisableForm(false);
       setDisablePassword('');
-      setConfirmCode('');
+      setShowDisableConfirm(false);
     } catch (error: any) {
       setToast(error.message || 'Falha ao desativar 2FA');
+    } finally {
+      setIsProcessing2FA(false);
     }
   };
 
@@ -336,9 +356,9 @@ export default function UserProfile() {
             {showDisableForm && authUser?.twoFactorEnabled && (
               <div className="mt-8 p-6 bg-red-50 rounded-xl border border-red-100 space-y-4">
                 <h4 className="font-semibold text-red-900">Desativar Autenticação em Duas Etapas</h4>
-                <p className="text-sm text-red-700">Por segurança, introduza a sua palavra-passe e o código 2FA enviado para o seu email para prosseguir.</p>
+                <p className="text-sm text-red-700">Por segurança, introduza a sua palavra-passe para confirmar a desativação do 2FA.</p>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+                <div className="max-w-md">
                   <Input
                     label="Palavra-passe"
                     type={showPassword ? 'text' : 'password'}
@@ -349,13 +369,6 @@ export default function UserProfile() {
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     }
-                  />
-                  <Input
-                    label="Código 2FA"
-                    value={confirmCode}
-                    onChange={(e) => setConfirmCode(e.target.value)}
-                    maxLength={6}
-                    placeholder="000000"
                   />
                 </div>
                 
@@ -489,6 +502,28 @@ export default function UserProfile() {
       </div>
 
       <Toast text={toast ?? ''} show={!!toast} onClose={() => setToast(null)} />
+
+      {/* Confirmation Dialogs */}
+      <ConfirmDialog
+        open={showEnableConfirm}
+        title="Ativar Autenticação em Duas Etapas?"
+        message="Garanta que tenha acesso ao email que utilizou no registo da plataforma. Após a ativação, será exigido um código enviado para o seu email sempre que iniciar sessão."
+        confirmLabel="Sim, Ativar"
+        onConfirm={confirmEnable2FA}
+        onCancel={() => setShowEnableConfirm(false)}
+        isLoading={isProcessing2FA}
+      />
+
+      <ConfirmDialog
+        open={showDisableConfirm}
+        title="Desativar 2FA?"
+        message="Tem a certeza que deseja desativar a autenticação em duas etapas? A sua conta ficará menos protegida."
+        confirmLabel="Sim, Desativar"
+        variant="danger"
+        onConfirm={confirmDisable2FA}
+        onCancel={() => setShowDisableConfirm(false)}
+        isLoading={isProcessing2FA}
+      />
     </AdminLayout>
   );
 }

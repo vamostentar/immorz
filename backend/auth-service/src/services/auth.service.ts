@@ -2,26 +2,26 @@ import { config } from '@/config';
 import { RefreshTokenRepository, SessionRepository } from '@/repositories/session.repository';
 import { UserRepository } from '@/repositories/user.repository';
 import type {
-  JWTPayload,
-  LoginRequest,
-  LoginResponse,
-  TokenPair,
-  TwoFactorSetup
+    JWTPayload,
+    LoginRequest,
+    LoginResponse,
+    TokenPair,
+    TwoFactorSetup
 } from '@/types/auth';
 import type { RequestContext } from '@/types/common';
 import {
-  ConflictError,
-  NotFoundError,
-  UnauthorizedError,
-  ValidationError
+    ConflictError,
+    NotFoundError,
+    UnauthorizedError,
+    ValidationError
 } from '@/types/common';
 import {
-  generateJTI,
-  generateRandomString,
-  generateSecureToken,
-  generateSessionToken,
-  hashPassword,
-  verifyPassword
+    generateJTI,
+    generateRandomString,
+    generateSecureToken,
+    generateSessionToken,
+    hashPassword,
+    verifyPassword
 } from '@/utils/crypto';
 import { logger, logHelpers } from '@/utils/logger';
 import { PrismaClient } from '@prisma/client';
@@ -330,12 +330,7 @@ export class AuthService {
    */
   async logout(refreshToken: string, context: RequestContext, sessionId?: string): Promise<void> {
     if (refreshToken) {
-      await this.refreshTokenRepository.revoke(refreshToken); // Ensure repository has this method signature or findByToken + update
-      // Actually repository might expect ID or unique token.
-      const token = await this.refreshTokenRepository.findByToken(refreshToken);
-      if (token) {
-        await this.refreshTokenRepository.revoke(token.id);
-      }
+      await this.refreshTokenRepository.revoke(refreshToken);
     }
 
     if (sessionId) {
@@ -460,12 +455,60 @@ export class AuthService {
   }
 
   /**
-   * Disable two-factor authentication
+   * Request 2FA deactivation code
    */
+  async request2FADisable(userId: string, context: RequestContext): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    if (!user.twoFactorEnabled) {
+      throw new ValidationError('A autenticação em duas etapas não está ativada');
+    }
+
+    // Generate 2FA token
+    const token = generateRandomString(6, '0123456789');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Store token
+    await this.prisma.twoFactorToken.create({
+      data: {
+        email: user.email,
+        token,
+        expiresAt,
+      }
+    });
+
+    // Send email via Notification Service
+    const { getNotificationClient } = await import('@/services/notification-client');
+    const notificationClient = getNotificationClient();
+    const emailResult = await notificationClient.sendTwoFactorToken(
+      user.email,
+      token,
+      user.firstName || 'Utilizador'
+    );
+
+    if (!emailResult.success) {
+      logger.error({
+        requestId: context.requestId,
+        userId,
+        email: user.email,
+        error: emailResult.error
+      }, 'Failed to send 2FA disable token email');
+      throw new Error('Falha ao enviar e-mail de verificação. Por favor tente novamente.');
+    }
+
+    logger.info({
+      requestId: context.requestId,
+      userId,
+      email: user.email
+    }, 'Two-factor deactivation code requested');
+  }
+
   async disable2FA(
     userId: string,
     password: string,
-    token: string,
     context: RequestContext
   ): Promise<void> {
     try {
@@ -475,19 +518,13 @@ export class AuthService {
       }
 
       if (!user.twoFactorEnabled) {
-        throw new ValidationError('Two-factor authentication is not enabled');
+        throw new ValidationError('A autenticação em duas etapas não está ativada');
       }
 
       // Verify password
       const isValidPassword = await verifyPassword((user as any).password, password);
       if (!isValidPassword) {
-        throw new UnauthorizedError('Password is incorrect');
-      }
-
-      // Verify 2FA token
-      const isValid2FA = await this.verify2FA(userId, token);
-      if (!isValid2FA) {
-        throw new ValidationError('Invalid authentication code');
+        throw new UnauthorizedError('Senha incorreta');
       }
 
       // Disable 2FA
@@ -496,7 +533,7 @@ export class AuthService {
       logger.info({
         requestId: context.requestId,
         userId,
-      }, 'Two-factor authentication disabled');
+      }, 'Two-factor authentication disabled directly by user');
 
     } catch (error) {
       logger.error({

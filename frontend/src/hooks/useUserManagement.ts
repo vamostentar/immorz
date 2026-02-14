@@ -25,6 +25,20 @@ export function useUserManagement() {
     const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
     const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
 
+    // Confirm dialog state
+    const [confirmDialog, setConfirmDialog] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant?: 'danger' | 'primary' | 'success';
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+    });
+
     // User states
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -202,31 +216,45 @@ export function useUserManagement() {
             return;
         }
 
-        if (!confirm('Tem certeza que deseja eliminar este utilizador?')) {
-            console.log('❌ handleDelete: User cancelled deletion');
-            return;
-        }
-
-        try {
-            console.log('🔄 handleDelete: Calling deleteUser API...');
-            await deleteUser(id);
-            console.log('✅ handleDelete: User deleted successfully');
-            setToast('Utilizador eliminado com sucesso');
-            setSelectedUsers(prev => prev.filter(uid => uid !== id));
-        } catch (error) {
-            console.error('❌ handleDelete: Error deleting user:', error);
-            setToast('Erro ao eliminar utilizador');
-        }
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Eliminar Utilizador',
+            message: 'Tem certeza que deseja eliminar este utilizador? Esta ação não pode ser desfeita.',
+            variant: 'danger',
+            onConfirm: async () => {
+                try {
+                    console.log('🔄 handleDelete: Calling deleteUser API...');
+                    await deleteUser(id);
+                    console.log('✅ handleDelete: User deleted successfully');
+                    setToast('Utilizador eliminado com sucesso');
+                    setSelectedUsers(prev => prev.filter(uid => uid !== id));
+                } catch (error) {
+                    console.error('❌ handleDelete: Error deleting user:', error);
+                    setToast('Erro ao eliminar utilizador');
+                } finally {
+                    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                }
+            }
+        });
     }, [deleteUser]);
 
     const resetTwoFactor = useCallback(async (id: string) => {
-        if (!confirm('Tem a certeza que deseja resetar o 2FA deste utilizador?')) return;
-        try {
-            await resetUserTwoFactor(id);
-            setToast('2FA resetado com sucesso');
-        } catch (error) {
-            setToast('Erro ao resetar 2FA');
-        }
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Resetar 2FA',
+            message: 'Tem a certeza que deseja resetar o 2FA deste utilizador? O utilizador terá que configurar a autenticação em duas etapas novamente no próximo login.',
+            variant: 'primary',
+            onConfirm: async () => {
+                try {
+                    await resetUserTwoFactor(id);
+                    setToast('2FA resetado com sucesso');
+                } catch (error) {
+                    setToast('Erro ao resetar 2FA');
+                } finally {
+                    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                }
+            }
+        });
     }, [resetUserTwoFactor]);
 
     // Export functionality
@@ -278,11 +306,24 @@ export function useUserManagement() {
                     setToast(`${selectedUsers.length} utilizadores desativados`);
                     break;
                 case 'delete':
-                    if (confirm(`Eliminar ${selectedUsers.length} utilizadores?`)) {
-                        // TODO: Implement bulk delete
-                        setToast(`${selectedUsers.length} utilizadores eliminados`);
-                    }
-                    break;
+                    setConfirmDialog({
+                        isOpen: true,
+                        title: 'Eliminar Utilizadores',
+                        message: `Tem certeza que deseja eliminar ${selectedUsers.length} utilizadores? Esta ação não pode ser desfeita.`,
+                        variant: 'danger',
+                        onConfirm: async () => {
+                            try {
+                                // TODO: Implement actual bulk delete API call in admin-queries
+                                setToast(`${selectedUsers.length} utilizadores eliminados`);
+                                setSelectedUsers([]);
+                            } catch (error) {
+                                setToast('Erro ao eliminar utilizadores');
+                            } finally {
+                                setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                            }
+                        }
+                    });
+                    return; // Retornar pois o reset do selectedUsers será feito no onConfirm
                 case 'export':
                     exportUsers(selectedUsers);
                     break;
@@ -347,6 +388,10 @@ export function useUserManagement() {
         setIsImportModalOpen,
         setIsAuditModalOpen,
         setIsPermissionsModalOpen,
+
+        // Confirm dialog
+        confirmDialog,
+        setConfirmDialog,
 
         // Handlers
         handleSelectUser,

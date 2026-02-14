@@ -1,5 +1,5 @@
 import { AgentProfile, flattenProfile } from '@/api/agent-queries';
-import { api, clearTokens, complete2FA as clientComplete2FA, confirm2FARequest, disable2FARequest, enable2FARequest, getAccessToken, loginRequest, registerRequest, setTokens } from '@/api/client';
+import { api, clearTokens, complete2FA as clientComplete2FA, confirm2FARequest, disable2FARequest, enable2FARequest, getAccessToken, getRefreshToken, loginRequest, registerRequest, setTokens } from '@/api/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -44,7 +44,7 @@ interface AuthContextValue extends AuthState {
   complete2FA: (code: string) => Promise<void>;
   enable2FA: () => Promise<{ secret: string; qrCode: string; backupCodes: string[] }>;
   confirm2FA: (secret: string, token: string) => Promise<void>;
-  disable2FA: (password: string, token: string) => Promise<void>;
+  disable2FA: (password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -94,21 +94,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data } = await api.get('/api/v1/users/me');
         const userDataRaw = data?.data ?? data ?? null;
         
-        // Log para debug de dados do utilizador
-        if (userDataRaw) {
-          console.log('🔐 AuthContext: Raw user data received:', { 
-            id: userDataRaw.id, 
-            hasProfile: !!userDataRaw.profile,
-            twoFactorEnabled: userDataRaw.twoFactorEnabled 
-          });
-        }
-
         const userData = userDataRaw ? flattenProfile(userDataRaw) : null;
 
-        console.log('🔐 AuthContext: User verified successfully:', { 
-          email: userData?.email, 
-          twoFactor: userData?.twoFactorEnabled 
-        });
+        console.log('🔐 AuthContext: User verified successfully:', userData?.email);
         
         setState({
           user: userData as unknown as AuthUser, // Cast seguro após verificação
@@ -283,10 +271,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const disable2FA = useCallback(async (password: string, token: string) => {
+  const disable2FA = useCallback(async (password: string) => {
     setState(s => ({ ...s, loading: true }));
     try {
-      await disable2FARequest({ password, token });
+      await disable2FARequest({ password });
       setState(s => ({ 
         ...s, 
         user: s.user ? { ...s.user, twoFactorEnabled: false } : null,
@@ -300,7 +288,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await api.post('/api/v1/auth/logout');
+      const refreshToken = getRefreshToken();
+      await api.post('/api/v1/auth/logout', { refreshToken });
     } catch (err) {
       console.warn('Logout request failed:', err);
     }

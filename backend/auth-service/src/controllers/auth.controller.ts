@@ -1,16 +1,16 @@
 import { createSuccessResponse } from '@/middlewares/error-handler';
 import { AuthService } from '@/services/auth.service';
 import type {
-  ChangePasswordRequest,
-  LoginRequest,
-  RefreshTokenRequest,
-  RegisterRequest
+    ChangePasswordRequest,
+    LoginRequest,
+    RefreshTokenRequest,
+    RegisterRequest
 } from '@/types/auth';
 import {
-  changePasswordSchema,
-  loginSchema,
-  refreshTokenSchema,
-  RegisterSchema
+    changePasswordSchema,
+    loginSchema,
+    refreshTokenSchema,
+    RegisterSchema
 } from '@/types/auth';
 import { getRequestContext } from '@/utils/request-context';
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -111,11 +111,11 @@ export class AuthController {
    * POST /api/v1/auth/logout
    */
   async logout(request: FastifyRequest, reply: FastifyReply) {
-    const context = getRequestContext(request)!;
-    const sessionToken = request.headers['x-session-token'] as string || '';
-    const sessionId = (request.user as any)?.sessionId;
-    
-    await this.authService.logout(sessionToken, context, sessionId);
+  const context = getRequestContext(request)!;
+  const { refreshToken } = request.body as any;
+  const sessionId = (request.user as any)?.sessionId;
+  
+  await this.authService.logout(refreshToken || '', context, sessionId);
     
     return reply.code(200).send(
       createSuccessResponse({ message: 'Logged out successfully' }, context.requestId)
@@ -186,19 +186,19 @@ export class AuthController {
    */
   async disable2FA(
     request: FastifyRequest<{ 
-      Body: { password: string; token: string } 
+      Body: { password: string } 
     }>, 
     reply: FastifyReply
   ) {
     const context = getRequestContext(request)!;
     const userId = request.user?.id!;
-    const { password, token } = request.body;
+    const { password } = request.body;
     
-    await this.authService.disable2FA(userId, password, token, context);
+    await this.authService.disable2FA(userId, password, context);
     
     return reply.code(200).send(
       createSuccessResponse(
-        { message: 'Two-factor authentication disabled successfully' }, 
+        { message: 'Autenticação em duas etapas desativada com sucesso' }, 
         context.requestId
       )
     );
@@ -252,6 +252,24 @@ export class AuthController {
     return reply.code(200).send(
       createSuccessResponse(
         { message: 'Password has been reset successfully. You can now login with your new password.' },
+        context.requestId
+      )
+    );
+  }
+
+  /**
+   * Request 2FA deactivation code
+   * POST /api/v1/auth/2fa/disable-request
+   */
+  async request2FADisable(request: FastifyRequest, reply: FastifyReply) {
+    const context = getRequestContext(request)!;
+    const userId = request.user?.id!;
+    
+    await this.authService.request2FADisable(userId, context);
+    
+    return reply.code(200).send(
+      createSuccessResponse(
+        { message: 'Código de desativação enviado para o seu email' }, 
         context.requestId
       )
     );

@@ -68,23 +68,56 @@ interface AggregatedUser {
 }
 
 /**
+ * Helper to forward requests to microservices with full context
+ */
+async function forwardRequest(params: {
+    url: string;
+    method: string;
+    authHeader?: string | undefined;
+    authUser?: any;
+    body?: any;
+}) {
+    const { url, method, authHeader, authUser, body } = params;
+    
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Internal-Request': 'true',
+    };
+
+    if (authHeader) headers['Authorization'] = authHeader;
+    
+    if (authUser) {
+        headers['X-User-Id'] = authUser.id;
+        headers['X-User-Email'] = authUser.email;
+        headers['X-User-Role'] = authUser.role;
+    }
+
+    const fetchParams: RequestInit = {
+        method,
+        headers,
+    };
+
+    if (body !== undefined) {
+        fetchParams.body = typeof body === 'string' ? body : JSON.stringify(body);
+    } else if (['POST', 'PUT', 'PATCH'].includes(method)) {
+        // Essential: provide empty body for POST/PUT if none provided to avoid 400 errors from strict servers
+        fetchParams.body = JSON.stringify({});
+    }
+
+    return fetch(url, fetchParams);
+}
+
+/**
  * Obtém dados do utilizador do auth-service
  */
-async function fetchAuthUser(userId: string, authHeader?: string): Promise<any | null> {
+async function fetchAuthUser(userId: string, authHeader?: string, authUserContext?: any): Promise<any | null> {
     try {
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-            'X-Internal-Request': 'true',
-        };
-
-        if (authHeader) {
-            headers['Authorization'] = authHeader;
-        }
-
-        const response = await fetch(
-            `${config.AUTH_SERVICE_URL}/api/v1/users/${userId}`,
-            { method: 'GET', headers }
-        );
+        const response = await forwardRequest({
+            url: `${config.AUTH_SERVICE_URL}/api/v1/users/${userId}`,
+            method: 'GET',
+            authHeader,
+            authUser: authUserContext
+        });
 
         if (!response.ok) {
             console.warn(`⚠️ Auth user fetch failed: ${response.status}`);
@@ -162,7 +195,7 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
             }
 
             // 1. Buscar dados essenciais (Auth Service)
-            const authUser = await fetchAuthUser(userId, authHeader);
+            const authUser = await fetchAuthUser(userId, authHeader, (request as any).user);
 
             if (!authUser) {
                 return reply.status(404).send({
@@ -175,14 +208,21 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
             // 2. Buscar perfil estendido (User Service) - Opcional, falha silenciosamente
             let userProfile = null;
             try {
-                userProfile = await fetchUserProfile(userId, authHeader);
+                const response = await forwardRequest({
+                    url: `${config.USERS_SERVICE_URL}/api/v1/user-profiles/${userId}`,
+                    method: 'GET',
+                    authHeader,
+                    authUser: (request as any).user
+                });
+                
+                if (response.ok) {
+                    const profileData = await response.json();
+                    userProfile = profileData.data ?? profileData;
+                }
             } catch (error) {
                 console.warn(`⚠️ Não foi possível obter perfil do user-service para ${userId} (ignorando)`);
             }
 
-            // Agregar dados
-            // NOTA: O auth-service agora já pode conter campos de perfil como bio, avatar, etc.
-            // Usamos os do authUser como base e sobrepomos com userProfile se existir.
             const aggregatedUser: AggregatedUser = {
                 id: authUser.id,
                 email: authUser.email,
@@ -192,7 +232,7 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
                 role: authUser.role,
                 isActive: authUser.isActive ?? true,
                 isEmailVerified: authUser.isEmailVerified ?? false,
-                twoFactorEnabled: authUser.twoFactorEnabled ?? false,
+                twoFactorEnabled: authUser.twoFactorEnabled ?? authUser.two_factor_enabled ?? false,
                 createdAt: authUser.createdAt,
                 updatedAt: authUser.updatedAt,
                 // Mapear campos de perfil que podem já vir do auth-service (nova migração)
@@ -249,19 +289,15 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
         try {
             const authHeader = request.headers.authorization;
             const query = request.query as any;
+            const authUser = (request as any).user;
 
             // Encaminhar para auth-service para listar utilizadores
-            const response = await fetch(
-                `${config.AUTH_SERVICE_URL}/api/v1/users?${new URLSearchParams(query).toString()}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': authHeader || '',
-                        'X-Internal-Request': 'true',
-                    }
-                }
-            );
+            const response = await forwardRequest({
+                url: `${config.AUTH_SERVICE_URL}/api/v1/users?${new URLSearchParams(query).toString()}`,
+                method: 'GET',
+                authHeader,
+                authUser
+            });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
@@ -269,7 +305,6 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
             }
 
             const data = await response.json();
-
             return reply.send(data);
         } catch (error) {
             console.error('❌ Erro no handler /admin/users:', error);
@@ -289,18 +324,14 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
         try {
             const authHeader = request.headers.authorization;
             const query = request.query as any;
+            const authUser = (request as any).user;
 
-            const response = await fetch(
-                `${config.AUTH_SERVICE_URL}/api/v1/users?${new URLSearchParams(query).toString()}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': authHeader || '',
-                        'X-Internal-Request': 'true',
-                    }
-                }
-            );
+            const response = await forwardRequest({
+                url: `${config.AUTH_SERVICE_URL}/api/v1/users?${new URLSearchParams(query).toString()}`,
+                method: 'GET',
+                authHeader,
+                authUser
+            });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
@@ -327,24 +358,20 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
         try {
             const authHeader = request.headers.authorization;
             const userData = request.body;
+            const authUser = (request as any).user;
 
             request.log.info({ userData }, 'POST /api/v1/users - Creating new user');
 
             // Make request to auth-service
             let response;
             try {
-                response = await fetch(
-                    `${config.AUTH_SERVICE_URL}/api/v1/users`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': authHeader || '',
-                            'X-Internal-Request': 'true',
-                        },
-                        body: JSON.stringify(userData)
-                    }
-                );
+                response = await forwardRequest({
+                    url: `${config.AUTH_SERVICE_URL}/api/v1/users`,
+                    method: 'POST',
+                    authHeader,
+                    authUser,
+                    body: userData
+                });
             } catch (fetchError: any) {
                 request.log.error({ error: fetchError.message, stack: fetchError.stack }, 'Fetch to auth-service failed');
                 return reply.status(500).send({
@@ -392,36 +419,29 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
         try {
             const { userId } = request.params;
             const authHeader = request.headers.authorization;
+            const authUser = (request as any).user;
 
             console.log(`🗑️ DELETE /api/v1/users/${userId} - Proxy para auth-service`);
 
             // 1. Eliminar perfil no user-service (pode não existir)
             try {
-                await fetch(
-                    `${config.USERS_SERVICE_URL}/api/v1/user-profiles/${userId}`,
-                    {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': authHeader || '',
-                            'X-Internal-Request': 'true',
-                        }
-                    }
-                );
+                await forwardRequest({
+                    url: `${config.USERS_SERVICE_URL}/api/v1/user-profiles/${userId}`,
+                    method: 'DELETE',
+                    authHeader,
+                    authUser
+                });
             } catch (e) {
                 console.warn('⚠️ Erro ao eliminar perfil (pode não existir):', e);
             }
 
             // 2. Eliminar utilizador no auth-service
-            const response = await fetch(
-                `${config.AUTH_SERVICE_URL}/api/v1/users/${userId}`,
-                {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': authHeader || '',
-                        'X-Internal-Request': 'true',
-                    }
-                }
-            );
+            const response = await forwardRequest({
+                url: `${config.AUTH_SERVICE_URL}/api/v1/users/${userId}`,
+                method: 'DELETE',
+                authHeader,
+                authUser
+            });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
@@ -456,19 +476,15 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
     app.get('/api/v1/admin/pending-approvals', async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             const authHeader = request.headers.authorization;
+            const authUser = (request as any).user;
 
             // Buscar todos os utilizadores do auth-service
-            const response = await fetch(
-                `${config.AUTH_SERVICE_URL}/api/v1/users`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': authHeader || '',
-                        'X-Internal-Request': 'true',
-                    }
-                }
-            );
+            const response = await forwardRequest({
+                url: `${config.AUTH_SERVICE_URL}/api/v1/users`,
+                method: 'GET',
+                authHeader,
+                authUser
+            });
 
             if (!response.ok) {
                 // Se falhar, retornar 0 como fallback
@@ -506,35 +522,26 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
     app.get('/api/v1/users/statistics', async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             const authHeader = request.headers.authorization;
+            const authUser = (request as any).user;
 
             // Obter estatísticas do auth-service
-            const response = await fetch(
-                `${config.AUTH_SERVICE_URL}/api/v1/users/statistics`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': authHeader || '',
-                        'X-Internal-Request': 'true',
-                    }
-                }
-            );
+            const response = await forwardRequest({
+                url: `${config.AUTH_SERVICE_URL}/api/v1/users/statistics`,
+                method: 'GET',
+                authHeader,
+                authUser
+            });
 
             if (!response.ok) {
                 // Se endpoint não existir no auth, retornar estatísticas básicas
                 if (response.status === 404) {
                     // Tentar obter contagem de utilizadores
-                    const usersResponse = await fetch(
-                        `${config.AUTH_SERVICE_URL}/api/v1/users`,
-                        {
-                            method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': authHeader || '',
-                                'X-Internal-Request': 'true',
-                            }
-                        }
-                    );
+                    const usersResponse = await forwardRequest({
+                        url: `${config.AUTH_SERVICE_URL}/api/v1/users`,
+                        method: 'GET',
+                        authHeader,
+                        authUser
+                    });
 
                     if (usersResponse.ok) {
                         const usersData = await usersResponse.json();
@@ -772,18 +779,13 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
                 });
 
                 // Actualizar utilizador no auth-service
-                const response = await fetch(
-                    `${config.AUTH_SERVICE_URL}/api/v1/users/${userId}`,
-                    {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': authHeader || '',
-                            'X-Internal-Request': 'true',
-                        },
-                        body: JSON.stringify(updateData)
-                    }
-                );
+                const response = await forwardRequest({
+                    url: `${config.AUTH_SERVICE_URL}/api/v1/users/${userId}`,
+                    method: 'PUT',
+                    authHeader,
+                    authUser: (request as any).user,
+                    body: updateData
+                });
 
                 const data = await response.json().catch(() => ({}));
 
@@ -812,6 +814,274 @@ export function registerAggregatedHandlers(app: FastifyInstance) {
         }
     );
     
+    /**
+     * POST /api/v1/users/:userId/reset-2fa - Reseta 2FA de um utilizador
+     */
+    app.post<{ Params: { userId: string } }>(
+        '/api/v1/users/:userId/reset-2fa',
+        async (request: FastifyRequest<{ Params: { userId: string } }>, reply: FastifyReply) => {
+            try {
+                const { userId } = request.params;
+                const authHeader = request.headers.authorization;
+                const authUser = (request as any).user;
+
+                const response = await forwardRequest({
+                    url: `${config.AUTH_SERVICE_URL}/api/v1/users/${userId}/reset-2fa`,
+                    method: 'POST',
+                    authHeader,
+                    authUser
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) return reply.status(response.status).send(data);
+
+                invalidateUserCache(userId);
+                return reply.send(data);
+            } catch (error) {
+                console.error('❌ AGGREGATED: Erro no handler POST /users/:userId/reset-2fa:', error);
+                return reply.status(500).send({ success: false, error: 'Erro interno do servidor', code: 'INTERNAL_ERROR' });
+            }
+        }
+    );
+
+    /**
+     * POST /api/v1/users/:userId/activate - Ativa um utilizador
+     */
+    app.post<{ Params: { userId: string } }>(
+        '/api/v1/users/:userId/activate',
+        async (request: FastifyRequest<{ Params: { userId: string } }>, reply: FastifyReply) => {
+            try {
+                const { userId } = request.params;
+                const authHeader = request.headers.authorization;
+                const authUser = (request as any).user;
+
+                const response = await forwardRequest({
+                    url: `${config.AUTH_SERVICE_URL}/api/v1/users/${userId}/activate`,
+                    method: 'POST',
+                    authHeader,
+                    authUser
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) return reply.status(response.status).send(data);
+
+                invalidateUserCache(userId);
+                return reply.send(data);
+            } catch (error) {
+                console.error('❌ AGGREGATED: Erro no handler POST /users/:userId/activate:', error);
+                return reply.status(500).send({ success: false, error: 'Erro interno do servidor', code: 'INTERNAL_ERROR' });
+            }
+        }
+    );
+
+    /**
+     * POST /api/v1/users/:userId/deactivate - Desativa um utilizador
+     */
+    app.post<{ Params: { userId: string } }>(
+        '/api/v1/users/:userId/deactivate',
+        async (request: FastifyRequest<{ Params: { userId: string } }>, reply: FastifyReply) => {
+            try {
+                const { userId } = request.params;
+                const authHeader = request.headers.authorization;
+                const authUser = (request as any).user;
+
+                const response = await forwardRequest({
+                    url: `${config.AUTH_SERVICE_URL}/api/v1/users/${userId}/deactivate`,
+                    method: 'POST',
+                    authHeader,
+                    authUser
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) return reply.status(response.status).send(data);
+
+                invalidateUserCache(userId);
+                return reply.send(data);
+            } catch (error) {
+                console.error('❌ AGGREGATED: Erro no handler POST /users/:userId/deactivate:', error);
+                return reply.status(500).send({ success: false, error: 'Erro interno do servidor', code: 'INTERNAL_ERROR' });
+            }
+        }
+    );
+
+    /**
+     * POST /api/v1/users/:userId/reset-password - Reseta senha de um utilizador
+     */
+    app.post<{ Params: { userId: string }; Body: any }>(
+        '/api/v1/users/:userId/reset-password',
+        async (request: FastifyRequest<{ Params: { userId: string }; Body: any }>, reply: FastifyReply) => {
+            try {
+                const { userId } = request.params;
+                const authHeader = request.headers.authorization;
+                const authUser = (request as any).user;
+
+                const response = await forwardRequest({
+                    url: `${config.AUTH_SERVICE_URL}/api/v1/users/${userId}/reset-password`,
+                    method: 'POST',
+                    authHeader,
+                    authUser,
+                    body: request.body
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) return reply.status(response.status).send(data);
+
+                return reply.send(data);
+            } catch (error) {
+                console.error('❌ AGGREGATED: Erro no handler POST /users/:userId/reset-password:', error);
+                return reply.status(500).send({ success: false, error: 'Erro interno do servidor', code: 'INTERNAL_ERROR' });
+            }
+        }
+    );
+
+    /**
+     * POST /api/v1/users/:userId/verify-email - Verifica email de um utilizador manual
+     */
+    app.post<{ Params: { userId: string } }>(
+        '/api/v1/users/:userId/verify-email',
+        async (request: FastifyRequest<{ Params: { userId: string } }>, reply: FastifyReply) => {
+            try {
+                const { userId } = request.params;
+                const authHeader = request.headers.authorization;
+                const authUser = (request as any).user;
+
+                const response = await forwardRequest({
+                    url: `${config.AUTH_SERVICE_URL}/api/v1/users/${userId}/verify-email`,
+                    method: 'POST',
+                    authHeader,
+                    authUser
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) return reply.status(response.status).send(data);
+
+                invalidateUserCache(userId);
+                return reply.send(data);
+            } catch (error) {
+                console.error('❌ AGGREGATED: Erro no handler POST /users/:userId/verify-email:', error);
+                return reply.status(500).send({ success: false, error: 'Erro interno do servidor', code: 'INTERNAL_ERROR' });
+            }
+        }
+    );
+
+    /**
+     * POST /api/v1/users/communication/send - Envia comunicação para utilizadores
+     */
+    app.post<{ Body: any }>(
+        '/api/v1/users/communication/send',
+        async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
+            try {
+                const authHeader = request.headers.authorization;
+                const authUser = (request as any).user;
+
+                const response = await forwardRequest({
+                    url: `${config.AUTH_SERVICE_URL}/api/v1/users/communication/send`,
+                    method: 'POST',
+                    authHeader,
+                    authUser,
+                    body: request.body
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) return reply.status(response.status).send(data);
+
+                return reply.send(data);
+            } catch (error) {
+                console.error('❌ AGGREGATED: Erro no handler POST /users/communication/send:', error);
+                return reply.status(500).send({ success: false, error: 'Erro interno do servidor', code: 'INTERNAL_ERROR' });
+            }
+        }
+    );
+
+    /**
+     * POST /api/v1/users/bulk-import - Importação em massa de utilizadores
+     */
+    app.post<{ Body: any }>(
+        '/api/v1/users/bulk-import',
+        async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
+            try {
+                const authHeader = request.headers.authorization;
+                const authUser = (request as any).user;
+
+                const response = await forwardRequest({
+                    url: `${config.AUTH_SERVICE_URL}/api/v1/users/bulk-import`,
+                    method: 'POST',
+                    authHeader,
+                    authUser,
+                    body: request.body
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) return reply.status(response.status).send(data);
+
+                return reply.send(data);
+            } catch (error) {
+                console.error('❌ AGGREGATED: Erro no handler POST /users/bulk-import:', error);
+                return reply.status(500).send({ success: false, error: 'Erro interno do servidor', code: 'INTERNAL_ERROR' });
+            }
+        }
+    );
+
+    /**
+     * GET /api/v1/users/:userId/permissions - Obtém permissões do utilizador
+     */
+    app.get<{ Params: { userId: string } }>(
+        '/api/v1/users/:userId/permissions',
+        async (request: FastifyRequest<{ Params: { userId: string } }>, reply: FastifyReply) => {
+            try {
+                const { userId } = request.params;
+                const authHeader = request.headers.authorization;
+                const authUser = (request as any).user;
+
+                const response = await forwardRequest({
+                    url: `${config.AUTH_SERVICE_URL}/api/v1/users/${userId}/permissions`,
+                    method: 'GET',
+                    authHeader,
+                    authUser
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) return reply.status(response.status).send(data);
+
+                return reply.send(data);
+            } catch (error) {
+                console.error('❌ AGGREGATED: Erro no handler GET /users/:userId/permissions:', error);
+                return reply.status(500).send({ success: false, error: 'Erro interno do servidor', code: 'INTERNAL_ERROR' });
+            }
+        }
+    );
+
+    /**
+     * PUT /api/v1/users/:userId/permissions - Atualiza permissões do utilizador
+     */
+    app.put<{ Params: { userId: string }; Body: any }>(
+        '/api/v1/users/:userId/permissions',
+        async (request: FastifyRequest<{ Params: { userId: string }; Body: any }>, reply: FastifyReply) => {
+            try {
+                const { userId } = request.params;
+                const authHeader = request.headers.authorization;
+                const authUser = (request as any).user;
+
+                const response = await forwardRequest({
+                    url: `${config.AUTH_SERVICE_URL}/api/v1/users/${userId}/permissions`,
+                    method: 'PUT',
+                    authHeader,
+                    authUser,
+                    body: request.body
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) return reply.status(response.status).send(data);
+
+                invalidateUserCache(userId);
+                return reply.send(data);
+            } catch (error) {
+                console.error('❌ AGGREGATED: Erro no handler PUT /users/:userId/permissions:', error);
+                return reply.status(500).send({ success: false, error: 'Erro interno do servidor', code: 'INTERNAL_ERROR' });
+            }
+        }
+    );
+
     /**
      * GET /api/v1/users/:userId/audit - Obtém logs de auditoria do utilizador
      * Encaminha para o auth-service

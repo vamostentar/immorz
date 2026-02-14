@@ -58,11 +58,6 @@ export async function createApp() {
     });
   });
 
-  // CORS
-  console.log('🔧 CORS Configuration:', {
-    origins: config.CORS_ORIGINS,
-    environment: config.NODE_ENV,
-  });
 
   // Helper to determine if an origin is allowed, considering www/non-www variants
   const isOriginAllowed = (origin?: string): boolean => {
@@ -92,13 +87,17 @@ export async function createApp() {
   };
 
   await app.register(import('@fastify/cors'), {
-    origin: (origin: string | undefined, callback: (err: Error | null, allow: boolean) => void) => {
-      // allow requests with no origin
+    origin: (origin: string | undefined, callback: (err: Error | null, allow: boolean | string) => void) => {
       if (!origin) return callback(null, true);
       const allowed = isOriginAllowed(origin);
-      if (allowed) return callback(null, true);
-      console.log(`🚫 CORS: Origin ${origin} not allowed. Allowed origins:`, config.CORS_ORIGINS);
-      return callback(new Error('Not allowed by CORS'), false);
+      if (allowed) {
+        // Echo the origin back explicitly instead of just true
+        return callback(null, origin);
+      }
+      
+      console.warn(`[CORS] ⛔ Origin not allowed: ${origin}`);
+      const error = new Error('Not allowed by CORS');
+      return callback(error, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -124,6 +123,26 @@ export async function createApp() {
     maxAge: 86400, // 24 hours
   });
 
+  // CRITICAL: Strip any Access-Control-Allow-Origin headers from UPSTREAM responses
+  // to prevent "multiple values" or "wildcard when credentials=true" errors in the browser.
+  app.addHook('onSend', async (request, reply, payload) => {
+    // 1. Remove ANY existing headers that might cause conflict (multiple values or wildcards from upstream)
+    reply.removeHeader('access-control-allow-origin');
+    reply.removeHeader('Access-Control-Allow-Origin');
+    reply.removeHeader('access-control-allow-credentials');
+    reply.removeHeader('Access-Control-Allow-Credentials');
+    
+    // 2. Re-apply correct origin if allowed
+    const origin = request.headers.origin;
+    if (origin && isOriginAllowed(origin)) {
+      reply.header('Access-Control-Allow-Origin', origin);
+      reply.header('Access-Control-Allow-Credentials', 'true');
+      reply.header('Vary', 'Origin');
+    }
+    
+    return payload;
+  });
+
   // Preflight OPTIONS requests são geridos automaticamente por @fastify/cors.
   // Evitamos declarar manualmente uma rota OPTIONS global para não duplicar.
 
@@ -134,83 +153,16 @@ export async function createApp() {
   //   done(null, payload); // Pass through the raw stream
   // });
 
-  // Add CORS debug hook and handle preflight OPTIONS requests here
-  app.addHook('onRequest', async (request: any, reply: any) => {
-    const origin = request.headers.origin;
-    const method = request.method;
-    const url = request.url;
 
-    if (config.ENABLE_DETAILED_LOGGING) {
-      if (origin) {
-        console.log(`🌐 CORS Request: ${method} ${url} from origin: ${origin}`);
-      }
-    }
 
-    // Handle preflight OPTIONS here to avoid declaring a duplicate OPTIONS route
-    if (method === 'OPTIONS') {
-      if (!origin) {
-        reply.status(204).send();
-        return;
-      }
-
-      // Normalize origin and consider www/non-www variants
-      let allowed = false;
-      try {
-        const incoming = new URL(origin);
-        const incomingOrigin = `${incoming.protocol}//${incoming.hostname}` + (incoming.port ? `:${incoming.port}` : '');
-        const variants = new Set<string>();
-        variants.add(incomingOrigin);
-        const host = incoming.hostname;
-        if (host.startsWith('www.')) {
-          variants.add(`${incoming.protocol}//${host.replace(/^www\./, '')}`);
-        } else {
-          variants.add(`${incoming.protocol}//www.${host}`);
-        }
-
-        for (const v of variants) {
-          if (config.CORS_ORIGINS.includes(v)) {
-            allowed = true;
-            break;
-          }
-        }
-      } catch (e) {
-        allowed = false;
-      }
-
-      if (allowed) {
-        reply.header('Access-Control-Allow-Origin', origin);
-        reply.header('Vary', 'Origin');
-        reply.header('Access-Control-Allow-Credentials', 'true');
-        reply.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
-        reply.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,X-Request-ID,X-Correlation-ID,X-API-Key,Accept,Origin,Cache-Control,Pragma');
-        reply.status(204).send();
-        return;
-      }
-
-      reply.status(403).send({ error: 'CORS Origin not allowed' });
-      return;
-    }
-  });
-
-  // Force CORS headers on every response (including errors/404)
-  app.addHook('onSend', async (request: any, reply: any, payload: any) => {
-    const origin = request.headers.origin;
-    if (origin && config.CORS_ORIGINS.includes(origin)) {
-      reply.header('Access-Control-Allow-Origin', origin);
-      reply.header('Vary', 'Origin');
-    }
-    reply.header('Access-Control-Allow-Credentials', 'true');
-    return payload;
-  });
+  // Global authentication middleware - BEFORE routes and proxy setup
+  app.addHook('preHandler', authenticateJWT);
 
   // Setup proxy routes first
   await setupProxy(app);
 
   // Register aggregated handlers for user data
   registerAggregatedHandlers(app);
-
-  // Global authentication middleware - AFTER CORS and proxy setup
-  app.addHook('preHandler', authenticateJWT);
 
   // Health check
   app.get('/health', async () => {

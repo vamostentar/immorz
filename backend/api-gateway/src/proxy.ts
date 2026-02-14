@@ -56,7 +56,7 @@ export async function setupProxy(app: FastifyInstance) {
     };
   };
 
-  // 1. AUTH SERVICE PROXY
+  // @ts-ignore
   await app.register(import('@fastify/http-proxy'), {
     upstream: config.AUTH_SERVICE_URL,
     prefix: '/api/v1/auth',

@@ -29,6 +29,7 @@ export interface EnrichedUser {
     };
     isActive: boolean;
     isEmailVerified: boolean;
+    twoFactorEnabled: boolean;
     createdAt: string;
     updatedAt: string;
 }
@@ -203,23 +204,37 @@ export function enrichObjectWithUsers<T extends Record<string, any>>(
 
 /**
  * Hook para invalidar cache quando utilizadores são atualizados
- * Registar como hook no proxy para rotas de atualização de utilizadores
+ * Registar como hook no proxy para rotas de atualização de utilizadores.
+ * 
+ * NOTA: Esta função deve ser síncrona ou não-bloqueante para evitar hangs no proxy.
+ * NUNCA aceder a request.body aqui pois pode estar drenado ou causar bloqueio na stream.
  */
-export async function onUserUpdated(
+export function onUserUpdated(
     request: FastifyRequest,
     reply: FastifyReply
-): Promise<void> {
-    // Verificar se a resposta foi bem-sucedida
+): void {
+    // Verificar se a resposta foi bem-sucedida (síncrono)
     const statusCode = reply.statusCode;
+    
     if (statusCode >= 200 && statusCode < 300) {
-        // Extrair userId do path ou body
+        // Extrair userId apenas de fontes seguras (params ou context)
+        // NÃO usar request.body pois causa hangs no proxy
         const userId =
             (request.params as any)?.userId ||
-            (request.body as any)?.id ||
             (request as any).user?.id;
 
         if (userId) {
-            invalidateUserCache(userId);
+            // Executar invalidação de forma segura
+            console.log(`🔄 UserEnricher: Invalidação de cache agendada para ${userId} (Status: ${statusCode})`);
+            
+            // Usar setImmediate para garantir que não atrasamos a stream de resposta
+            setImmediate(() => {
+                try {
+                    invalidateUserCache(userId);
+                } catch (err) {
+                    console.error(`❌ UserEnricher: Erro ao invalidar cache para ${userId}:`, err);
+                }
+            });
         }
     }
 }

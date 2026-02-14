@@ -65,7 +65,7 @@ export function ContactInfo() {
           </div>
           <div>
             <h4 className="font-semibold mb-2">Sábado</h4>
-            <p className="text-blue-100">9h00 às 19h00</p>
+            <p className="text-blue-100">9h00 às 16h00</p>
           </div>
         </div>
       </div>

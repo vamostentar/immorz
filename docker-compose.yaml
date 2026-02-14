@@ -107,8 +107,8 @@ services:
       SEED_DEFAULT_ADMIN: "true"
       DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@immorz.pt}
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD}
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
       API_URL: ${API_URL:-https://www.immorz.pt}
       EMAIL_FROM: ${AUTH_EMAIL_FROM}
       API_KEY_VALUE: ${API_KEY_VALUE}
@@ -145,8 +145,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=properties
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
       BASE_URL: ${API_URL:-https://www.immorz.pt}
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
     volumes:
       - properties_uploads:/app/uploads
     # networks:
@@ -181,8 +181,8 @@ services:
       HOST: "0.0.0.0"
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=users
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/4
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
       API_URL: ${API_URL:-https://www.immorz.pt}
       JWT_SECRET: ${JWT_SECRET}
     # networks:
@@ -217,8 +217,8 @@ services:
       HOST: "0.0.0.0"
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=settings
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/3
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
       API_URL: ${API_URL:-https://www.immorz.pt}
     # networks:
     #   - backend
@@ -254,8 +254,8 @@ services:
       S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
       S3_BUCKET_NAME: ${S3_BUCKET_NAME}
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
       API_URL: ${API_URL:-https://www.immorz.pt}
       MEDIA_STORAGE_PROVIDER: local
       UPLOAD_DIR: /app/uploads
@@ -303,8 +303,8 @@ services:
       PORT: 8081
       HOST: "0.0.0.0"
       JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
       # Service URLs
       AUTH_SERVICE_URL: http://auth:8084
       PROPERTIES_SERVICE_URL: http://properties:8082
@@ -391,6 +391,8 @@ services:
       IMAP_ENABLED: "true"
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/5
       MEDIA_SERVICE_URL: http://media:8083
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
       interval: 15s
@@ -436,8 +438,8 @@ services:
       SMTP_PASS: ${SMTP_PASS}
       SMTP_FROM: ${AUTH_EMAIL_FROM}
       SMTP_FROM_NAME: "Immorz Imobiliária"
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
       API_URL: ${API_URL:-https://www.immorz.pt}
       # Internal service URLs
       AUTH_SERVICE_URL: http://auth:8084

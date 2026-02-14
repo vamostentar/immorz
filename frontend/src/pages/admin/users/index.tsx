@@ -15,6 +15,7 @@ import {
 } from '@/components/admin/users';
 import Modal from '@/components/Modal';
 import { Toast } from '@/components/Toast';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useUserManagement } from '@/hooks/useUserManagement';
 import {
     Download,
@@ -59,6 +60,10 @@ export default function UsersManagementPage() {
         setIsImportModalOpen,
         setIsAuditModalOpen,
         setIsPermissionsModalOpen,
+
+        // Confirm dialog
+        confirmDialog,
+        setConfirmDialog,
 
         // Handlers
         handleSelectUser,
@@ -387,6 +392,16 @@ export default function UsersManagementPage() {
                         />
                     )}
                 </Modal>
+
+                {/* Confirm Dialog */}
+                <ConfirmDialog
+                    open={confirmDialog.isOpen}
+                    title={confirmDialog.title}
+                    message={confirmDialog.message}
+                    variant={confirmDialog.variant}
+                    onConfirm={confirmDialog.onConfirm}
+                    onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+                />
 
                 {/* Toast */}
                 <Toast

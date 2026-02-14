@@ -303,6 +303,12 @@ export async function authRoutes(fastify: FastifyInstance) {
         tags: ['Authentication'],
         summary: 'User logout',
         security: [{ bearerAuth: [] }],
+        body: {
+          type: 'object',
+          properties: {
+            refreshToken: { type: 'string' },
+          },
+        },
         response: {
           200: {
             description: 'Logout successful',
@@ -427,6 +433,30 @@ export async function authRoutes(fastify: FastifyInstance) {
       },
     }, authController.confirm2FA.bind(authController));
 
+    fastify.post('/2fa/disable-request', {
+      schema: {
+        tags: ['Authentication'],
+        summary: 'Request 2FA deactivation code',
+        security: [{ bearerAuth: [] }],
+        response: {
+          200: {
+            description: 'Code sent',
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  message: { type: 'string' },
+                },
+              },
+              meta: { type: 'object' },
+            },
+          },
+        },
+      },
+    }, authController.request2FADisable.bind(authController));
+
     fastify.post('/2fa/disable', {
       schema: {
         tags: ['Authentication'],
@@ -434,10 +464,9 @@ export async function authRoutes(fastify: FastifyInstance) {
         security: [{ bearerAuth: [] }],
         body: {
           type: 'object',
-          required: ['password', 'token'],
+          required: ['password'],
           properties: {
             password: { type: 'string', minLength: 8 },
-            token: { type: 'string', minLength: 6, maxLength: 6 },
           },
         },
         response: {
@@ -456,7 +485,7 @@ export async function authRoutes(fastify: FastifyInstance) {
             },
           },
           401: {
-            description: 'Invalid password or 2FA code',
+            description: 'Invalid password',
             type: 'object',
             additionalProperties: true,
           },
