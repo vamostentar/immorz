@@ -101,7 +101,7 @@ services:
       <<: *common-env
       PORT: 8084
       HOST: "0.0.0.0"
-      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=auth}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=auth
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       JWT_SECRET: ${JWT_SECRET}
       SEED_DEFAULT_ADMIN: "true"
@@ -145,7 +145,7 @@ services:
       <<: *common-env
       PORT: 8082
       HOST: "0.0.0.0"
-      DATABASE_URL: ${PROPERTIES_DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=properties}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=properties
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
       BASE_URL: ${API_URL:-https://www.immorz.pt}
       CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
@@ -182,7 +182,7 @@ services:
       <<: *common-env
       PORT: 8086
       HOST: "0.0.0.0"
-      DATABASE_URL: ${USERS_DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=users}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=users
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/4
       CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
@@ -221,7 +221,7 @@ services:
       <<: *common-env
       PORT: 8085
       HOST: "0.0.0.0"
-      DATABASE_URL: ${SETTINGS_DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=settings}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=settings
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/3
       CORS_ORIGINS: ${CORS_ORIGINS:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://immorz.pt,https://www.immorz.pt,https://app.immorz.pt,http://localhost:3000}
@@ -387,7 +387,7 @@ services:
       <<: *common-env
       PORT: 8089
       HOST: "0.0.0.0"
-      DATABASE_URL: ${ANALYTICS_DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=analytics}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=analytics
       # Service URLs for aggregation
       PROPERTIES_SERVICE_URL: http://properties:8082
       USERS_SERVICE_URL: http://users:8086
@@ -416,7 +416,7 @@ services:
       <<: *common-env
       PORT: 8090
       HOST: "0.0.0.0"
-      DATABASE_URL: ${MESSAGES_DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=messages}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=messages
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_SECURE: ${SMTP_SECURE:-false}
@@ -463,7 +463,7 @@ services:
       <<: *common-env
       PORT: 8087
       HOST: "0.0.0.0"
-      DATABASE_URL: ${NOTIFICATIONS_DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=notifications}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=notifications
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
