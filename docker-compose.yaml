@@ -27,8 +27,7 @@ services:
       # Desabilitar Traefik para PostgreSQL (serviço interno)
       - "traefik.enable=false"
     healthcheck:
-      # Use configured user for healthcheck
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} || exit 1"]
+      test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -458,10 +457,8 @@ services:
     ports:
       - "8087:8087"
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - db
+      - redis
     environment:
       <<: *common-env
       PORT: 8087
@@ -506,10 +503,8 @@ services:
         NODE_ENV: production
     restart: unless-stopped
     depends_on:
-      api-gateway:
-        condition: service_healthy
-      messages:
-        condition: service_healthy
+      - api-gateway
+      - messages
     environment:
       <<: *common-env
     # networks:
