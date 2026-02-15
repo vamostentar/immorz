@@ -300,6 +300,8 @@ services:
         condition: service_healthy
       notifications:
         condition: service_healthy
+      messages:
+        condition: service_healthy
       intelligence:
         condition: service_healthy
       analytics:
@@ -383,6 +385,12 @@ services:
     restart: unless-stopped
     depends_on:
       db:
+        condition: service_healthy
+      users:
+        condition: service_healthy
+      properties:
+        condition: service_healthy
+      messages:
         condition: service_healthy
     environment:
       <<: *common-env
