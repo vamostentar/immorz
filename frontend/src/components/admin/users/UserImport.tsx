@@ -254,7 +254,7 @@ export const UserImport: React.FC<UserImportProps> = ({ onClose, onImport }) => 
                         {importResult.data?.length} utilizadores prontos para importar
                       </div>
                       <div className="text-xs text-green-700 mt-1">
-                        Clique em "Importar" para adicionar ao sistema
+                        Clique em &quot;Importar&quot; para adicionar ao sistema
                       </div>
                     </div>
                   </div>
