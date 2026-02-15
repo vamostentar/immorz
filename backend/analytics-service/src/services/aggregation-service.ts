@@ -10,28 +10,49 @@ export class AggregationService {
   constructor(private repository: AnalyticsRepository) {}
 
   /**
+   * Utilitário para executar pedidos Axios com retries em caso de falha de rede/DNS
+   */
+  private async withRetry<T>(fn: () => Promise<T>, retries = 3, delay = 2000): Promise<T> {
+    try {
+      return await fn();
+    } catch (err: any) {
+      const isNetworkError = err.code === 'EAI_AGAIN' || err.code === 'ECONNREFUSED' || err.code === 'ECONNRESET';
+      if (retries > 0 && isNetworkError) {
+        console.log(`⚠️ Falha de comunicação. Tentando novamente em ${delay}ms... (${retries} tentativas restantes)`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.withRetry(fn, retries - 1, delay * 2);
+      }
+      throw err;
+    }
+  }
+
+  /**
    * Executa um ciclo completo de agregação (pode ser chamado via cron ou trigger)
    */
   async runAggregationCycle() {
     console.log('🔄 Iniciando ciclo de agregação de analytics...');
+    
+    // Pequeno delay no primeiro arranque para garantir que o DNS interno estabilizou
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     // Executamos cada agregação de forma isolada para que uma falha não pare as outras
     try {
-      await this.aggregatePropertyStats(today);
+      await this.withRetry(() => this.aggregatePropertyStats(today));
     } catch (err) {
       console.error('❌ Falha na agregação de Propriedades:', err);
     }
 
     try {
-      await this.aggregateUserStats(today);
+      await this.withRetry(() => this.aggregateUserStats(today));
     } catch (err) {
       console.error('❌ Falha na agregação de Utilizadores:', err);
     }
 
     try {
-      await this.aggregateLeadStats(today);
+      await this.withRetry(() => this.aggregateLeadStats(today));
     } catch (err) {
       console.error('❌ Falha na agregação de Leads:', err);
     }

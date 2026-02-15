@@ -117,6 +117,9 @@ services:
     labels:
       # Desabilitar Traefik para Auth Service (serviço interno)
       - "traefik.enable=false"
+    # volumes:
+    #   - ./backend/auth-service:/app
+    #   - /app/node_modules
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
       interval: 30s
@@ -190,6 +193,9 @@ services:
     labels:
       # Desabilitar Traefik para Users Service (serviço interno)
       - "traefik.enable=false"
+    # volumes:
+    #   - ./backend/user-service:/app
+    #   - /app/node_modules
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
       interval: 30s
@@ -282,22 +288,16 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      auth:
-        condition: service_healthy
-      properties:
-        condition: service_healthy
-      media:
-        condition: service_healthy
-      settings:
-        condition: service_healthy
-      users:
-        condition: service_healthy
-      notifications:
-        condition: service_healthy
-      intelligence:
-        condition: service_healthy
-      analytics:
-        condition: service_healthy
+      - auth
+      - properties
+      - media
+      - settings
+      - users
+      - notifications
+      - messages
+      - intelligence
+      - analytics
+
     ports:
       - "8081:8081"
     environment:
@@ -330,11 +330,16 @@ services:
     labels:
       # Desabilitar Traefik para API Gateway (serviço interno)
       - "traefik.enable=false"
+    # volumes:
+    #   - ./backend/api-gateway:/app
+    #   - /app/node_modules
     healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+
 
   # ====================================
   # Intelligence Service (AI Lead Hunter)
@@ -373,8 +378,11 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      db:
-        condition: service_healthy
+      - db
+      - users
+      - properties
+      - messages
+
     environment:
       <<: *common-env
       PORT: 8089
