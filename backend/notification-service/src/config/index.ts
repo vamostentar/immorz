@@ -22,7 +22,7 @@ export const config = {
     secure: process.env.SMTP_SECURE === 'true',
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
-    from: process.env.SMTP_FROM || 'noreply@ribeirazul.com',
+    from: process.env.SMTP_FROM || 'noreply@immorz.pt',
     fromName: process.env.SMTP_FROM_NAME || 'Ribeirazul Imobiliária',
   },
   
@@ -33,6 +33,7 @@ export const config = {
   services: {
     auth: process.env.AUTH_SERVICE_URL || 'http://localhost:8081',
     properties: process.env.PROPERTIES_SERVICE_URL || 'http://localhost:8082',
+    users: process.env.USERS_SERVICE_URL || 'http://localhost:8086',
   },
 };
 

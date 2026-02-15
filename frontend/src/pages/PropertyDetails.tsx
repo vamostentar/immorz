@@ -10,6 +10,7 @@ import { Link, useParams } from 'react-router-dom';
 export default function PropertyDetails() {
   const { id } = useParams<{ id: string }>();
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [showToast, setShowToast] = useState(false);
 
   const { data: property, isLoading: propertyLoading, error: propertyError } = useProperty(id || '');
   const { data: images = [], isLoading: imagesLoading } = usePropertyImages(id || '');
@@ -32,6 +33,33 @@ export default function PropertyDetails() {
         .finally(() => setAgentLoading(false));
     }
   }, [property?.agentId]);
+
+  const handleShare = async () => {
+    if (!property) return;
+
+    const shareData = {
+      title: property.title,
+      text: property.description?.slice(0, 100) + '...',
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.error('Erro ao partilhar:', err);
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+      } catch (err) {
+        console.error('Erro ao copiar:', err);
+      }
+    }
+  };
 
   const openImageModal = (index: number) => {
     setSelectedImageIndex(index);
@@ -220,12 +248,12 @@ export default function PropertyDetails() {
               <div className="flex flex-col items-center justify-center text-center p-2 border-l border-gray-100">
                 <Bath className="w-6 h-6 text-blue-600 mb-2" />
                 <span className="font-bold text-gray-900 text-lg">{property.bathrooms || '-'}</span>
-                <span className="text-xs text-gray-500 uppercase">Banhos</span>
+                <span className="text-xs text-gray-500 uppercase">Casas de Banho</span>
               </div>
               <div className="flex flex-col items-center justify-center text-center p-2 border-l border-gray-100">
                 <Ruler className="w-6 h-6 text-blue-600 mb-2" />
                 <span className="font-bold text-gray-900 text-lg">{property.area || '-'}</span>
-                <span className="text-xs text-gray-500 uppercase">m² Últis</span>
+                <span className="text-xs text-gray-500 uppercase">m² Úteis</span>
               </div>
               <div className="flex flex-col items-center justify-center text-center p-2 border-l border-gray-100">
                 <Home className="w-6 h-6 text-blue-600 mb-2" />
@@ -293,7 +321,10 @@ export default function PropertyDetails() {
                 </div>
                 
                 <div className="flex gap-2 mb-6">
-                  <button className="flex-1 btn bg-gray-100 text-gray-700 hover:bg-gray-200 border-0">
+                  <button 
+                    onClick={handleShare}
+                    className="flex-1 btn bg-gray-100 text-gray-700 hover:bg-gray-200 border-0"
+                  >
                     <Share2 size={18} className="mr-2" />
                     Partilhar
                   </button>
@@ -351,6 +382,16 @@ export default function PropertyDetails() {
         />
       )}
       <Footer />
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
+            <Share2 size={18} className="text-sky-400" />
+            <span className="font-medium">Link copiado para a área de transferência!</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

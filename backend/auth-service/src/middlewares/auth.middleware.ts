@@ -9,6 +9,11 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
  * Verifies JWT token and sets user information on request
  */
 export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
+  // Allow internal requests to bypass authentication
+  if (request.headers['x-internal-request'] === 'true') {
+    return;
+  }
+
   try {
     // Verify JWT token (this uses @fastify/jwt plugin)
     await request.jwtVerify();

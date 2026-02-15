@@ -61,7 +61,7 @@ export class UserProfileController {
                 preferredContactMethod: profileData.preferredContactMethod || 'EMAIL',
                 language: profileData.language || 'pt',
                 timezone: profileData.timezone || 'Europe/Lisbon',
-                profileVisibility: profileData.profileVisibility || 'PUBLIC',
+                profileVisibility: profileData.profileVisibility || 'PRIVATE',
                 allowNotifications: profileData.allowNotifications ?? true,
                 // Agent fields
                 specialties: profileData.specialties || [],
@@ -134,7 +134,7 @@ export class UserProfileController {
                     preferredContactMethod: 'EMAIL',
                     language: 'pt',
                     timezone: 'Europe/Lisbon',
-                    profileVisibility: 'PUBLIC',
+                    profileVisibility: 'PRIVATE',
                     allowMarketing: false,
                     allowNotifications: true,
                 });
@@ -220,6 +220,9 @@ export class UserProfileController {
         try {
             const userId = (request as any).user?.id;
             const updateData = (request as any).body;
+
+            console.log(`🔍 [DEBUG] User Service: updateMyProfile called for user ${userId}`);
+            console.log('🔍 [DEBUG] Received updateData:', JSON.stringify(updateData, null, 2));
 
             if (!userId) {
                 return reply.status(401).send({
@@ -314,6 +317,9 @@ export class UserProfileController {
         try {
             const userId = (request as any).params?.userId;
             const updateData = (request as any).body;
+
+            console.log(`🔍 [DEBUG] User Service: updateProfileById called for user ${userId}`);
+            console.log('🔍 [DEBUG] Received updateData:', JSON.stringify(updateData, null, 2));
 
             if (!userId) {
                 return reply.status(400).send({

@@ -2,9 +2,9 @@ import { UserController } from '@/controllers/user.controller';
 import { authenticate, requireRole } from '@/middlewares/auth.middleware';
 import { UserService } from '@/services/user.service';
 import {
-  type CreateUserRequest,
-  type UpdateUserRequest,
-  type UserListQuery,
+    type CreateUserRequest,
+    type UpdateUserRequest,
+    type UserListQuery,
 } from '@/types/auth';
 import { PrismaClient } from '@prisma/client';
 import type { FastifyInstance } from 'fastify';
@@ -36,8 +36,6 @@ const userResponseProperties = {
   linkedin: { type: 'string', nullable: true },
   facebook: { type: 'string', nullable: true },
   instagram: { type: 'string', nullable: true },
-  isProfilePublic: { type: 'boolean' },
-  isProfileApproved: { type: 'boolean' },
   twoFactorEnabled: { type: 'boolean' },
   createdAt: { type: 'string', format: 'date-time' },
   updatedAt: { type: 'string', format: 'date-time' }
@@ -137,8 +135,9 @@ export async function userRoutes(fastify: FastifyInstance) {
     const currentUserId = request.user?.id;
     const currentUserRole = request.user?.role;
 
-    // Permissions check: Owner or Admin
-    if (userId !== currentUserId && !['admin', 'super_admin'].includes(currentUserRole)) {
+    // Permissions check: Internal Request, Owner or Admin
+    const isInternal = request.headers['x-internal-request'] === 'true';
+    if (!isInternal && userId !== currentUserId && !['admin', 'super_admin'].includes(currentUserRole)) {
       return reply.status(403).send({
         success: false,
         error: 'Acesso negado. Apenas o próprio utilizador ou administradores podem aceder a estes dados.',

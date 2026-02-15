@@ -9,10 +9,12 @@ import { ApprovalEntity } from '@prisma/client';
 export class ApprovalSyncService {
   private readonly authServiceUrl: string;
   private readonly propertiesServiceUrl: string;
+  private readonly usersServiceUrl: string;
 
   constructor() {
     this.authServiceUrl = config.services.auth;
     this.propertiesServiceUrl = config.services.properties;
+    this.usersServiceUrl = config.services.users;
   }
 
   /**
@@ -47,17 +49,17 @@ export class ApprovalSyncService {
   }
 
   /**
-   * Sync agent profile approval to auth-service.
-   * Endpoint: PATCH /api/v1/admin/agents/:userId/approve
+   * Sync agent profile approval to user-service.
+   * Endpoint: PATCH /api/v1/user-profiles/:userId/approve
    */
   private async syncAgentApproval(
     userId: string,
     isApproved: boolean,
     adminToken?: string
   ): Promise<{ success: boolean; error?: string }> {
-    const url = `${this.authServiceUrl}/api/v1/admin/agents/${userId}/approve`;
+    const url = `${this.usersServiceUrl}/api/v1/user-profiles/${userId}/approve`;
     
-    logger.info({ userId, isApproved, url }, 'Syncing agent approval to auth-service');
+    logger.info({ userId, isApproved, url }, 'Syncing agent approval to user-service');
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -75,8 +77,8 @@ export class ApprovalSyncService {
 
     if (!response.ok) {
       const errorText = await response.text();
-      logger.error({ userId, status: response.status, error: errorText }, 'Auth-service sync failed');
-      return { success: false, error: `Auth service returned ${response.status}: ${errorText}` };
+      logger.error({ userId, status: response.status, error: errorText }, 'User-service sync failed');
+      return { success: false, error: `User service returned ${response.status}: ${errorText}` };
     }
 
     const data = await response.json();

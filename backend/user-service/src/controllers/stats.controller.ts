@@ -24,16 +24,14 @@ export class StatsController {
 
             // Count new agents today (proxy: profiles with specialties or experience created today)
             const newAgents = await dependencyConfig.database.userProfiles.count({
-                where: {
-                    createdAt: {
-                        gte: startOfDay
-                    },
-                    OR: [
-                        { specialties: { isEmpty: false } },
-                        { experience: { not: null } },
-                        { isProfileApproved: true }
-                    ]
-                }
+                createdAt: {
+                    gte: startOfDay
+                },
+                OR: [
+                    { specialties: { isEmpty: false } },
+                    { experience: { not: null } },
+                    { isProfileApproved: true }
+                ]
             });
 
             return reply.send({

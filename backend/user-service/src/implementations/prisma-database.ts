@@ -143,6 +143,7 @@ class PrismaUserProfileRepository implements UserProfileRepositoryInterface {
   }
 
   async update(id: string, data: UpdateUserProfileData) {
+    console.log(`💾 [DEBUG] Prisma update calling for user ${id} with data:`, JSON.stringify(data, null, 2));
     return this.prisma.userProfile.update({
       where: { id },
       data: {

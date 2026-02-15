@@ -1,10 +1,16 @@
 import { fetchPublicAgents } from '@/api/agent-queries';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-export function Navbar() {
+interface NavbarProps {
+  showBack?: boolean;
+  backLabel?: string;
+}
+
+export function Navbar({ showBack = false, backLabel = 'Voltar' }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hasAgents, setHasAgents] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPublicAgents({ limit: 1 })
@@ -19,21 +25,37 @@ export function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/90 border-b border-gray-200/50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <Link 
-            to="/" 
-            className="flex items-center gap-3 group"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          >
-            <img 
-              src="/logo.svg" 
-              alt="RibeiraZul" 
-              className="h-12 w-auto transition-transform duration-300 group-hover:scale-105"
-            />
-          </Link>
+          
+          {/* Left zone: Back button and/or Logo */}
+          <div className="flex items-center gap-4">
+            {showBack && (
+              <button
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium transition-colors group pr-4 border-r border-gray-200"
+                type="button"
+              >
+                <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span className="hidden sm:inline">{backLabel}</span>
+              </button>
+            )}
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-8">
+            <Link 
+              to="/" 
+              className="flex items-center gap-3 group"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              <img 
+                src="/logo.svg" 
+                alt="RibeiraZul" 
+                className="h-10 sm:h-12 w-auto transition-transform duration-300 group-hover:scale-105"
+              />
+            </Link>
+          </div>
+
+          {/* Right: Desktop Menu */}
+          <div className="hidden md:flex items-center justify-end gap-8">
             <a 
               href="#imoveis" 
               className="text-gray-700 hover:text-blue-600 font-medium transition-colors relative group"
@@ -66,22 +88,25 @@ export function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
-            aria-expanded={mobileMenuOpen}
-            type="button"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {mobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+              aria-expanded={mobileMenuOpen}
+              type="button"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
+
 
         {/* Mobile Menu */}
         <div className={`md:hidden transition-all duration-300 ${mobileMenuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>

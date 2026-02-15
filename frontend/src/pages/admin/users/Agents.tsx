@@ -154,6 +154,9 @@ function AgentEditForm({ user, onClose }: { user: User, onClose: () => void }) {
         if (userProfile) {
             const profile = userProfile as any;
             const profileData = profile.profile || profile;
+            
+            console.log('🔍 [DEBUG] AgentEditForm initialization - profileData:', profileData);
+            
             setFormData({
                 bio: profileData.bio || '',
                 specialties: Array.isArray(profileData.specialties) ? profileData.specialties.join(', ') : '',
@@ -161,7 +164,7 @@ function AgentEditForm({ user, onClose }: { user: User, onClose: () => void }) {
                 linkedin: profileData.linkedin || '',
                 facebook: profileData.facebook || '',
                 instagram: profileData.instagram || '',
-                isProfilePublic: !!profileData.isProfilePublic,
+                isProfilePublic: profileData.isProfilePublic ?? (profileData.profileVisibility === 'PUBLIC'),
                 isProfileApproved: !!profileData.isProfileApproved
             });
         }
@@ -172,19 +175,14 @@ function AgentEditForm({ user, onClose }: { user: User, onClose: () => void }) {
         try {
             const specialties = formData.specialties.split(',').map((s: string) => s.trim()).filter(Boolean);
             
-            // 1. Update Auth Service fields (Identity + Approval)
+            // 1. Update Auth Service fields (Base Identity)
             const identityData = {
-                bio: formData.bio,
-                specialties,
-                experience: formData.experience,
-                linkedin: formData.linkedin,
-                facebook: formData.facebook,
-                instagram: formData.instagram,
-                isProfilePublic: formData.isProfilePublic,
-                isProfileApproved: formData.isProfileApproved
+                firstName: user.firstName,
+                lastName: user.lastName,
+                phone: user.phone
             };
             
-            // 2. Update User Service fields (Extended Profile)
+            // 2. Update User Service fields (Extended Profile + Approval)
             const profileData = {
                 bio: formData.bio,
                 specialties,
@@ -192,6 +190,7 @@ function AgentEditForm({ user, onClose }: { user: User, onClose: () => void }) {
                 linkedin: formData.linkedin,
                 facebook: formData.facebook,
                 instagram: formData.instagram,
+                isProfileApproved: formData.isProfileApproved,
                 profileVisibility: formData.isProfilePublic ? 'PUBLIC' : 'PRIVATE'
             };
 

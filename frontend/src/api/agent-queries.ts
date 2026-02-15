@@ -42,15 +42,15 @@ export function flattenProfile(data: any): AgentProfile {
     const { profile, ...rest } = data;
     
     // Map profileVisibility enum from aggregator back to isProfilePublic boolean
-    let isProfilePublic = rest.isProfilePublic;
-    if (profile.profileVisibility) {
-        isProfilePublic = profile.profileVisibility === 'PUBLIC';
-    }
+    // Prioritize the nested profile object as the source of truth for visibility
+    const profileVisibility = profile.profileVisibility || rest.profileVisibility;
+    const isProfilePublic = profileVisibility === 'PUBLIC';
 
     return {
         ...rest,
         ...profile,
-        isProfilePublic: isProfilePublic ?? profile.isProfilePublic ?? rest.isProfilePublic ?? false,
+        profileVisibility: profileVisibility || 'PRIVATE',
+        isProfilePublic,
         isProfileApproved: profile.isProfileApproved ?? rest.isProfileApproved ?? false,
         twoFactorEnabled: rest.twoFactorEnabled ?? profile.twoFactorEnabled ?? false,
         // Ensure arrays are initialized
@@ -162,9 +162,7 @@ export async function updateMyProfile(data: Partial<{
 
         // 3. Special Mappings
         if (key === 'isProfilePublic') {
-            // Send boolean to Auth
-            identityData['isProfilePublic'] = value;
-            // Send enum to User
+            // Send enum to User Service
             profileData['profileVisibility'] = value ? 'PUBLIC' : 'PRIVATE';
         }
     });
