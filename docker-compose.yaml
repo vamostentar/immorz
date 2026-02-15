@@ -27,12 +27,12 @@ services:
       # Desabilitar Traefik para PostgreSQL (serviço interno)
       - "traefik.enable=false"
     healthcheck:
+      # Use hardcoded defaults instead of env vars (Coolify may not expand them)
       test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 60s
-
 
   # ====================================
   # Redis Cache
@@ -117,9 +117,9 @@ services:
     labels:
       # Desabilitar Traefik para Auth Service (serviço interno)
       - "traefik.enable=false"
-    # volumes:
-    #   - ./backend/auth-service:/app
-    #   - /app/node_modules
+    volumes:
+      - ./backend/auth-service:/app
+      - /app/node_modules
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
       interval: 30s
@@ -193,9 +193,9 @@ services:
     labels:
       # Desabilitar Traefik para Users Service (serviço interno)
       - "traefik.enable=false"
-    # volumes:
-    #   - ./backend/user-service:/app
-    #   - /app/node_modules
+    volumes:
+      - ./backend/user-service:/app
+      - /app/node_modules
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
       interval: 30s
@@ -288,16 +288,22 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      - auth
-      - properties
-      - media
-      - settings
-      - users
-      - notifications
-      - messages
-      - intelligence
-      - analytics
-
+      auth:
+        condition: service_healthy
+      properties:
+        condition: service_healthy
+      media:
+        condition: service_healthy
+      settings:
+        condition: service_healthy
+      users:
+        condition: service_healthy
+      notifications:
+        condition: service_healthy
+      intelligence:
+        condition: service_healthy
+      analytics:
+        condition: service_healthy
     ports:
       - "8081:8081"
     environment:
@@ -330,16 +336,14 @@ services:
     labels:
       # Desabilitar Traefik para API Gateway (serviço interno)
       - "traefik.enable=false"
-    # volumes:
-    #   - ./backend/api-gateway:/app
-    #   - /app/node_modules
+    volumes:
+      - ./backend/api-gateway:/app
+      - /app/node_modules
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
-
 
   # ====================================
   # Intelligence Service (AI Lead Hunter)
@@ -378,11 +382,8 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      - db
-      - users
-      - properties
-      - messages
-
+      db:
+        condition: service_healthy
     environment:
       <<: *common-env
       PORT: 8089
@@ -457,8 +458,10 @@ services:
     ports:
       - "8087:8087"
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       <<: *common-env
       PORT: 8087
@@ -503,8 +506,10 @@ services:
         NODE_ENV: production
     restart: unless-stopped
     depends_on:
-      - api-gateway
-      - messages
+      api-gateway:
+        condition: service_healthy
+      messages:
+        condition: service_healthy
     environment:
       <<: *common-env
     # networks:
