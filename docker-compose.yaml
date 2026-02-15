@@ -288,24 +288,16 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      auth:
-        condition: service_healthy
-      properties:
-        condition: service_healthy
-      media:
-        condition: service_healthy
-      settings:
-        condition: service_healthy
-      users:
-        condition: service_healthy
-      notifications:
-        condition: service_healthy
-      messages:
-        condition: service_healthy
-      intelligence:
-        condition: service_healthy
-      analytics:
-        condition: service_healthy
+      - auth
+      - properties
+      - media
+      - settings
+      - users
+      - notifications
+      - messages
+      - intelligence
+      - analytics
+
     ports:
       - "8081:8081"
     environment:
