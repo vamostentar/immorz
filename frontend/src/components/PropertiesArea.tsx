@@ -2,10 +2,12 @@ import { StatusBadge } from '@/components/Badges';
 import { Filters, useFilteredProperties } from '@/components/Filters';
 import { CardSkeleton } from '@/components/Skeleton';
 import type { Property } from '@/types';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 export function PropertiesArea({ properties, loading }: { properties: Property[]; loading: boolean }) {
   const { filters, setFilters, filtered } = useFilteredProperties(properties);
+  const { t } = useTranslation();
   
   if (loading) {
     return (
@@ -28,8 +30,8 @@ export function PropertiesArea({ properties, loading }: { properties: Property[]
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Nenhum imóvel encontrado</h3>
-          <p className="text-gray-600">Tente ajustar os filtros ou volte mais tarde para ver novos imóveis.</p>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('properties.noResults')}</h3>
+          <p className="text-gray-600">{t('properties.noResultsHint')}</p>
         </div>
       ) : (
         <div className="properties-grid">
@@ -43,6 +45,11 @@ export function PropertiesArea({ properties, loading }: { properties: Property[]
 }
 
 function PropertyCard({ property, index }: { property: Property; index: number }) {
+  const { t, i18n } = useTranslation();
+  const isEn = i18n.language?.startsWith('en');
+  const title = isEn && property.titleEn ? property.titleEn : property.title;
+  const description = isEn && property.descriptionEn ? property.descriptionEn : property.description;
+
   return (
     <div 
       className={`property-card card card-interactive animate-fade-in-up animate-delay-${(index + 1) * 100}`}
@@ -62,7 +69,7 @@ function PropertyCard({ property, index }: { property: Property; index: number }
       <div className="p-6 space-y-4">
         <div className="space-y-2">
           <h3 className="font-bold text-xl text-gray-900 leading-tight">
-            {property.title}
+            {title}
           </h3>
           <div className="flex items-center text-gray-600">
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,7 +86,7 @@ function PropertyCard({ property, index }: { property: Property; index: number }
               €{Number(property.price ?? 0).toLocaleString('pt-PT')}
             </div>
             <div className="text-xs text-gray-500">
-              {property.status === 'for_rent' ? 'por mês' : ''}
+              {property.status === 'for_rent' ? t('properties.perMonth') : ''}
             </div>
           </div>
           
@@ -87,16 +94,16 @@ function PropertyCard({ property, index }: { property: Property; index: number }
             to={`/property/${property.id}`}
             className="btn btn-primary text-sm px-4 py-2 group"
           >
-            <span>Ver Detalhes</span>
+            <span>{t('properties.viewDetails')}</span>
             <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
           </Link>
         </div>
 
-        {property.description && (
+        {description && (
           <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
-            {property.description}
+            {description}
           </p>
         )}
       </div>

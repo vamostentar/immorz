@@ -1,8 +1,12 @@
+import { useTranslation } from 'react-i18next';
+
 export function StatusBadge({ status }: { status: 'for_sale' | 'for_rent' | 'sold' }) {
-  const config: Record<string, { classes: string; labels: string; icon: React.ReactNode }> = {
+  const { t } = useTranslation();
+
+  const config: Record<string, { classes: string; labelKey: string; icon: React.ReactNode }> = {
     for_sale: {
       classes: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-      labels: 'À venda',
+      labelKey: 'badges.forSale',
       icon: (
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
@@ -11,7 +15,7 @@ export function StatusBadge({ status }: { status: 'for_sale' | 'for_rent' | 'sol
     },
     for_rent: {
       classes: 'bg-amber-100 text-amber-700 border-amber-200',
-      labels: 'Para alugar',
+      labelKey: 'badges.forRent',
       icon: (
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
@@ -20,7 +24,7 @@ export function StatusBadge({ status }: { status: 'for_sale' | 'for_rent' | 'sol
     },
     sold: {
       classes: 'bg-rose-100 text-rose-700 border-rose-200',
-      labels: 'Vendido',
+      labelKey: 'badges.sold',
       icon: (
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -29,21 +33,23 @@ export function StatusBadge({ status }: { status: 'for_sale' | 'for_rent' | 'sol
     },
   };
 
-  const { classes, labels, icon } = config[status];
+  const { classes, labelKey, icon } = config[status];
   
   return (
     <span className={`badge border ${classes} flex items-center gap-1.5`}>
       {icon}
-      {labels}
+      {t(labelKey)}
     </span>
   );
 }
 
 export function AdminStatusBadge({ status }: { status: 'ACTIVE' | 'PENDING' | 'INACTIVE' }) {
-  const config: Record<string, { classes: string; labels: string; icon: React.ReactNode }> = {
+  const { t } = useTranslation();
+
+  const config: Record<string, { classes: string; labelKey: string; icon: React.ReactNode }> = {
     ACTIVE: {
       classes: 'bg-green-100 text-green-700 border-green-200',
-      labels: 'Ativo',
+      labelKey: 'badges.active',
       icon: (
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -52,7 +58,7 @@ export function AdminStatusBadge({ status }: { status: 'ACTIVE' | 'PENDING' | 'I
     },
     PENDING: {
       classes: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-      labels: 'Pendente',
+      labelKey: 'badges.pending',
       icon: (
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -61,7 +67,7 @@ export function AdminStatusBadge({ status }: { status: 'ACTIVE' | 'PENDING' | 'I
     },
     INACTIVE: {
       classes: 'bg-red-100 text-red-700 border-red-200',
-      labels: 'Inativo',
+      labelKey: 'badges.inactive',
       icon: (
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -70,12 +76,12 @@ export function AdminStatusBadge({ status }: { status: 'ACTIVE' | 'PENDING' | 'I
     },
   };
 
-  const { classes, labels, icon } = config[status];
+  const { classes, labelKey, icon } = config[status];
   
   return (
     <span className={`badge border ${classes} flex items-center gap-1.5`}>
       {icon}
-      {labels}
+      {t(labelKey)}
     </span>
   );
 }

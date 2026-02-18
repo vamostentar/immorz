@@ -5,9 +5,11 @@ import { ImageModal } from '@/components/properties/ImageModal';
 import { PropertyContactForm } from '@/components/properties/PropertyContactForm';
 import { ArrowLeft, Bath, BedDouble, Check, Expand, Eye, Heart, Home, Info, MapPin, Ruler, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 
 export default function PropertyDetails() {
+  const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [showToast, setShowToast] = useState(false);
@@ -86,7 +88,7 @@ export default function PropertyDetails() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">A carregar propriedade...</p>
+          <p className="text-gray-600">{t('propertyDetails.loading')}</p>
         </div>
       </div>
     );
@@ -101,15 +103,21 @@ export default function PropertyDetails() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Propriedade não encontrada</h3>
-          <p className="text-gray-600 mb-6">A propriedade que procura não existe ou foi removida.</p>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('propertyDetails.notFound')}</h3>
+          <p className="text-gray-600 mb-6">{t('propertyDetails.notFoundDesc')}</p>
           <Link to="/" className="btn btn-primary">
-            Voltar à página principal
+            {t('propertyDetails.backToHome')}
           </Link>
         </div>
       </div>
     );
   }
+
+  const statusLabel = property.status === 'for_sale' 
+    ? t('propertyDetails.forSale') 
+    : property.status === 'for_rent' 
+      ? t('propertyDetails.forRent') 
+      : t('propertyDetails.sold');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -122,7 +130,7 @@ export default function PropertyDetails() {
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft size={20} />
-              <span>Voltar</span>
+              <span>{t('propertyDetails.back')}</span>
             </Link>
             <Link
               to="/"
@@ -136,9 +144,9 @@ export default function PropertyDetails() {
             </Link>
           </div>
           <div className="flex items-center gap-6">
-            <Link to="/" className="hover:text-sky-700">Imóveis</Link>
-            <Link to="#contato" className="hover:text-sky-700">Contato</Link>
-            <Link to="/admin/dashboard" className="btn btn-primary text-sm">Entrar</Link>
+            <Link to="/" className="hover:text-sky-700">{t('navbar.properties')}</Link>
+            <Link to="#contato" className="hover:text-sky-700">{t('navbar.contact')}</Link>
+            <Link to="/admin/dashboard" className="btn btn-primary text-sm">{t('navbar.login')}</Link>
           </div>
         </div>
       </nav>
@@ -155,7 +163,7 @@ export default function PropertyDetails() {
              >
                {imagesLoading ? (
                  <div className="w-full h-full flex items-center justify-center animate-pulse">
-                   <span className="text-gray-400">A carregar...</span>
+                   <span className="text-gray-400">{t('loading.default')}</span>
                  </div>
                ) : images.length > 0 ? (
                  <>
@@ -167,12 +175,12 @@ export default function PropertyDetails() {
                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
                    <button className="absolute bottom-4 right-4 bg-white/90 backdrop-blur text-gray-800 px-4 py-2 rounded-lg text-sm font-medium shadow-lg flex items-center gap-2 hover:bg-white transition-colors">
                      <Expand size={16} />
-                     Ver todas as {images.length} fotos
+                     {t('propertyDetails.viewAllPhotos', { count: images.length })}
                    </button>
                  </>
                ) : (
                  <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                   <span className="text-gray-400">Sem imagens</span>
+                   <span className="text-gray-400">{t('propertyDetails.noImages')}</span>
                  </div>
                )}
              </div>
@@ -188,7 +196,7 @@ export default function PropertyDetails() {
                    <img 
                      src={img.url} 
                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                     alt={`Miniatura ${idx + 1}`}
+                     alt={t('propertyDetails.thumbnail', { index: idx + 1 })}
                    />
                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
                  </div>
@@ -219,7 +227,7 @@ export default function PropertyDetails() {
                   property.status === 'for_rent' ? 'bg-blue-100 text-blue-700' :
                   'bg-gray-100 text-gray-700'
                 }`}>
-                  {property.status === 'for_sale' ? 'Para Venda' : property.status === 'for_rent' ? 'Para Arrendar' : 'Vendido'}
+                  {statusLabel}
                 </span>
                 <div className="flex items-center gap-2 text-gray-500 text-sm">
                    <div className="flex items-center gap-1">
@@ -230,7 +238,7 @@ export default function PropertyDetails() {
                 </div>
               </div>
 
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{property.title}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{i18n.language?.startsWith('en') && property.titleEn ? property.titleEn : property.title}</h1>
               <div className="flex items-center text-gray-600">
                 <MapPin size={18} className="mr-1 text-gray-400" />
                 <span>{property.location}</span>
@@ -243,37 +251,37 @@ export default function PropertyDetails() {
               <div className="flex flex-col items-center justify-center text-center p-2">
                 <BedDouble className="w-6 h-6 text-blue-600 mb-2" />
                 <span className="font-bold text-gray-900 text-lg">{property.bedrooms || '-'}</span>
-                <span className="text-xs text-gray-500 uppercase">Quartos</span>
+                <span className="text-xs text-gray-500 uppercase">{t('propertyDetails.bedrooms')}</span>
               </div>
               <div className="flex flex-col items-center justify-center text-center p-2 border-l border-gray-100">
                 <Bath className="w-6 h-6 text-blue-600 mb-2" />
                 <span className="font-bold text-gray-900 text-lg">{property.bathrooms || '-'}</span>
-                <span className="text-xs text-gray-500 uppercase">Casas de Banho</span>
+                <span className="text-xs text-gray-500 uppercase">{t('propertyDetails.bathrooms')}</span>
               </div>
               <div className="flex flex-col items-center justify-center text-center p-2 border-l border-gray-100">
                 <Ruler className="w-6 h-6 text-blue-600 mb-2" />
                 <span className="font-bold text-gray-900 text-lg">{property.area || '-'}</span>
-                <span className="text-xs text-gray-500 uppercase">m² Úteis</span>
+                <span className="text-xs text-gray-500 uppercase">{t('propertyDetails.area')}</span>
               </div>
               <div className="flex flex-col items-center justify-center text-center p-2 border-l border-gray-100">
                 <Home className="w-6 h-6 text-blue-600 mb-2" />
                 <span className="font-bold text-gray-900 text-lg capitalize">{property.type || '-'}</span>
-                <span className="text-xs text-gray-500 uppercase">Tipo</span>
+                <span className="text-xs text-gray-500 uppercase">{t('propertyDetails.type')}</span>
               </div>
             </div>
 
             {/* Description */}
             <div className="prose max-w-none text-gray-600">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Sobre este imóvel</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">{t('propertyDetails.aboutTitle')}</h3>
               <div className="whitespace-pre-line leading-relaxed">
-                {property.description}
+                {i18n.language?.startsWith('en') && property.descriptionEn ? property.descriptionEn : property.description}
               </div>
             </div>
 
             {/* Detailed Features */}
             {((property as any).features && (property as any).features.length > 0) && (
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Características</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">{t('propertyDetails.featuresTitle')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-6">
                   {(property as any).features.map((feature: string, idx: number) => (
                     <div key={idx} className="flex items-center text-gray-700 bg-gray-50 p-3 rounded-lg">
@@ -287,7 +295,7 @@ export default function PropertyDetails() {
 
             {/* Map */}
             <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Localização</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">{t('propertyDetails.locationTitle')}</h3>
               <div className="bg-gray-100 rounded-xl overflow-hidden h-80 relative shadow-inner">
                 <iframe 
                   width="100%" 
@@ -303,7 +311,7 @@ export default function PropertyDetails() {
               </div>
               <div className="mt-2 text-sm text-gray-500 flex items-center">
                 <Info size={14} className="mr-1" />
-                A localização no mapa é aproximada.
+                {t('propertyDetails.locationApprox')}
               </div>
             </div>
 
@@ -315,7 +323,7 @@ export default function PropertyDetails() {
               
               {/* Price Card */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div className="text-sm text-gray-500 mb-1">Preço de Venda</div>
+                <div className="text-sm text-gray-500 mb-1">{t('propertyDetails.salePrice')}</div>
                 <div className="text-4xl font-bold text-blue-900 mb-4">
                   {property.price.toLocaleString('pt-PT')}€
                 </div>
@@ -326,11 +334,11 @@ export default function PropertyDetails() {
                     className="flex-1 btn bg-gray-100 text-gray-700 hover:bg-gray-200 border-0"
                   >
                     <Share2 size={18} className="mr-2" />
-                    Partilhar
+                    {t('propertyDetails.share')}
                   </button>
                   <button className="flex-1 btn bg-gray-100 text-gray-700 hover:bg-gray-200 border-0">
                     <Heart size={18} className="mr-2" />
-                    Guardar
+                    {t('propertyDetails.save')}
                   </button>
                 </div>
 
@@ -352,10 +360,10 @@ export default function PropertyDetails() {
                     />
                     <div>
                       <div className="font-bold text-gray-900 text-sm">{agent.firstName} {agent.lastName}</div>
-                      <div className="text-xs text-gray-500">Agente Imobiliário</div>
+                      <div className="text-xs text-gray-500">{t('propertyDetails.agentRole')}</div>
                     </div>
                     <Link to={`/agent/${agent.id}`} className="ml-auto text-blue-600 hover:text-blue-800 text-xs font-bold uppercase">
-                      Ver Perfil
+                      {t('propertyDetails.viewProfile')}
                     </Link>
                   </div>
                 )}
@@ -388,7 +396,7 @@ export default function PropertyDetails() {
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className="bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
             <Share2 size={18} className="text-sky-400" />
-            <span className="font-medium">Link copiado para a área de transferência!</span>
+            <span className="font-medium">{t('propertyDetails.linkCopied')}</span>
           </div>
         </div>
       )}

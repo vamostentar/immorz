@@ -1,0 +1,318 @@
+{
+  "navbar": {
+    "properties": "Properties",
+    "team": "Team",
+    "contact": "Contact",
+    "login": "Login",
+    "back": "Back",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "about": "About Us",
+    "faq": "FAQ"
+  },
+  "hero": {
+    "badge": "✨ Excellence in Real Estate",
+    "titleLine1": "Where your",
+    "titleLine2": "dreams live",
+    "subtitle": "Leaders in real estate brokerage and construction. We turn every project into a story of success and quality.",
+    "ctaProperties": "View Properties",
+    "ctaContact": "Direct Support"
+  },
+  "properties": {
+    "title": "Exclusive",
+    "titleHighlight": "Properties",
+    "stockLabel": "Active Stock",
+    "stockUnits": "units available",
+    "noResults": "No properties found",
+    "noResultsHint": "Try adjusting the filters or check back later for new listings.",
+    "viewDetails": "View Details",
+    "perMonth": "per month"
+  },
+  "filters": {
+    "searchPlaceholder": "Location, type or description...",
+    "all": "All properties",
+    "forSale": "For sale",
+    "forRent": "For rent",
+    "sold": "Sold",
+    "clear": "Clear"
+  },
+  "badges": {
+    "forSale": "For sale",
+    "forRent": "For rent",
+    "sold": "Sold",
+    "active": "Active",
+    "pending": "Pending",
+    "inactive": "Inactive"
+  },
+  "projects": {
+    "sectionLabel": "Works & Projects",
+    "title": "Building your",
+    "titleHighlight": "future",
+    "titleSuffix": "today.",
+    "description": "We don't just broker properties, we create spaces. Our construction division ensures every detail of your new home is perfect.",
+    "yearsLabel": "Years of Construction",
+    "yearsValue": "10+"
+  },
+  "testimonials": {
+    "title": "What our clients say",
+    "items": [
+      {
+        "name": "Ricardo Ramos",
+        "role": "Investor",
+        "content": "\"RibeiraZul completely transformed my vision of real estate investment in Sintra. Exemplary professionalism.\""
+      },
+      {
+        "name": "Ana Sofia",
+        "role": "Homeowner",
+        "content": "\"From selling my old house to renovating the new one, it was a stress-free process with incredible results.\""
+      },
+      {
+        "name": "Marco Silva",
+        "role": "Entrepreneur",
+        "content": "\"The legal support and clarity at every stage of construction were fundamental to the success of my project.\""
+      }
+    ]
+  },
+  "contact": {
+    "title": "Get in Touch",
+    "subtitle": "Our specialized team is ready to help you find your dream property.",
+    "whatsappTitle": "WhatsApp",
+    "whatsappDesc": "Talk to us now",
+    "emailTitle": "Email",
+    "emailDesc": "Send your query",
+    "officeTitle": "Office",
+    "officeDesc": "Visit us in person",
+    "scheduleTitle": "Opening Hours",
+    "weekdays": "Monday to Friday",
+    "weekdaysHours": "9:00 AM to 8:00 PM",
+    "saturday": "Saturday",
+    "saturdayHours": "9:00 AM to 4:00 PM"
+  },
+  "leadForm": {
+    "sectionTitle": "Ready to find your next property?",
+    "sectionSubtitle": "Talk to our specialists and get personalized service for your needs.",
+    "formLabel": "Exclusive Service",
+    "formTitle": "Talk to a specialist",
+    "nameLabel": "Full Name",
+    "namePlaceholder": "e.g. John Smith",
+    "emailLabel": "Email",
+    "emailPlaceholder": "john@email.com",
+    "phoneLabel": "Phone / WhatsApp",
+    "phonePlaceholder": "+351 9xx xxx xxx",
+    "messageLabel": "Your Message",
+    "messagePlaceholder": "How can we help?",
+    "submit": "Send Request",
+    "submitting": "Sending...",
+    "successTitle": "Message sent!",
+    "successMessage": "Thank you for your interest. One of our specialists will contact you within 24 hours.",
+    "successCta": "Continue exploring"
+  },
+  "propertyDetails": {
+    "loading": "Loading property...",
+    "notFound": "Property not found",
+    "notFoundDesc": "The property you are looking for does not exist or has been removed.",
+    "backToHome": "Back to home page",
+    "back": "Back",
+    "forSale": "For Sale",
+    "forRent": "For Rent",
+    "sold": "Sold",
+    "bedrooms": "Bedrooms",
+    "bathrooms": "Bathrooms",
+    "area": "sq m Net",
+    "type": "Type",
+    "aboutTitle": "About this property",
+    "featuresTitle": "Features",
+    "locationTitle": "Location",
+    "locationApprox": "The location on the map is approximate.",
+    "salePrice": "Sale Price",
+    "share": "Share",
+    "save": "Save",
+    "agentRole": "Real Estate Agent",
+    "viewProfile": "View Profile",
+    "viewAllPhotos": "View all {{count}} photos",
+    "noImages": "No images",
+    "linkCopied": "Link copied to clipboard!",
+    "thumbnail": "Thumbnail {{index}}"
+  },
+  "footer": {
+    "tagline": "Turning dreams into reality",
+    "legalTitle": "Legal Information",
+    "privacy": "Privacy",
+    "terms": "Terms of Use",
+    "legal": "Legal Notice",
+    "companyTitle": "The Company",
+    "followUs": "Follow Us",
+    "copyright": "© {{year}} {{brand}}. All rights reserved."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The route you tried to access does not exist.",
+    "goHome": "Go to Home",
+    "openPanel": "Open Panel"
+  },
+  "loading": {
+    "default": "Loading..."
+  },
+  "whatsapp": {
+    "tooltip": "Chat with us on WhatsApp!"
+  },
+  "partners": {
+    "title": "Our Partners",
+    "subtitle": "We work with the best institutions to make your dream come true"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "intro": "Your privacy is crucial to us. At {{brand}}, we are committed to protecting the security and confidentiality of your personal data.",
+    "s1Title": "1. Data Controller",
+    "s1Text": "{{brand}} is the entity responsible for processing personal data collected through this website, determining the purposes and means of processing, in compliance with the General Data Protection Regulation (GDPR).",
+    "s2Title": "2. Personal Data Collected",
+    "s2Intro": "We only collect data essential for providing our real estate services, namely:",
+    "s2Items": [
+      "Contact information (name, email, phone) voluntarily provided through contact forms;",
+      "Property preferences (type of property, location, budget) for sending personalized suggestions;",
+      "Technical browsing data (IP address, device type, browser) for improving user experience."
+    ],
+    "s3Title": "3. Purpose of Processing",
+    "s3Intro": "The data collected is intended for:",
+    "s3Items": [
+      "Managing commercial relationships and responding to information or visit requests;",
+      "Disclosing real estate opportunities compatible with your profile;",
+      "Compliance with legal and regulatory obligations of real estate brokerage activity (AMI License 26172);",
+      "Continuous improvement of our services and the website."
+    ],
+    "s4Title": "4. Data Sharing and Security",
+    "s4Text1": "We do not sell your data to third parties. Data sharing occurs only when strictly necessary for closing real estate deals (e.g., Registry Offices, Banks for mortgage credit) or by legal requirement.",
+    "s4Text2": "We implement rigorous technical and organizational measures to protect your data against loss, misuse, alteration, or unauthorized access.",
+    "s5Title": "5. Data Subject Rights",
+    "s5Intro": "As a data subject, you have the right to:",
+    "s5Items": [
+      "Access, rectify, or request the deletion of your personal data;",
+      "Restrict or object to the processing of your data;",
+      "Request data portability;",
+      "Withdraw consent at any time (without compromising the lawfulness of processing carried out based on consent previously given)."
+    ],
+    "s5Text": "To exercise these rights, contact us through the forms available on the website.",
+    "s6Title": "6. Cookies and Tracking Technologies",
+    "s6Text": "We use cookies to optimize site functionality and analyze traffic. You can manage your cookie preferences in your browser settings at any time.",
+    "s7Title": "7. Policy Updates",
+    "s7Text": "We reserve the right to update this privacy policy periodically. We recommend regularly consulting this page to stay informed."
+  },
+  "terms": {
+    "title": "Terms and Conditions of Use",
+    "intro": "Welcome to the {{brand}} website. By accessing and using this site, the user agrees to comply with these Terms and Conditions, which govern the relationship between {{brand}} (AMI License 26172) and the user.",
+    "s1Title": "1. Acceptance of Terms",
+    "s1Text": "By accessing this website, the user declares having read, understood, and accepted the Terms and Conditions described herein, as well as all applicable laws and regulations. If you do not agree with any of these terms, you must immediately cease using this site.",
+    "s2Title": "2. Authorized Use and License",
+    "s2Intro": "Permission is granted to temporarily view the materials (information, software, or graphic content) on the {{brand}} website for personal, non-commercial, and transitory use only. This is a grant of license, not a transfer of title, and under this license the user may not:",
+    "s2Items": [
+      "Modify or copy the materials;",
+      "Use the materials for any commercial purpose or for public display (commercial or non-commercial);",
+      "Attempt to decompile or reverse engineer any software contained on the site;",
+      "Remove any copyright or other proprietary notations from the materials;",
+      "Transfer the materials to another person or \"mirror\" the materials on any other server."
+    ],
+    "s2Text": "This license will be automatically terminated if the user violates any of these restrictions and may be terminated by {{brand}} at any time.",
+    "s3Title": "3. Disclaimer",
+    "s3Text": "The materials on the {{brand}} website are provided \"as is\". {{brand}} endeavors to ensure the accuracy and currency of information (prices, areas, property characteristics), but does not guarantee, expressly or impliedly, the complete accuracy or reliability of the materials.",
+    "s3Note": "* Note: All property information is subject to confirmation and does not replace consultation of official documentation.",
+    "s4Title": "4. Limitation of Liability",
+    "s4Text": "In no event shall {{brand}} or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profits, or due to business interruption) arising from the use or inability to use the materials on the {{brand}} website, even if {{brand}} has been notified of the possibility of such damages.",
+    "s5Title": "5. Accuracy of Materials",
+    "s5Text": "The materials displayed on the {{brand}} website may include technical, typographical, or photographic errors. {{brand}} may make changes to the materials contained on its website at any time without prior notice, but does not commit to updating the materials.",
+    "s6Title": "6. Third-Party Links",
+    "s6Text": "{{brand}} has not reviewed all sites linked to its website and is not responsible for the content of any linked site. The inclusion of any link does not imply endorsement by {{brand}}. The use of any linked website is at the user's own risk.",
+    "s7Title": "7. Modifications",
+    "s7Text": "{{brand}} may revise these terms of service for its website at any time without prior notice. By using this site, the user agrees to be bound by the current version of these Terms and Conditions of Use.",
+    "s8Title": "8. Applicable Law",
+    "s8Text": "These terms and conditions are governed and interpreted in accordance with Portuguese law and the user irrevocably submits to the exclusive jurisdiction of the Portuguese courts."
+  },
+  "legal": {
+    "title": "Legal Information",
+    "intro": "In compliance with the duty of information provided by Law, {{brand}} provides the following legal information regarding its real estate brokerage activity.",
+    "licensingTitle": "Licensing and Registration",
+    "licensingSubtitle": "Real Estate Brokerage",
+    "licensingText": "The activity is carried out under <strong>AMI License No. 26172</strong>, issued by IMPIC, I.P. (Institute for Public Markets, Real Estate, and Construction).",
+    "licensingNote": "The validity of the license can be checked on the",
+    "licensingLink": "IMPIC",
+    "insuranceTitle": "Professional Liability Insurance",
+    "insuranceText": "To guarantee the liability arising from its professional activity, {{brand}} holds valid Professional Liability Insurance, as required by current legislation for Real Estate Brokerage activity.",
+    "ralTitle": "Alternative Dispute Resolution (ADR)",
+    "ralIntro": "Under Art. 18 of Law No. 144/2015, of September 8, it is hereby informed that, in case of dispute, the consumer has the possibility of resorting to an Alternative Consumer Dispute Resolution Entity:",
+    "ralNational": "National Scope",
+    "ralNationalBody": "CNIACC - National Center for Information and Arbitration of Consumer Conflicts",
+    "ralRegional": "Regional Scope",
+    "ralRegionalBody": "Lisbon Consumer Conflict Arbitration Center",
+    "ralNote": "For more information, visit the Consumer Portal at",
+    "complaintsTitle": "Complaints Book",
+    "complaintsText": "{{brand}} has an Electronic Complaints Book. If you wish to submit a complaint, compliment, or suggestion, you may do so through the official platform.",
+    "complaintsLink": "Check at www.livroreclamacoes.pt",
+    "amlTitle": "Anti-Money Laundering",
+    "amlText": "In compliance with Law No. 83/2017, of August 18, which establishes measures to combat money laundering and terrorist financing, {{brand}} may request identification documents from all parties involved in real estate transactions in which it participates."
+  },
+  "about": {
+    "title": "About {{brand}}",
+    "subtitle": "More than a real estate agency, we are partners in building your future.",
+    "missionTitle": "Our Mission",
+    "missionText": "Provide excellence in the real estate market, focused on transparency, integrity, and total customer satisfaction. We want to simplify the buying, selling, and renting process, making it a positive and memorable experience.",
+    "visionTitle": "Our Vision",
+    "visionText": "To be the real estate reference in our region, recognized for the quality of our service, the competence of our team, and the innovation in the solutions we present to our clients.",
+    "expLabel": "Years of Experience",
+    "clientsLabel": "Happy Families",
+    "whyChooseTitle": "Why Choose RibeiraZul?",
+    "reasons": [
+      {
+        "title": "Local Expertise",
+        "desc": "We know every street, neighborhood, and opportunity in our region like no one else."
+      },
+      {
+        "title": "Total Support",
+        "desc": "From the first contact to the deed (and beyond), we are always by your side at every step."
+      },
+      {
+        "title": "Transparency",
+        "desc": "Clear, honest, and direct communication. No small print or unpleasant surprises."
+      }
+    ],
+    "ctaTitle": "Ready to find your dream home?",
+    "ctaText": "Talk to our team today and find out how we can help.",
+    "ctaButton": "Contact Us"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Have questions? We have answers. Explore the most common questions from our clients.",
+    "items": [
+      {
+        "question": "How does the property buying process work?",
+        "answer": "The process begins with choosing the property. After that, we make an offer, negotiate values, and upon agreement, sign the Promissory Purchase and Sale Agreement (CPCV). Finally, we carry out the Public Deed, where the property officially passes to your name."
+      },
+      {
+        "question": "What documents are needed to sell my property?",
+        "answer": "Generally, you need the Urban Property Booklet, Land Registry Certificate, Usage License, Energy Certificate, Property Plan, and identification documents of the owners."
+      },
+      {
+        "question": "Does RibeiraZul handle bank financing?",
+        "answer": "Yes! We have partnerships with several banking entities (such as CGD, Novo Banco, BPI, etc.) and help throughout the checking process, guaranteeing the best conditions for you."
+      },
+      {
+        "question": "How long does it take to sell a house?",
+        "answer": "The time varies depending on the market, location, and price. However, our team uses advanced marketing strategies to ensure maximum exposure and sell your property in the shortest possible time."
+      },
+      {
+        "question": "Do you only do brokerage or also construction?",
+        "answer": "We do both! In addition to real estate brokerage, we have a team specialized in construction and renovation, allowing us to offer turnkey solutions for those buying houses in need of intervention."
+      }
+    ],
+    "supportTitle": "Still have questions?",
+    "supportText": "If you didn't find the answer you were looking for, don't hesitate to contact our support team.",
+    "supportButton": "Talk to the Team"
+  },
+  "team": {
+    "backToHome": "Back to Home",
+    "title": "Meet our Team",
+    "subtitle": "Experts dedicated to finding the perfect property for you, with transparency and excellence.",
+    "yearsExp": "years of experience",
+    "viewProfile": "View Profile",
+    "emptyTitle": "Our team is growing",
+    "emptyText": "We currently do not have public profiles available, but our experts continue to work for you. Check back soon!"
+  }
+}

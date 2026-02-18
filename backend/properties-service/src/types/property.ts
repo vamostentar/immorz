@@ -41,6 +41,19 @@ export const propertyCreateSchema = z.object({
     .trim()
     .optional(),
 
+  // Multilingual fields (EN)
+  titleEn: z
+    .string()
+    .max(config.MAX_PROPERTY_TITLE_LENGTH, `Title (EN) must not exceed ${config.MAX_PROPERTY_TITLE_LENGTH} characters`)
+    .trim()
+    .optional(),
+
+  descriptionEn: z
+    .string()
+    .max(config.MAX_PROPERTY_DESCRIPTION_LENGTH, `Description (EN) must not exceed ${config.MAX_PROPERTY_DESCRIPTION_LENGTH} characters`)
+    .trim()
+    .optional(),
+
   // New fields for better real estate functionality
   bedrooms: z.number().int().min(0).max(20).optional(),
   bathrooms: z.number().int().min(0).max(20).optional(),
@@ -102,6 +115,19 @@ export const propertyUpdateSchema = z.object({
   description: z
     .string()
     .max(config.MAX_PROPERTY_DESCRIPTION_LENGTH, `Description must not exceed ${config.MAX_PROPERTY_DESCRIPTION_LENGTH} characters`)
+    .trim()
+    .optional(),
+
+  // Multilingual fields (EN)
+  titleEn: z
+    .string()
+    .max(config.MAX_PROPERTY_TITLE_LENGTH, `Title (EN) must not exceed ${config.MAX_PROPERTY_TITLE_LENGTH} characters`)
+    .trim()
+    .optional(),
+
+  descriptionEn: z
+    .string()
+    .max(config.MAX_PROPERTY_DESCRIPTION_LENGTH, `Description (EN) must not exceed ${config.MAX_PROPERTY_DESCRIPTION_LENGTH} characters`)
     .trim()
     .optional(),
 
@@ -192,6 +218,8 @@ export const propertyResponseSchema = z.object({
   type: PropertyTypeSchema.nullable(),
   imageUrl: z.string().nullable(),
   description: z.string().nullable(),
+  titleEn: z.string().nullable(),
+  descriptionEn: z.string().nullable(),
   bedrooms: z.number().int().nullable(),
   bathrooms: z.number().int().nullable(),
   area: z.number().nullable(),

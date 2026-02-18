@@ -3,7 +3,10 @@ import { Award, CheckCircle, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { useTranslation } from 'react-i18next';
+
 export function MeetOurTeam() {
+    const { t } = useTranslation();
     const [agents, setAgents] = useState<AgentProfile[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -36,9 +39,9 @@ export function MeetOurTeam() {
                 <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
                     <User size={32} className="text-gray-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">A nossa equipa está a crescer</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('team.emptyTitle')}</h3>
                 <p className="text-gray-600 max-w-md mx-auto">
-                    De momento não temos perfis públicos disponíveis, mas os nossos especialistas continuam a trabalhar para si. Volte em breve!
+                    {t('team.emptyText')}
                 </p>
             </div>
         );
@@ -49,10 +52,10 @@ export function MeetOurTeam() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-16 animate-fade-in-up">
                     <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                        Conheça a nossa Equipa
+                        {t('team.title')}
                     </h2>
                     <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Especialistas dedicados a encontrar o imóvel perfeito para si, com transparência e excelência.
+                        {t('team.subtitle')}
                     </p>
                 </div>
 
@@ -86,7 +89,7 @@ export function MeetOurTeam() {
                             
                             <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
                                 <Award size={14} className="text-blue-500" />
-                                <span>{agent.experience || 0} anos de experiência</span>
+                                <span>{agent.experience || 0} {t('team.yearsExp')}</span>
                             </div>
 
                             <div className="mt-4 flex flex-wrap justify-center gap-1">
@@ -101,7 +104,7 @@ export function MeetOurTeam() {
                             </div>
 
                             <div className="mt-6 w-full pt-4 border-t border-gray-200 flex items-center justify-center text-blue-600 font-medium text-sm gap-2">
-                                <span>Ver Perfil</span>
+                                <span>{t('team.viewProfile')}</span>
                                 <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>

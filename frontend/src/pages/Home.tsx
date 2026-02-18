@@ -8,6 +8,8 @@ import { ProjectItem } from '@/components/ProjectItem';
 import { PropertiesArea } from '@/components/PropertiesArea';
 import { ListSkeleton } from '@/components/Skeleton';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 
 function TestimonialCard({ name, role, content, delay }: { name: string, role: string, content: string, delay: string }) {
   return (
@@ -34,6 +36,7 @@ function TestimonialCard({ name, role, content, delay }: { name: string, role: s
 }
 
 function LeadForm() {
+  const { t } = useTranslation();
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,10 +118,10 @@ function LeadForm() {
     <div className="text-center space-y-12 animate-fade-in-up">
       <div>
         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-          Pronto para encontrar seu próximo imóvel?
+          {t('leadForm.sectionTitle')}
         </h2>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Fale com nossos especialistas e receba atendimento personalizado para suas necessidades.
+          {t('leadForm.sectionSubtitle')}
         </p>
       </div>
 
@@ -132,41 +135,41 @@ function LeadForm() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h3 className="text-3xl font-black text-gray-900 mb-2">Mensagem enviada!</h3>
+                <h3 className="text-3xl font-black text-gray-900 mb-2">{t('leadForm.successTitle')}</h3>
                 <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                  Obrigado pelo seu interesse. Um dos nossos especialistas entrará em contacto consigo nas próximas 24 horas.
+                  {t('leadForm.successMessage')}
                 </p>
                 <a
                   href="#imoveis"
                   className="btn btn-primary px-10 py-4 rounded-2xl inline-flex items-center gap-2"
                 >
-                  Continuar a explorar
+                  {t('leadForm.successCta')}
                 </a>
               </div>
             ) : (
               <>
                 <div className="text-center space-y-2 mb-10">
-                  <span className="text-blue-600 font-bold uppercase tracking-widest text-xs">Atendimento Exclusivo</span>
+                  <span className="text-blue-600 font-bold uppercase tracking-widest text-xs">{t('leadForm.formLabel')}</span>
                   <h3 className="text-3xl md:text-4xl font-black text-gray-900">
-                    Fale com um especialista
+                    {t('leadForm.formTitle')}
                   </h3>
                 </div>
                 <form onSubmit={onSubmit} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-400 uppercase ml-2">Nome Completo</label>
+                      <label className="text-xs font-bold text-gray-400 uppercase ml-2">{t('leadForm.nameLabel')}</label>
                       <input
                         name="name"
-                        placeholder="Ex: João Silva"
+                        placeholder={t('leadForm.namePlaceholder')}
                         className="input !bg-gray-50/50 !border-none !rounded-2xl"
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-400 uppercase ml-2">Email</label>
+                      <label className="text-xs font-bold text-gray-400 uppercase ml-2">{t('leadForm.emailLabel')}</label>
                       <input
                         name="email"
-                        placeholder="joao@email.com"
+                        placeholder={t('leadForm.emailPlaceholder')}
                         type="email"
                         className="input !bg-gray-50/50 !border-none !rounded-2xl"
                         required
@@ -175,20 +178,20 @@ function LeadForm() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-2">Telefone / WhatsApp</label>
+                    <label className="text-xs font-bold text-gray-400 uppercase ml-2">{t('leadForm.phoneLabel')}</label>
                     <input
                       name="phone"
-                      placeholder="+351 9xx xxx xxx"
+                      placeholder={t('leadForm.phonePlaceholder')}
                       className="input !bg-gray-50/50 !border-none !rounded-2xl"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-2">Sua Mensagem</label>
+                    <label className="text-xs font-bold text-gray-400 uppercase ml-2">{t('leadForm.messageLabel')}</label>
                     <textarea
                       name="message"
-                      placeholder="Como podemos ajudar?"
+                      placeholder={t('leadForm.messagePlaceholder')}
                       className="input !bg-gray-50/50 !border-none !rounded-2xl resize-none"
                       rows={5}
                       required
@@ -212,11 +215,11 @@ function LeadForm() {
                     {submitting ? (
                       <div className="flex items-center gap-3">
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>Enviando...</span>
+                        <span>{t('leadForm.submitting')}</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-3">
-                        <span>Enviar Solicitação</span>
+                        <span>{t('leadForm.submit')}</span>
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
@@ -234,9 +237,26 @@ function LeadForm() {
 }
 
 export default function Home() {
+  const { t } = useTranslation();
   const { data: propsResp, isLoading: propsLoading } = useProperties({ limit: 12, sortBy: 'createdAt', sortOrder: 'desc' });
   const properties = Array.isArray(propsResp) ? propsResp : (propsResp?.data ?? []);
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
+
+  // Buscar testemunhos das traduções (array de objetos)
+  const testimonials = t('testimonials.items', { returnObjects: true }) as Array<{ name: string; role: string; content: string }>;
+
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.getElementById(location.hash.replace('#', ''));
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  }, [location]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -251,20 +271,20 @@ export default function Home() {
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
             <div className="animate-fade-in-up space-y-4">
               <h2 className="text-4xl md:text-5xl lg:text-7xl font-black text-gray-900 tracking-tight">
-                Propriedades <span className="text-blue-600 italic">Exclusivas</span>
+                {t('properties.title')} <span className="text-blue-600 italic">{t('properties.titleHighlight')}</span>
               </h2>
               <div className="w-20 h-1.5 bg-blue-600 rounded-full" />
             </div>
             <div className="animate-fade-in-up">
                <div className="glass px-8 py-4 rounded-3xl flex items-center gap-4 border border-blue-100/50 shadow-blue-500/5 transition-transform hover:scale-105 duration-300">
                  <div className="flex flex-col">
-                   <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-none mb-1">Stock Ativo</span>
+                   <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-none mb-1">{t('properties.stockLabel')}</span>
                    <span className="text-3xl font-black text-blue-600 leading-none">
                     {propsLoading ? '...' : properties.length}
                    </span>
                  </div>
                  <div className="h-8 w-px bg-blue-100 mx-2" />
-                 <span className="text-xs font-bold text-gray-500 max-w-[80px] leading-tight">unidades disponíveis</span>
+                 <span className="text-xs font-bold text-gray-500 max-w-[80px] leading-tight">{t('properties.stockUnits')}</span>
                </div>
             </div>
           </div>
@@ -284,19 +304,19 @@ export default function Home() {
                 alt="Construção"
               />
               <div className="absolute -bottom-10 -right-10 glass p-8 rounded-3xl animate-float">
-                <div className="text-4xl font-black text-blue-600 mb-1">10+</div>
-                <div className="text-sm font-bold text-gray-600 uppercase">Anos de Obra</div>
+                <div className="text-4xl font-black text-blue-600 mb-1">{t('projects.yearsValue')}</div>
+                <div className="text-sm font-bold text-gray-600 uppercase">{t('projects.yearsLabel')}</div>
               </div>
             </div>
             <div className="space-y-8 animate-fade-in-up">
               <div className="space-y-4">
-                <span className="text-blue-600 font-black uppercase tracking-[0.2em] text-sm italic">Obras & Projetos</span>
+                <span className="text-blue-600 font-black uppercase tracking-[0.2em] text-sm italic">{t('projects.sectionLabel')}</span>
                 <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
-                  Construindo o seu <br />
-                  <span className="text-blue-600">futuro</span> hoje.
+                  {t('projects.title')} <br />
+                  <span className="text-blue-600">{t('projects.titleHighlight')}</span> {t('projects.titleSuffix')}
                 </h2>
                 <p className="text-xl text-gray-500 leading-relaxed font-light">
-                  Não apenas mediamos imóveis, nós criamos espaços. A nossa divisão de obras assegura que cada detalhe do seu novo lar é perfeito.
+                  {t('projects.description')}
                 </p>
               </div>
 
@@ -318,33 +338,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials Section - NEW PREMIUM SECTION */}
+      {/* Testimonials Section */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-20 animate-fade-in-up">
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900">A voz dos nossos clientes</h2>
+            <h2 className="text-4xl md:text-5xl font-black text-gray-900">{t('testimonials.title')}</h2>
             <div className="w-24 h-1 bg-blue-600 mx-auto rounded-full" />
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <TestimonialCard 
-              name="Ricardo Ramos" 
-              role="Investidor" 
-              content="&quot;A RibeiraZul transformou completamente a minha visão de investimento imobiliário em Sintra. Profissionalismo exemplar.&quot;"
-              delay="animate-delay-100"
-            />
-            <TestimonialCard 
-              name="Ana Sofia" 
-              role="Proprietária" 
-              content="&quot;Desde a venda da minha casa antiga até à remodelação da nova, foi um processo sem stress e com resultados incríveis.&quot;"
-              delay="animate-delay-200"
-            />
-            <TestimonialCard 
-              name="Marco Silva" 
-              role="Empresário" 
-              content="&quot;O acompanhamento jurídico e a clareza em todas as etapas de construção foram fundamentais para o sucesso do meu projeto.&quot;"
-              delay="animate-delay-300"
-            />
+            {Array.isArray(testimonials) && testimonials.map((item, idx) => (
+              <TestimonialCard 
+                key={idx}
+                name={item.name} 
+                role={item.role} 
+                content={item.content}
+                delay={`animate-delay-${(idx + 1) * 100}`}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -372,7 +383,7 @@ export default function Home() {
         className="fixed bottom-8 right-8 z-50 group flex items-center gap-3"
       >
         <div className="bg-white px-4 py-2 rounded-xl shadow-xl border border-gray-100 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300 text-sm font-bold text-gray-900 pointer-events-none">
-          Fale connosco no WhatsApp!
+          {t('whatsapp.tooltip')}
         </div>
         <div className="w-16 h-16 bg-[#25D366] rounded-2xl shadow-2xl flex items-center justify-center text-white animate-pulse-soft hover:scale-110 transition-transform duration-300">
           <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
@@ -385,8 +396,8 @@ export default function Home() {
       <section className="py-16 bg-gray-50 border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Nossos Parceiros</h2>
-            <p className="text-gray-500">Trabalhamos com as melhores instituições para realizar o seu sonho</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('partners.title')}</h2>
+            <p className="text-gray-500">{t('partners.subtitle')}</p>
           </div>
           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-75 grayscale hover:grayscale-0 transition-all duration-500">
             {/* Caixa Geral de Depósitos */}
@@ -429,4 +440,3 @@ export default function Home() {
     </div>
   );
 }
-

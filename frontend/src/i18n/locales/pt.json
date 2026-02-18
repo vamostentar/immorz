@@ -1,0 +1,318 @@
+{
+  "navbar": {
+    "properties": "Imóveis",
+    "team": "Equipa",
+    "contact": "Contato",
+    "login": "Entrar",
+    "back": "Voltar",
+    "openMenu": "Abrir menu",
+    "closeMenu": "Fechar menu",
+    "about": "Sobre Nós",
+    "faq": "FAQ"
+  },
+  "hero": {
+    "badge": "✨ Excelência no Mercado Imobiliário",
+    "titleLine1": "Onde os seus",
+    "titleLine2": "sonhos habitam",
+    "subtitle": "Líderes em mediação imobiliária e construção. Transformamos cada projeto numa história de sucesso e qualidade.",
+    "ctaProperties": "Ver Imóveis",
+    "ctaContact": "Atendimento Direto"
+  },
+  "properties": {
+    "title": "Propriedades",
+    "titleHighlight": "Exclusivas",
+    "stockLabel": "Stock Ativo",
+    "stockUnits": "unidades disponíveis",
+    "noResults": "Nenhum imóvel encontrado",
+    "noResultsHint": "Tente ajustar os filtros ou volte mais tarde para ver novos imóveis.",
+    "viewDetails": "Ver Detalhes",
+    "perMonth": "por mês"
+  },
+  "filters": {
+    "searchPlaceholder": "Localização, tipo ou descrição...",
+    "all": "Todos os imóveis",
+    "forSale": "À venda",
+    "forRent": "Para alugar",
+    "sold": "Vendido",
+    "clear": "Limpar"
+  },
+  "badges": {
+    "forSale": "À venda",
+    "forRent": "Para alugar",
+    "sold": "Vendido",
+    "active": "Ativo",
+    "pending": "Pendente",
+    "inactive": "Inativo"
+  },
+  "projects": {
+    "sectionLabel": "Obras & Projetos",
+    "title": "Construindo o seu",
+    "titleHighlight": "futuro",
+    "titleSuffix": "hoje.",
+    "description": "Não apenas mediamos imóveis, nós criamos espaços. A nossa divisão de obras assegura que cada detalhe do seu novo lar é perfeito.",
+    "yearsLabel": "Anos de Obra",
+    "yearsValue": "10+"
+  },
+  "testimonials": {
+    "title": "A voz dos nossos clientes",
+    "items": [
+      {
+        "name": "Ricardo Ramos",
+        "role": "Investidor",
+        "content": "\"A RibeiraZul transformou completamente a minha visão de investimento imobiliário em Sintra. Profissionalismo exemplar.\""
+      },
+      {
+        "name": "Ana Sofia",
+        "role": "Proprietária",
+        "content": "\"Desde a venda da minha casa antiga até à remodelação da nova, foi um processo sem stress e com resultados incríveis.\""
+      },
+      {
+        "name": "Marco Silva",
+        "role": "Empresário",
+        "content": "\"O acompanhamento jurídico e a clareza em todas as etapas de construção foram fundamentais para o sucesso do meu projeto.\""
+      }
+    ]
+  },
+  "contact": {
+    "title": "Entre em Contato",
+    "subtitle": "A nossa equipa especializada está pronta para ajudar a encontrar o imóvel dos seus sonhos.",
+    "whatsappTitle": "WhatsApp",
+    "whatsappDesc": "Fale connosco agora",
+    "emailTitle": "Email",
+    "emailDesc": "Envie sua dúvida",
+    "officeTitle": "Escritório",
+    "officeDesc": "Visite-nos pessoalmente",
+    "scheduleTitle": "Horário de Atendimento",
+    "weekdays": "Segunda a Sexta",
+    "weekdaysHours": "9h00 às 20h00",
+    "saturday": "Sábado",
+    "saturdayHours": "9h00 às 16h00"
+  },
+  "leadForm": {
+    "sectionTitle": "Pronto para encontrar seu próximo imóvel?",
+    "sectionSubtitle": "Fale com nossos especialistas e receba atendimento personalizado para suas necessidades.",
+    "formLabel": "Atendimento Exclusivo",
+    "formTitle": "Fale com um especialista",
+    "nameLabel": "Nome Completo",
+    "namePlaceholder": "Ex: João Silva",
+    "emailLabel": "Email",
+    "emailPlaceholder": "joao@email.com",
+    "phoneLabel": "Telefone / WhatsApp",
+    "phonePlaceholder": "+351 9xx xxx xxx",
+    "messageLabel": "Sua Mensagem",
+    "messagePlaceholder": "Como podemos ajudar?",
+    "submit": "Enviar Solicitação",
+    "submitting": "Enviando...",
+    "successTitle": "Mensagem enviada!",
+    "successMessage": "Obrigado pelo seu interesse. Um dos nossos especialistas entrará em contacto consigo nas próximas 24 horas.",
+    "successCta": "Continuar a explorar"
+  },
+  "propertyDetails": {
+    "loading": "A carregar propriedade...",
+    "notFound": "Propriedade não encontrada",
+    "notFoundDesc": "A propriedade que procura não existe ou foi removida.",
+    "backToHome": "Voltar à página principal",
+    "back": "Voltar",
+    "forSale": "Para Venda",
+    "forRent": "Para Arrendar",
+    "sold": "Vendido",
+    "bedrooms": "Quartos",
+    "bathrooms": "Casas de Banho",
+    "area": "m² Úteis",
+    "type": "Tipo",
+    "aboutTitle": "Sobre este imóvel",
+    "featuresTitle": "Características",
+    "locationTitle": "Localização",
+    "locationApprox": "A localização no mapa é aproximada.",
+    "salePrice": "Preço de Venda",
+    "share": "Partilhar",
+    "save": "Guardar",
+    "agentRole": "Agente Imobiliário",
+    "viewProfile": "Ver Perfil",
+    "viewAllPhotos": "Ver todas as {{count}} fotos",
+    "noImages": "Sem imagens",
+    "linkCopied": "Link copiado para a área de transferência!",
+    "thumbnail": "Miniatura {{index}}"
+  },
+  "footer": {
+    "tagline": "Transformando sonhos em realidade",
+    "legalTitle": "Informação Legal",
+    "privacy": "Privacidade",
+    "terms": "Termos de Utilização",
+    "legal": "Informações Legais",
+    "companyTitle": "A Empresa",
+    "followUs": "Siga-nos",
+    "copyright": "© {{year}} {{brand}}. Todos os direitos reservados."
+  },
+  "notFound": {
+    "title": "Página não encontrada",
+    "description": "A rota que tentou aceder não existe.",
+    "goHome": "Ir para a Home",
+    "openPanel": "Abrir Painel"
+  },
+  "loading": {
+    "default": "A carregar..."
+  },
+  "whatsapp": {
+    "tooltip": "Fale connosco no WhatsApp!"
+  },
+  "partners": {
+    "title": "Nossos Parceiros",
+    "subtitle": "Trabalhamos com as melhores instituições para realizar o seu sonho"
+  },
+  "privacy": {
+    "title": "Política de Privacidade",
+    "intro": "A sua privacidade é crucial para nós. Na {{brand}}, comprometemo-nos a proteger a segurança e a confidencialidade dos seus dados pessoais.",
+    "s1Title": "1. Responsável pelo Tratamento de Dados",
+    "s1Text": "A {{brand}} é a entidade responsável pelo tratamento dos dados pessoais recolhidos através deste website, determinando as finalidades e os meios de tratamento dos mesmos, em conformidade com o Regulamento Geral sobre a Proteção de Dados (RGPD).",
+    "s2Title": "2. Dados Pessoais Recolhidos",
+    "s2Intro": "Recolhemos apenas os dados essenciais para a prestação dos nossos serviços imobiliários, nomeadamente:",
+    "s2Items": [
+      "Informação de contacto (nome, email, telefone) fornecida voluntariamente nos formulários de contacto;",
+      "Preferências imobiliárias (tipo de imóvel, localização, orçamento) para envio de sugestões personalizadas;",
+      "Dados técnicos de navegação (endereço IP, tipo de dispositivo, navegador) para melhoria da experiência do utilizador."
+    ],
+    "s3Title": "3. Finalidades do Tratamento",
+    "s3Intro": "Os dados recolhidos destinam-se a:",
+    "s3Items": [
+      "Gestão da relação comercial e resposta a pedidos de informação ou visita;",
+      "Divulgação de oportunidades imobiliárias compatíveis com o seu perfil;",
+      "Cumprimento de obrigações legais e regulamentares da atividade de mediação imobiliária (Licença AMI 26172);",
+      "Melhoria contínua dos nossos serviços e do website."
+    ],
+    "s4Title": "4. Partilha e Segurança de Dados",
+    "s4Text1": "Não comercializamos os seus dados com terceiros. A partilha de dados ocorre apenas quando estritamente necessária para a conclusão de negócios imobiliários (ex: Conservatórias, Bancos para crédito habitação) ou por imposição legal.",
+    "s4Text2": "Implementamos medidas técnicas e organizativas rigorosas para proteger os seus dados contra a perda, uso indevido, alteração ou acesso não autorizado.",
+    "s5Title": "5. Direitos do Titular dos Dados",
+    "s5Intro": "Enquanto titular dos dados, tem o direito a:",
+    "s5Items": [
+      "Aceder, retificar ou solicitar a eliminação dos seus dados pessoais;",
+      "Limitar ou opor-se ao tratamento dos seus dados;",
+      "Solicitar a portabilidade dos dados;",
+      "Retirar o consentimento a qualquer momento (sem comprometer a licitude do tratamento efetuado com base no consentimento previamente dado)."
+    ],
+    "s5Text": "Para exercer estes direitos, contacte-nos através dos formulários disponíveis no site.",
+    "s6Title": "6. Cookies e Tecnologias de Rastreio",
+    "s6Text": "Utilizamos cookies para otimizar a funcionalidade do site e analisar o tráfego. Pode gerir as suas preferências de cookies nas definições do seu navegador a qualquer momento.",
+    "s7Title": "7. Atualizações à Política",
+    "s7Text": "Reservamo-nos o direito de atualizar esta política de privacidade periodicamente. Recomendamos a consulta regular desta página para se manter informado."
+  },
+  "terms": {
+    "title": "Termos e Condições de Utilização",
+    "intro": "Bem-vindo ao website da {{brand}}. Ao aceder e utilizar este site, o utilizador concorda em cumprir os presentes Termos e Condições, que regem a relação entre a {{brand}} (Licença AMI 26172) e o utilizador.",
+    "s1Title": "1. Aceitação dos Termos",
+    "s1Text": "Ao aceder a este website, o utilizador declara ter lido, compreendido e aceite os Termos e Condições aqui descritos, bem como todas as leis e regulamentos aplicáveis. Se não concordar com algum destes termos, deve cessar imediatamente a utilização deste site.",
+    "s2Title": "2. Uso Autorizado e Licença",
+    "s2Intro": "É concedida permissão para visualizar temporariamente os materiais (informações, software ou conteúdos gráficos) no site da {{brand}} apenas para uso pessoal, não comercial e transitório. Esta é uma concessão de licença, não uma transferência de título, e sob esta licença o utilizador não pode:",
+    "s2Items": [
+      "Modificar ou copiar os materiais;",
+      "Utilizar os materiais para qualquer finalidade comercial ou para exibição pública (comercial ou não comercial);",
+      "Tentar descompilar ou fazer engenharia reversa de qualquer software contido no site;",
+      "Remover quaisquer direitos de autor ou outras anotações de propriedade dos materiais;",
+      "Transferir os materiais para outra pessoa ou \"espelhar\" os materiais em qualquer outro servidor."
+    ],
+    "s2Text": "Esta licença será automaticamente terminada se o utilizador violar alguma destas restrições e poderá ser terminada pela {{brand}} a qualquer momento.",
+    "s3Title": "3. Isenção de Responsabilidade",
+    "s3Text": "Os materiais no site da {{brand}} são fornecidos \"como estão\". A {{brand}} procura garantir a exatidão e atualização da informação (preços, áreas, características dos imóveis), mas não garante, expressa ou implicitamente, a precisão completa ou fiabilidade dos materiais.",
+    "s3Note": "* Nota: Todas as informações sobre imóveis estão sujeitas a confirmação e não dispensam a consulta da documentação oficial.",
+    "s4Title": "4. Limitação de Responsabilidade",
+    "s4Text": "Em caso algum a {{brand}} ou os seus fornecedores serão responsáveis por quaisquer danos (incluindo, sem limitação, danos por perda de dados ou lucros, ou devido a interrupção da atividade) decorrentes do uso ou da incapacidade de usar os materiais no site da {{brand}}, mesmo que a {{brand}} tenha sido notificada da possibilidade de tais danos.",
+    "s5Title": "5. Precisão dos Materiais",
+    "s5Text": "Os materiais exibidos no site da {{brand}} podem incluir erros técnicos, tipográficos ou fotográficos. A {{brand}} pode fazer alterações nos materiais contidos no seu site a qualquer momento, sem aviso prévio, mas não se compromete a atualizar os materiais.",
+    "s6Title": "6. Links para Terceiros",
+    "s6Text": "A {{brand}} não reviu todos os sites ligados ao seu site e não é responsável pelo conteúdo de nenhum site vinculado. A inclusão de qualquer link não implica o endosso pela {{brand}}. O uso de qualquer site vinculado é por conta e risco do utilizador.",
+    "s7Title": "7. Modificações",
+    "s7Text": "A {{brand}} pode rever estes termos de serviço para o seu site a qualquer momento, sem aviso prévio. Ao usar este site, o utilizador concorda em ficar vinculado à versão atual destes Termos e Condições de Utilização.",
+    "s8Title": "8. Lei Aplicável",
+    "s8Text": "Estes termos e condições são regidos e interpretados de acordo com a lei Portuguesa e o utilizador submete-se irrevogavelmente à jurisdição exclusiva dos tribunais portugueses."
+  },
+  "legal": {
+    "title": "Informações Legais",
+    "intro": "Em cumprimento do dever de informação previsto na Lei, a {{brand}} disponibiliza a seguinte informação legal referente à sua atividade de mediação imobiliária.",
+    "licensingTitle": "Licenciamento e Registo",
+    "licensingSubtitle": "Mediação Imobiliária",
+    "licensingText": "A atividade é exercida ao abrigo da <strong>Licença AMI nº 26172</strong>, emitida pelo IMPIC, I.P. (Instituto dos Mercados Públicos, do Imobiliário e da Construção).",
+    "licensingNote": "A validade da licença pode ser consultada no site do",
+    "licensingLink": "IMPIC",
+    "insuranceTitle": "Seguro de Responsabilidade Civil",
+    "insuranceText": "Para garantia da responsabilidade emergente da sua atividade profissional, a {{brand}} possui Seguro de Responsabilidade Civil válido, conforme exigido pela legislação em vigor para a atividade de Mediação Imobiliária.",
+    "ralTitle": "Resolução Alternativa de Litígios (RAL)",
+    "ralIntro": "Nos termos do art.º 18.º da Lei n.º 144/2015, de 8 de setembro, informa-se que, em caso de litígio, o consumidor tem a possibilidade de recorrer a uma Entidade de Resolução Alternativa de Litígios de Consumo:",
+    "ralNational": "Âmbito Nacional",
+    "ralNationalBody": "CNIACC - Centro Nacional de Informação e Arbitragem de Conflitos de Consumo",
+    "ralRegional": "Âmbito Regional",
+    "ralRegionalBody": "Centro de Arbitragem de Conflitos de Consumo de Lisboa",
+    "ralNote": "Para mais informações, consulte o Portal do Consumidor em",
+    "complaintsTitle": "Livro de Reclamações",
+    "complaintsText": "A {{brand}} dispõe de Livro de Reclamações Eletrónico. Se desejar apresentar uma reclamação, elogio ou sugestão, poderá fazê-lo através da plataforma oficial.",
+    "complaintsLink": "Confirmar em www.livroreclamacoes.pt",
+    "amlTitle": "Branqueamento de Capitais",
+    "amlText": "Em cumprimento da Lei n.º 83/2017, de 18 de agosto, que estabelece medidas de combate ao branqueamento de capitais e ao financiamento do terrorismo, a {{brand}} poderá solicitar elementos de identificação a todos os intervenientes nos negócios imobiliários em que intervenha."
+  },
+  "about": {
+    "title": "Sobre a {{brand}}",
+    "subtitle": "Mais do que uma imobiliária, somos parceiros na construção do seu futuro.",
+    "missionTitle": "A Nossa Missão",
+    "missionText": "Proporcionar um serviço de excelência no mercado imobiliário, focado na transparência, integridade e na satisfação total dos nossos clientes. Queremos simplificar o processo de compra, venda e arrendamento, tornando-o numa experiência positiva e memorável.",
+    "visionTitle": "A Nossa Visão",
+    "visionText": "Ser a referência imobiliária na nossa região, reconhecida pela qualidade do nosso serviço, pela competência da nossa equipa e pela inovação nas soluções que apresentamos aos nossos clientes.",
+    "expLabel": "Anos de Experiência",
+    "clientsLabel": "Famílias Felizes",
+    "whyChooseTitle": "Porquê Escolher a RibeiraZul?",
+    "reasons": [
+      {
+        "title": "Experiência Local",
+        "desc": "Conhecemos cada rua, cada bairro e cada oportunidade da nossa região como ninguém."
+      },
+      {
+        "title": "Acompanhamento Total",
+        "desc": "Do primeiro contacto até à escritura (e além), estamos sempre ao seu lado em cada etapa."
+      },
+      {
+        "title": "Transparência",
+        "desc": "Comunicação clara, honesta e direta. Sem letras pequenas ou surpresas desagradáveis."
+      }
+    ],
+    "ctaTitle": "Pronto para encontrar a sua casa de sonho?",
+    "ctaText": "Fale hoje mesmo com a nossa equipa e descubra como podemos ajudar.",
+    "ctaButton": "Contacte-nos"
+  },
+  "faq": {
+    "title": "Perguntas Frequentes",
+    "subtitle": "Tem dúvidas? Nós temos as respostas. Explore as questões mais comuns dos nossos clientes.",
+    "items": [
+      {
+        "question": "Como funciona o processo de compra de um imóvel?",
+        "answer": "O processo começa com a escolha do imóvel. Após isso, fazemos a proposta, negociamos valores e, ao chegar a acordo, assinamos o Contrato Promessa de Compra e Venda (CPCV). Por fim, realizamos a Escritura Pública, onde o imóvel passa oficialmente para o seu nome."
+      },
+      {
+        "question": "Quais são os documentos necessários para vender o meu imóvel?",
+        "answer": "Geralmente, necessita da Caderneta Predial Urbana, Certidão do Registo Predial, Licença de Utilização, Certificado Energético, Planta do Imóvel e documentos de identificação dos proprietários."
+      },
+      {
+        "question": "A RibeiraZul trata do financiamento bancário?",
+        "answer": "Sim! Temos parcerias com várias entidades bancárias (como CGD, Novo Banco, BPI, etc.) e ajudamos em todo o processo de aprovação de crédito habitação, garantindo as melhores condições para si."
+      },
+      {
+        "question": "Quanto tempo demora a vender uma casa?",
+        "answer": "O tempo varia consoante o mercado, a localização e o preço. No entanto, a nossa equipa utiliza estratégias de marketing avançadas para garantir a máxima exposição e vender o seu imóvel no menor tempo possível."
+      },
+      {
+        "question": "Fazem apenas mediação ou também obras?",
+        "answer": "Fazemos ambos! Além da mediação imobiliária, temos uma equipa especializada em construção e remodelação, permitindo-nos oferecer soluções chave-na-mão para quem compra casas a precisar de intervenção."
+      }
+    ],
+    "supportTitle": "Ainda tem dúvidas?",
+    "supportText": "Se não encontrou a resposta que procurava, não hesite em contactar a nossa equipa de suporte.",
+    "supportButton": "Falar com a Equipa"
+  },
+  "team": {
+    "backToHome": "Voltar para a Home",
+    "title": "Conheça a nossa Equipa",
+    "subtitle": "Especialistas dedicados a encontrar o imóvel perfeito para si, com transparência e excelência.",
+    "yearsExp": "anos de experiência",
+    "viewProfile": "Ver Perfil",
+    "emptyTitle": "A nossa equipa está a crescer",
+    "emptyText": "De momento não temos perfis públicos disponíveis, mas os nossos especialistas continuam a trabalhar para si. Volte em breve!"
+  }
+}

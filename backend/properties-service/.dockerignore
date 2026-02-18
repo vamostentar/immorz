@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.git
+.yarn/cache
+coverage
+.vscode
+.idea
+*.log
+docker-compose.yml
+Dockerfile

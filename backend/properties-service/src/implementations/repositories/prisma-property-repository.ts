@@ -22,6 +22,8 @@ export class PrismaPropertyRepository implements IPropertyRepository {
           type: data.type,
           imageUrl: data.imageUrl,
           description: data.description,
+          titleEn: data.titleEn,
+          descriptionEn: data.descriptionEn,
           bedrooms: data.bedrooms,
           bathrooms: data.bathrooms,
           area: data.area ? new Prisma.Decimal(data.area as number) : null,
@@ -119,6 +121,8 @@ export class PrismaPropertyRepository implements IPropertyRepository {
       if (data.type !== undefined) updateData.type = data.type;
       if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
       if (data.description !== undefined) updateData.description = data.description;
+      if ((data as any).titleEn !== undefined) updateData.titleEn = (data as any).titleEn;
+      if ((data as any).descriptionEn !== undefined) updateData.descriptionEn = (data as any).descriptionEn;
       if (data.bedrooms !== undefined) updateData.bedrooms = data.bedrooms;
       if (data.bathrooms !== undefined) updateData.bathrooms = data.bathrooms;
       if (data.area !== undefined) updateData.area = new Prisma.Decimal(data.area as number);

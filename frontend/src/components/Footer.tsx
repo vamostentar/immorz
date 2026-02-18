@@ -1,7 +1,9 @@
 import { useSettings } from '@/api/queries';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 export function Footer() {
+  const { t } = useTranslation();
   const { data: settings } = useSettings();
   const year = new Date().getFullYear();
 
@@ -23,38 +25,44 @@ export function Footer() {
               />
             </Link>
             <p className="text-gray-500 text-sm italic">
-              Transformando sonhos em realidade
+              {t('footer.tagline')}
             </p>
           </div>
 
           {/* Legal Links */}
           <div className="text-center md:text-left">
-            <h3 className="font-semibold text-gray-300 mb-4 uppercase tracking-wider text-xs">Informação Legal</h3>
+            <h3 className="font-semibold text-gray-300 mb-4 uppercase tracking-wider text-xs">{t('footer.legalTitle')}</h3>
             <ul className="space-y-2 text-sm text-gray-500">
               <li>
-                <Link to="/privacidade" className="hover:text-white transition-colors">Privacidade</Link>
+                <Link to="/privacidade" className="hover:text-white transition-colors">{t('footer.privacy')}</Link>
               </li>
               <li>
-                <Link to="/termos" className="hover:text-white transition-colors">Termos de Utilização</Link>
+                <Link to="/termos" className="hover:text-white transition-colors">{t('footer.terms')}</Link>
               </li>
               <li>
-                <Link to="/legal" className="hover:text-white transition-colors">Informações Legais</Link>
+                <Link to="/legal" className="hover:text-white transition-colors">{t('footer.legal')}</Link>
               </li>
             </ul>
           </div>
 
           {/* Company Details */}
           <div className="text-center md:text-left">
-            <h3 className="font-semibold text-gray-300 mb-4 uppercase tracking-wider text-xs">A Empresa</h3>
+            <h3 className="font-semibold text-gray-300 mb-4 uppercase tracking-wider text-xs">{t('footer.companyTitle')}</h3>
             <ul className="space-y-2 text-sm text-gray-500">
               <li>Licença AMI: 26172 </li>
               <li>NIPC: 518 885 399 </li>
+              <li className="pt-2">
+                <Link to="/sobre" className="hover:text-white transition-colors">Sobre Nós</Link>
+              </li>
+              <li>
+                <Link to="/faq" className="hover:text-white transition-colors">Perguntas Frequentes</Link>
+              </li>
             </ul>
           </div>
 
           {/* Social Media */}
           <div className="text-center md:text-right">
-            <h3 className="font-semibold text-gray-300 mb-4 uppercase tracking-wider text-xs">Siga-nos</h3>
+            <h3 className="font-semibold text-gray-300 mb-4 uppercase tracking-wider text-xs">{t('footer.followUs')}</h3>
             <div className="flex justify-center md:justify-end gap-6 text-gray-400">
               <a href="#" className="hover:text-white transition-colors" aria-label="Twitter">
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -77,7 +85,7 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-gray-800 text-center">
           <p className="text-gray-600 text-xs">
-            © {year} {settings?.brandName ?? 'RibeiraZul'}. Todos os direitos reservados.
+            {t('footer.copyright', { year, brand: settings?.brandName ?? 'RibeiraZul' })}
           </p>
         </div>
       </div>

@@ -5,6 +5,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -79,6 +80,10 @@ model Property {
   type        PropertyType?
   imageUrl    String?  @db.VarChar(2048)
   description String?  @db.Text
+  
+  // Campos multilingues (EN) — fallback para PT quando vazio
+  titleEn       String?  @db.VarChar(200)
+  descriptionEn String?  @db.Text
   
   // Características do imóvel
   bedrooms    Int?     @db.SmallInt

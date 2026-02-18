@@ -15,6 +15,8 @@ const schema = z.object({
   type: z.enum(['apartamento', 'moradia', 'loft', 'penthouse', 'estudio', 'escritorio', 'terreno']).optional().nullable(),
   imageUrl: z.string().optional().nullable(),
   description: z.string().max(2000).optional().nullable(),
+  titleEn: z.string().max(200).optional().nullable(),
+  descriptionEn: z.string().max(2000).optional().nullable(),
   bedrooms: z.number().min(0).optional().nullable(),
   bathrooms: z.number().min(0).optional().nullable(),
   area: z.number().min(0).optional().nullable(),
@@ -60,6 +62,8 @@ const PropertyForm = forwardRef<PropertyFormRef, {
       type: (initial?.type as any) ?? undefined,
       imageUrl: initial?.imageUrl ?? undefined,
       description: initial?.description ?? undefined,
+      titleEn: initial?.titleEn ?? undefined,
+      descriptionEn: initial?.descriptionEn ?? undefined,
       bedrooms: initial?.bedrooms ?? undefined,
       bathrooms: initial?.bathrooms ?? undefined,
       area: initial?.area ?? undefined,
@@ -71,6 +75,7 @@ const PropertyForm = forwardRef<PropertyFormRef, {
   });
 
   const [images, setImages] = useState<UploadedImage[]>([]);
+  const [langTab, setLangTab] = useState<'pt' | 'en'>('pt');
   const multiImageUploadRef = useRef<any>(null);
 
   // Expor funções para o componente pai
@@ -121,11 +126,58 @@ const PropertyForm = forwardRef<PropertyFormRef, {
 
   return (
     <form onSubmit={handleSubmit(((values: any) => onSubmit(values, images)) as any)} className="grid gap-4">
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">Título</label>
-        <input className="input" placeholder="Título" {...register('title')} />
-        {errors.title?.message && <span className="text-red-600 text-sm">{errors.title.message}</span>}
+      {/* Language Tab Strip */}
+      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+        <button
+          type="button"
+          onClick={() => setLangTab('pt')}
+          className={`px-4 py-2 rounded-md text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+            langTab === 'pt' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          🇵🇹 Português
+        </button>
+        <button
+          type="button"
+          onClick={() => setLangTab('en')}
+          className={`px-4 py-2 rounded-md text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+            langTab === 'en' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          🇬🇧 English
+        </button>
       </div>
+
+      {/* PT fields */}
+      {langTab === 'pt' && (
+        <>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">Título <span className="text-red-500">*</span></label>
+            <input className="input" placeholder="Título" {...register('title')} />
+            {errors.title?.message && <span className="text-red-600 text-sm">{errors.title.message}</span>}
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">Descrição</label>
+            <textarea className="input" rows={4} placeholder="Descrição (opcional)" {...register('description')} />
+          </div>
+        </>
+      )}
+
+      {/* EN fields */}
+      {langTab === 'en' && (
+        <>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">Title (EN)</label>
+            <input className="input" placeholder="Title in English (optional)" {...register('titleEn')} />
+            <span className="text-xs text-gray-400">Leave blank to show Portuguese version</span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">Description (EN)</label>
+            <textarea className="input" rows={4} placeholder="Description in English (optional)" {...register('descriptionEn')} />
+            <span className="text-xs text-gray-400">Leave blank to show Portuguese version</span>
+          </div>
+        </>
+      )}
 
       <div className="flex flex-col gap-1">
         <label className="text-sm font-medium text-gray-700">Localização</label>
@@ -280,11 +332,6 @@ const PropertyForm = forwardRef<PropertyFormRef, {
           maxFileSize={10}
           disabled={submitting}
         />
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">Descrição</label>
-        <textarea className="input" rows={4} placeholder="Descrição (opcional)" {...register('description')} />
       </div>
 
       <div className="flex justify-end gap-2 mt-2">

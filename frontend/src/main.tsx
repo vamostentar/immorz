@@ -1,6 +1,7 @@
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import '@/i18n';
 import { lazy, Suspense } from 'react';
 
 // Eager load critical pages
@@ -21,6 +22,8 @@ const Legal = lazy(() => import('@/pages/Legal'));
 const Team = lazy(() => import('@/pages/Team'));
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
+const About = lazy(() => import('@/pages/About'));
+const FAQ = lazy(() => import('@/pages/FAQ'));
 
 // Lazy load all admin pages
 const Analytics = lazy(() => import('@/pages/admin/Analytics'));
@@ -369,6 +372,22 @@ const router = createBrowserRouter([
     element: (
       <AppWrapper>
         <Legal />
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/sobre',
+    element: (
+      <AppWrapper>
+        <About />
+      </AppWrapper>
+    )
+  },
+  {
+    path: '/faq',
+    element: (
+      <AppWrapper>
+        <FAQ />
       </AppWrapper>
     )
   },

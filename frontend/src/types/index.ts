@@ -8,6 +8,8 @@ export type Property = {
   type?: 'apartamento' | 'moradia' | 'loft' | 'penthouse' | 'estudio' | 'escritorio' | 'terreno' | null;
   imageUrl?: string | null;
   description?: string | null;
+  titleEn?: string | null;
+  descriptionEn?: string | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
   area?: number | null;

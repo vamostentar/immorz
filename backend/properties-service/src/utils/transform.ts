@@ -59,6 +59,8 @@ export function transformPropertyFromDb(property: ExtendedProperty): PropertyRes
     type: property.type,
     imageUrl: property.imageUrl,
     description: property.description,
+    titleEn: property.titleEn || null,
+    descriptionEn: property.descriptionEn || null,
     bedrooms: property.bedrooms || null,
     bathrooms: property.bathrooms || null,
     area: property.area ? Number(property.area) : null,

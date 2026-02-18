@@ -4,7 +4,11 @@ import { Navbar } from '@/components/Navbar';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useTranslation } from 'react-i18next';
+
 export default function Team() {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -16,7 +20,7 @@ export default function Team() {
             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-8"
           >
             <ArrowLeft size={20} />
-            <span>Voltar para a Home</span>
+            <span>{t('team.backToHome')}</span>
           </Link>
         </div>
         

@@ -1,12 +1,16 @@
+import { useTranslation } from 'react-i18next';
+
 export function ContactInfo() {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
         <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-          Entre em Contato
+          {t('contact.title')}
         </h2>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          A nossa equipa especializada está pronta para ajudar a encontrar o imóvel dos seus sonhos.
+          {t('contact.subtitle')}
         </p>
       </div>
 
@@ -17,8 +21,8 @@ export function ContactInfo() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
             </svg>
           }
-          title="WhatsApp"
-          description="Fale connosco agora"
+          title={t('contact.whatsappTitle')}
+          description={t('contact.whatsappDesc')}
           contact="+351 927 886 229"
           href="https://wa.me/351927886229"
           bgColor="bg-green-500"
@@ -31,10 +35,10 @@ export function ContactInfo() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           }
-          title="Email"
-          description="Envie sua dúvida"
+          title={t('contact.emailTitle')}
+          description={t('contact.emailDesc')}
           contact="geral@immorz.pt"
-          href="mailto:geral@immorz.pt.pt"
+          href="mailto:geral@immorz.pt"
           bgColor="bg-blue-500"
           textColor="text-blue-500"
         />
@@ -46,8 +50,8 @@ export function ContactInfo() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           }
-          title="Escritório"
-          description="Visite-nos pessoalmente"
+          title={t('contact.officeTitle')}
+          description={t('contact.officeDesc')}
           contact="Rua das Eiras nº 61 R/C Dt, 2725-297 Mem Martins"
           href="https://maps.app.goo.gl/434JPrMjixQUNEUY9"
           bgColor="bg-amber-500"
@@ -57,15 +61,15 @@ export function ContactInfo() {
 
       {/* Additional contact section */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-3xl p-8 text-center text-white">
-        <h3 className="text-2xl font-bold mb-4">Horário de Atendimento</h3>
+        <h3 className="text-2xl font-bold mb-4">{t('contact.scheduleTitle')}</h3>
         <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
           <div>
-            <h4 className="font-semibold mb-2">Segunda a Sexta</h4>
-            <p className="text-blue-100">9h00 às 20h00</p>
+            <h4 className="font-semibold mb-2">{t('contact.weekdays')}</h4>
+            <p className="text-blue-100">{t('contact.weekdaysHours')}</p>
           </div>
           <div>
-            <h4 className="font-semibold mb-2">Sábado</h4>
-            <p className="text-blue-100">9h00 às 16h00</p>
+            <h4 className="font-semibold mb-2">{t('contact.saturday')}</h4>
+            <p className="text-blue-100">{t('contact.saturdayHours')}</p>
           </div>
         </div>
       </div>
