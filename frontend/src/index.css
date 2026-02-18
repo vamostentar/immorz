@@ -202,3 +202,10 @@ body {
     background-position: -200% 0;
   }
 }
+
+/* Preloader — Entrada Triunfal */
+#preloader.preloader-hide {
+  opacity: 0 !important;
+  transform: scale(1.02);
+  pointer-events: none;
+}

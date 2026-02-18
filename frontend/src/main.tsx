@@ -400,3 +400,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </React.StrictMode>
 );
+
+// Preloader: Entrada Triunfal — remoção suave após 2s
+const removePreloader = () => {
+  const el = document.getElementById('preloader');
+  if (el) {
+    el.classList.add('preloader-hide');
+    el.addEventListener('transitionend', () => el.remove(), { once: true });
+  }
+};
+setTimeout(removePreloader, 2000);
